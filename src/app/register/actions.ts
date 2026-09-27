@@ -4,7 +4,11 @@ import { redirect } from "next/navigation";
 import { AuthService } from "@/lib/auth/service";
 import { DrizzleUserRepository } from "@/lib/auth/drizzle-repository";
 import { getSession } from "@/lib/auth/session";
-import { InvalidCredentialsError, UsernameTakenError } from "@/lib/auth/errors";
+import {
+  EmailTakenError,
+  InvalidCredentialsError,
+  UsernameTakenError,
+} from "@/lib/auth/errors";
 
 export type RegisterState = {
   error?: string;
@@ -19,6 +23,8 @@ export async function registerAction(
   try {
     const user = await service.register({
       username: formData.get("username"),
+      email: formData.get("email"),
+      emailOwnerType: formData.get("emailOwnerType"),
       password: formData.get("password"),
     });
 
@@ -29,8 +35,11 @@ export async function registerAction(
     if (error instanceof UsernameTakenError) {
       return { error: "Ese nombre de usuario no está disponible." };
     }
+    if (error instanceof EmailTakenError) {
+      return { error: "Ese email ya está registrado." };
+    }
     if (error instanceof InvalidCredentialsError) {
-      return { error: "Revisá el usuario y la contraseña." };
+      return { error: "Revisá el usuario, email, tipo de contacto y contraseña." };
     }
     return { error: "No se pudo completar el registro." };
   }

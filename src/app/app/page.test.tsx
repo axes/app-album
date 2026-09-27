@@ -86,7 +86,12 @@ describe("/app Server Component", () => {
   });
 
   it("renders the username and a logout form for an authenticated user", async () => {
-    mocks.getCurrentUser.mockResolvedValue({ id: "user-1", username: "erin" });
+    mocks.getCurrentUser.mockResolvedValue({
+      id: "user-1",
+      username: "erin",
+      role: "user",
+      status: "active",
+    });
 
     const tree = await AppPage();
 

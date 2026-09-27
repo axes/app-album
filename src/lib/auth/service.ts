@@ -1,62 +1,76 @@
 import { z } from "zod";
-import { credentialsSchema, loginSchema } from "./credentials";
-import { InvalidCredentialsError, UsernameTakenError } from "./errors";
+import { loginSchema, registrationSchema } from "./credentials";
+import {
+  EmailTakenError,
+  InvalidCredentialsError,
+  UsernameTakenError,
+} from "./errors";
 import {
   DUMMY_PASSWORD_HASH,
   hashPassword,
   verifyPassword,
 } from "./password";
-import type { UserRepository } from "./repository";
+import type { UserRecord, UserRepository } from "./repository";
 
 export type AuthenticatedUser = {
   id: string;
   username: string;
+  role: "user" | "admin";
+  status: "active";
 };
 
 const uuidSchema = z.string().uuid();
 
-function isUniqueViolation(error: unknown): boolean {
+function uniqueConstraint(error: unknown): string | null {
   if (typeof error !== "object" || error === null) {
-    return false;
+    return null;
   }
-  const code = (error as { code?: unknown }).code;
-  if (code !== "23505") {
-    return false;
+  if ((error as { code?: unknown }).code !== "23505") {
+    return null;
   }
-  // When the driver exposes the constraint name, make sure it is the one we
-  // expect so unrelated unique violations are not misreported.
   const constraint = (error as { constraint_name?: unknown }).constraint_name;
-  if (typeof constraint === "string" && constraint.length > 0) {
-    return constraint === "users_username_unique";
-  }
-  return true;
+  return typeof constraint === "string" && constraint.length > 0
+    ? constraint
+    : "unknown_unique";
 }
 
 export class AuthService {
   constructor(private readonly users: UserRepository) {}
 
   async register(input: unknown): Promise<AuthenticatedUser> {
-    const parsed = credentialsSchema.safeParse(input);
+    const parsed = registrationSchema.safeParse(input);
     if (!parsed.success) {
       throw new InvalidCredentialsError();
     }
 
-    const { username, password } = parsed.data;
+    const { username, email, emailOwnerType, password } = parsed.data;
 
-    const existing = await this.users.findByUsername(username);
-    if (existing) {
+    if (await this.users.findByUsername(username)) {
       throw new UsernameTakenError();
+    }
+    if (await this.users.findByEmail(email)) {
+      throw new EmailTakenError();
     }
 
     const passwordHash = await hashPassword(password);
 
     try {
-      const user = await this.users.createUser({ username, passwordHash });
-      return { id: user.id, username: user.username };
+      const user = await this.users.createUser({
+        username,
+        email,
+        emailOwnerType,
+        passwordHash,
+        role: "user",
+        status: "active",
+      });
+      return this.toAuthenticatedUser(user);
     } catch (error) {
-      // Concurrent duplicate registration: the unique constraint wins.
-      if (isUniqueViolation(error)) {
+      const constraint = uniqueConstraint(error);
+      if (constraint === "users_username_unique" || constraint === "unknown_unique") {
         throw new UsernameTakenError();
+      }
+      if (constraint === "users_email_unique") {
+        throw new EmailTakenError();
       }
       throw error;
     }
@@ -81,11 +95,11 @@ export class AuthService {
     }
 
     const valid = await verifyPassword(user.passwordHash, password);
-    if (!valid) {
+    if (!valid || user.status !== "active") {
       throw new InvalidCredentialsError();
     }
 
-    return { id: user.id, username: user.username };
+    return this.toAuthenticatedUser(user);
   }
 
   /**
@@ -100,10 +114,22 @@ export class AuthService {
     }
 
     const user = await this.users.findById(parsed.data);
-    if (!user) {
+    if (!user || user.status !== "active") {
       return null;
     }
 
-    return { id: user.id, username: user.username };
+    return this.toAuthenticatedUser(user);
+  }
+
+  private toAuthenticatedUser(user: UserRecord): AuthenticatedUser {
+    if (!user || user.status !== "active") {
+      throw new InvalidCredentialsError();
+    }
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      status: "active",
+    };
   }
 }

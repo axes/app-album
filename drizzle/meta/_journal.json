@@ -8,6 +8,13 @@
       "when": 1790453743444,
       "tag": "0000_init_users",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790473544493,
+      "tag": "0001_crazy_shiver_man",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,7 @@
-# App Album — M0 Foundation
+# App Album
 
-Base de una aplicación Next.js (App Router) con autenticación por usuario y
-contraseña. Este hito (M0) incluye únicamente el esqueleto de autenticación:
-registro, login, sesión sellada y un área protegida.
+Aplicación Next.js (App Router) con autenticación, cuentas con email/contacto,
+roles y estado, sesión sellada y administración básica de usuarios.
 
 ## Stack
 
@@ -65,10 +64,12 @@ cp .env.example .env
 
 ## Migración
 
-La migración inicial vive en `drizzle/0000_init_users.sql` y sólo crea `users`
-(`id` UUID con `gen_random_uuid()`, `username` único con checks de longitud,
-normalización y formato, `password_hash` y timestamps). El snapshot canónico
-está en `drizzle/meta/0000_snapshot.json`.
+La migración inicial vive en `drizzle/0000_init_users.sql`. La migración
+`drizzle/0001_crazy_shiver_man.sql` amplía `users` y crea la trazabilidad
+`user_admin_events`. Para conservar usuarios existentes, asigna a cada cuenta
+legacy un email reservado y único `legacy+<uuid>@invalid.example` con tipo
+`other`; luego el email queda obligatorio y único. Esas direcciones no son
+reales ni se usan para enviar correo.
 
 ```bash
 npm run db:generate   # regenera migraciones desde el schema (no-op si está sincronizado)
@@ -87,12 +88,29 @@ npm run dev
 Rutas disponibles:
 
 - `/` — portada con enlaces.
-- `/register` — alta de usuario (usuario normalizado, contraseña hasheada).
-- `/login` — inicio de sesión con mensaje de error genérico.
+- `/register` — alta con username, email, tipo de contacto y contraseña.
+- `/login` — inicio de sesión con mensaje de error genérico; cuentas bloqueadas
+  no pueden iniciar ni mantener acceso.
 - `/app` — área protegida; redirige a `/login` sin sesión. El botón de cierre
   de sesión usa la Server Action `logoutAction`.
 - `POST /logout` — endpoint documentado para clientes que no pueden enviar una
   Server Action; destruye la sesión y redirige a `/login`.
+- `/admin/users` — listado y gestión de rol/estado, sólo para admins activos.
+
+## Bootstrap del primer administrador
+
+Después de aplicar migraciones, promueve de forma explícita una cuenta ya
+existente usando su username o email normalizado:
+
+```bash
+npm run admin:bootstrap -- <username-o-email>
+```
+
+El comando requiere `DATABASE_URL`, activa la cuenta, registra los cambios en
+`user_admin_events` como `bootstrap-cli` y no crea usuarios ni acepta
+credenciales. Las mutaciones desde `/admin/users` también se auditan. Una
+transacción con advisory lock serializa estas operaciones e impide degradar o
+bloquear al último administrador activo.
 
 ## Runtime
 
@@ -139,10 +157,10 @@ el cliente no puede leer ni modificar su contenido. La identidad se revalida
 contra la base de datos en cada petición, de modo que un usuario eliminado deja
 de tener acceso de inmediato.
 
-Limitación conocida: **no hay revocación central de sesiones**. Al ser una
-cookie stateless, no existe un registro de sesiones activas; cambiar
-`AUTH_SECRET` invalida todas las sesiones a la vez, pero no es posible cerrar
-una sesión concreta de forma remota. La revocación por sesión queda fuera de M0.
+No existe un registro central de sesiones individuales. Sin embargo, la cuenta
+se revalida en PostgreSQL en cada petición: bloquearla invalida inmediatamente
+su autorización aunque conserve una cookie sellada. Cambiar `AUTH_SECRET`
+invalida todas las sesiones a la vez.
 
 ## Alcance
 

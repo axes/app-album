@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { AuthService } from "./service";
-import { InvalidCredentialsError, UsernameTakenError } from "./errors";
+import {
+  EmailTakenError,
+  InvalidCredentialsError,
+  UsernameTakenError,
+} from "./errors";
 import type {
   CreateUserInput,
   UserRecord,
@@ -12,6 +16,7 @@ class InMemoryUserRepository implements UserRepository {
   private counter = 0;
   public findByIdCalls = 0;
   public findByUsernameCalls = 0;
+  public findByEmailCalls = 0;
 
   constructor(private readonly failWith?: unknown) {}
 
@@ -30,6 +35,11 @@ class InMemoryUserRepository implements UserRepository {
     return this.rows.get(username) ?? null;
   }
 
+  async findByEmail(email: string): Promise<UserRecord | null> {
+    this.findByEmailCalls += 1;
+    return [...this.rows.values()].find((row) => row.email === email) ?? null;
+  }
+
   async createUser(input: CreateUserInput): Promise<UserRecord> {
     if (this.failWith) {
       throw this.failWith;
@@ -43,6 +53,10 @@ class InMemoryUserRepository implements UserRepository {
     const record: UserRecord = {
       id: `00000000-0000-4000-8000-${String(this.counter).padStart(12, "0")}`,
       username: input.username,
+      email: input.email,
+      emailOwnerType: input.emailOwnerType,
+      role: input.role,
+      status: input.status,
       passwordHash: input.passwordHash,
       createdAt: now,
       updatedAt: now,
@@ -59,6 +73,8 @@ describe("AuthService.register", () => {
 
     const user = await service.register({
       username: "  Alice_01 ",
+      email: "  Alice@Example.COM ",
+      emailOwnerType: "self",
       password: "super-secret-1",
     });
 
@@ -67,6 +83,9 @@ describe("AuthService.register", () => {
 
     const stored = await repo.findByUsername("alice_01");
     expect(stored).not.toBeNull();
+    expect(stored?.email).toBe("alice@example.com");
+    expect(stored?.role).toBe("user");
+    expect(stored?.status).toBe("active");
     expect(stored?.passwordHash).not.toBe("super-secret-1");
     expect(stored?.passwordHash.startsWith("$argon2id$")).toBe(true);
   });
@@ -88,10 +107,40 @@ describe("AuthService.register", () => {
     const repo = new InMemoryUserRepository();
     const service = new AuthService(repo);
 
-    await service.register({ username: "taken", password: "super-secret-1" });
+    await service.register({
+      username: "taken",
+      email: "taken@example.com",
+      emailOwnerType: "self",
+      password: "super-secret-1",
+    });
     await expect(
-      service.register({ username: "taken", password: "another-secret-1" }),
+      service.register({
+        username: "taken",
+        email: "other@example.com",
+        emailOwnerType: "self",
+        password: "another-secret-1",
+      }),
     ).rejects.toBeInstanceOf(UsernameTakenError);
+  });
+
+  it("rejects a duplicate normalized email", async () => {
+    const repo = new InMemoryUserRepository();
+    const service = new AuthService(repo);
+    await service.register({
+      username: "first",
+      email: "person@example.com",
+      emailOwnerType: "self",
+      password: "super-secret-1",
+    });
+
+    await expect(
+      service.register({
+        username: "second",
+        email: " PERSON@EXAMPLE.COM ",
+        emailOwnerType: "other",
+        password: "super-secret-2",
+      }),
+    ).rejects.toBeInstanceOf(EmailTakenError);
   });
 
   it("maps a concurrent unique violation to UsernameTakenError", async () => {
@@ -100,7 +149,12 @@ describe("AuthService.register", () => {
     const service = new AuthService(repo);
 
     await expect(
-      service.register({ username: "racer", password: "super-secret-1" }),
+      service.register({
+        username: "racer",
+        email: "racer@example.com",
+        emailOwnerType: "self",
+        password: "super-secret-1",
+      }),
     ).rejects.toBeInstanceOf(UsernameTakenError);
   });
 
@@ -113,7 +167,12 @@ describe("AuthService.register", () => {
     const service = new AuthService(repo);
 
     await expect(
-      service.register({ username: "racer", password: "super-secret-1" }),
+      service.register({
+        username: "racer",
+        email: "racer@example.com",
+        emailOwnerType: "self",
+        password: "super-secret-1",
+      }),
     ).rejects.toBe(duplicate);
   });
 
@@ -123,7 +182,12 @@ describe("AuthService.register", () => {
     const service = new AuthService(repo);
 
     await expect(
-      service.register({ username: "racer", password: "super-secret-1" }),
+      service.register({
+        username: "racer",
+        email: "racer@example.com",
+        emailOwnerType: "self",
+        password: "super-secret-1",
+      }),
     ).rejects.toBe(boom);
   });
 });
@@ -134,6 +198,8 @@ describe("AuthService.login", () => {
     const service = new AuthService(repo);
     const user = await service.register({
       username: "carol",
+      email: "carol@example.com",
+      emailOwnerType: "self",
       password: "super-secret-1",
     });
     return { repo, service, user };
@@ -145,7 +211,12 @@ describe("AuthService.login", () => {
       username: "carol",
       password: "super-secret-1",
     });
-    expect(result).toEqual({ id: user.id, username: "carol" });
+    expect(result).toEqual({
+      id: user.id,
+      username: "carol",
+      role: "user",
+      status: "active",
+    });
   });
 
   it("normalizes the username on login", async () => {
@@ -230,6 +301,8 @@ describe("AuthService.resolveUserById", () => {
     const service = new AuthService(repo);
     const user = await service.register({
       username: "dave",
+      email: "dave@example.com",
+      emailOwnerType: "self",
       password: "super-secret-1",
     });
     return { repo, service, user };
@@ -238,7 +311,12 @@ describe("AuthService.resolveUserById", () => {
   it("resolves an existing user from a valid UUID", async () => {
     const { service, user } = await setup();
     const resolved = await service.resolveUserById(user.id);
-    expect(resolved).toEqual({ id: user.id, username: "dave" });
+    expect(resolved).toEqual({
+      id: user.id,
+      username: "dave",
+      role: "user",
+      status: "active",
+    });
   });
 
   it("returns null for a malformed id without querying the repository", async () => {
@@ -258,5 +336,26 @@ describe("AuthService.resolveUserById", () => {
     await expect(
       service.resolveUserById("11111111-1111-4111-8111-111111111111"),
     ).resolves.toBeNull();
+  });
+});
+
+describe("banned account authorization", () => {
+  it("rejects login and existing-session resolution for a banned user", async () => {
+    const repo = new InMemoryUserRepository();
+    const service = new AuthService(repo);
+    const created = await service.register({
+      username: "blocked",
+      email: "blocked@example.com",
+      emailOwnerType: "self",
+      password: "super-secret-1",
+    });
+    const stored = await repo.findByUsername("blocked");
+    if (!stored) throw new Error("missing test user");
+    stored.status = "banned";
+
+    await expect(
+      service.login({ username: "blocked", password: "super-secret-1" }),
+    ).rejects.toBeInstanceOf(InvalidCredentialsError);
+    await expect(service.resolveUserById(created.id)).resolves.toBeNull();
   });
 });

@@ -26,12 +26,20 @@ class InMemoryUserRepository implements UserRepository {
     return this.rows.get(username) ?? null;
   }
 
+  async findByEmail(email: string): Promise<UserRecord | null> {
+    return [...this.rows.values()].find((row) => row.email === email) ?? null;
+  }
+
   async createUser(input: CreateUserInput): Promise<UserRecord> {
     this.counter += 1;
     const now = new Date();
     const record: UserRecord = {
       id: `00000000-0000-4000-8000-${String(this.counter).padStart(12, "0")}`,
       username: input.username,
+      email: input.email,
+      emailOwnerType: input.emailOwnerType,
+      role: input.role,
+      status: input.status,
       passwordHash: input.passwordHash,
       createdAt: now,
       updatedAt: now,
@@ -46,6 +54,8 @@ async function setup() {
   const service = new AuthService(repo);
   const user = await service.register({
     username: "erin",
+    email: "erin@example.com",
+    emailOwnerType: "self",
     password: "super-secret-1",
   });
   const resolver: UserResolver = (id) => service.resolveUserById(id);
@@ -85,11 +95,21 @@ describe("resolveCurrentUser", () => {
 
     const resolved = await resolveCurrentUser(user.id, resolver);
 
-    expect(resolved).toEqual({ id: user.id, username: "erin" });
+    expect(resolved).toEqual({
+      id: user.id,
+      username: "erin",
+      role: "user",
+      status: "active",
+    });
   });
 
   it("delegates the lookup to the injected resolver only", async () => {
-    const sentinel: AuthenticatedUser = { id: "sentinel", username: "sentinel" };
+    const sentinel: AuthenticatedUser = {
+      id: "sentinel",
+      username: "sentinel",
+      role: "user",
+      status: "active",
+    };
     const resolver = vi.fn<UserResolver>().mockResolvedValue(sentinel);
 
     const resolved = await resolveCurrentUser("some-id", resolver);

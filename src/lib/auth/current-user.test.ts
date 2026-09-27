@@ -28,6 +28,9 @@ vi.mock("./drizzle-repository", () => ({
     findByUsername() {
       return Promise.resolve(null);
     }
+    findByEmail() {
+      return Promise.resolve(null);
+    }
     createUser() {
       return Promise.reject(new Error("createUser must not be called"));
     }
@@ -101,6 +104,10 @@ describe("getCurrentUser (real production boundary)", () => {
     mocks.findById.mockResolvedValue({
       id: VALID_ID,
       username: "erin",
+      email: "erin@example.com",
+      emailOwnerType: "self",
+      role: "user",
+      status: "active",
       passwordHash: "$argon2id$fake",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -109,10 +116,29 @@ describe("getCurrentUser (real production boundary)", () => {
     await expect(getCurrentUser()).resolves.toEqual({
       id: VALID_ID,
       username: "erin",
+      role: "user",
+      status: "active",
     });
 
     expect(mocks.findById).toHaveBeenCalledTimes(1);
     expect(mocks.findById).toHaveBeenCalledWith(VALID_ID);
+  });
+
+  it("returns null when an existing session belongs to a banned user", async () => {
+    setSessionUserId(VALID_ID);
+    mocks.findById.mockResolvedValue({
+      id: VALID_ID,
+      username: "erin",
+      email: "erin@example.com",
+      emailOwnerType: "self",
+      role: "user",
+      status: "banned",
+      passwordHash: "$argon2id$fake",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(getCurrentUser()).resolves.toBeNull();
   });
 
   it("never calls session.save() or session.destroy() on any render path", async () => {
@@ -134,6 +160,10 @@ describe("getCurrentUser (real production boundary)", () => {
     mocks.findById.mockResolvedValue({
       id: VALID_ID,
       username: "erin",
+      email: "erin@example.com",
+      emailOwnerType: "self",
+      role: "user",
+      status: "active",
       passwordHash: "$argon2id$fake",
       createdAt: new Date(),
       updatedAt: new Date(),

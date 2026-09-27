@@ -28,6 +28,31 @@ export function RegisterForm() {
         />
       </label>
       <label className="flex flex-col gap-1">
+        <span className="text-sm font-medium">Email</span>
+        <input
+          className="rounded border border-neutral-300 px-3 py-2"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          maxLength={254}
+        />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-sm font-medium">¿A quién pertenece este email?</span>
+        <select
+          className="rounded border border-neutral-300 px-3 py-2"
+          name="emailOwnerType"
+          required
+          defaultValue="self"
+        >
+          <option value="self">A mí</option>
+          <option value="parent">A mi padre o madre</option>
+          <option value="guardian">A mi tutor/a</option>
+          <option value="other">A otro contacto</option>
+        </select>
+      </label>
+      <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Contraseña</span>
         <input
           className="rounded border border-neutral-300 px-3 py-2"

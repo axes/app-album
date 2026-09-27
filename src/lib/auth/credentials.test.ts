@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   credentialsSchema,
+  emailSchema,
   passwordSchema,
+  registrationSchema,
   usernameSchema,
 } from "./credentials";
 
@@ -54,5 +56,30 @@ describe("credentialsSchema", () => {
       username: "bob_99",
       password: "  secret-pass  ",
     });
+  });
+});
+
+describe("registrationSchema", () => {
+  it("accepts and normalizes a valid email", () => {
+    const result = registrationSchema.parse({
+      username: "alice",
+      email: "  Alice@Example.COM ",
+      emailOwnerType: "guardian",
+      password: "super-secret-1",
+    });
+    expect(result.email).toBe("alice@example.com");
+    expect(result.emailOwnerType).toBe("guardian");
+  });
+
+  it("rejects invalid emails and owner types", () => {
+    expect(emailSchema.safeParse("not-an-email").success).toBe(false);
+    expect(
+      registrationSchema.safeParse({
+        username: "alice",
+        email: "alice@example.com",
+        emailOwnerType: "child",
+        password: "super-secret-1",
+      }).success,
+    ).toBe(false);
   });
 });

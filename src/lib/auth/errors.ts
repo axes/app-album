@@ -11,3 +11,10 @@ export class UsernameTakenError extends Error {
     this.name = "UsernameTakenError";
   }
 }
+
+export class EmailTakenError extends Error {
+  constructor() {
+    super("Email is not available");
+    this.name = "EmailTakenError";
+  }
+}
