@@ -1,7 +1,8 @@
 # App Album
 
 Aplicación Next.js (App Router) con autenticación, cuentas con email/contacto,
-roles y estado, sesión sellada y administración básica de usuarios.
+roles y estado, sesión sellada, administración de usuarios y catálogo maestro
+de álbumes, páginas y láminas.
 
 ## Stack
 
@@ -66,7 +67,9 @@ cp .env.example .env
 
 La migración inicial vive en `drizzle/0000_init_users.sql`. La migración
 `drizzle/0001_crazy_shiver_man.sql` amplía `users` y crea la trazabilidad
-`user_admin_events`. Para conservar usuarios existentes, asigna a cada cuenta
+`user_admin_events`. La migración `drizzle/0002_bored_slapstick.sql` agrega el
+catálogo administrativo (`albums`, `album_sections`, `stickers` y
+`album_admin_events`) sin modificar ni recrear las tablas existentes. Para conservar usuarios existentes, asigna a cada cuenta
 legacy un email reservado y único `legacy+<uuid>@invalid.example` con tipo
 `other`; luego el email queda obligatorio y único. Esas direcciones no son
 reales ni se usan para enviar correo.
@@ -96,6 +99,47 @@ Rutas disponibles:
 - `POST /logout` — endpoint documentado para clientes que no pueden enviar una
   Server Action; destruye la sesión y redirige a `/login`.
 - `/admin/users` — listado y gestión de rol/estado, sólo para admins activos.
+- `/admin/albums` — catálogo maestro administrativo y conteos derivados.
+- `/admin/albums/new` — creación de álbum en estado `draft`.
+- `/admin/albums/[id]` — editor del álbum en tres bloques: Álbum, Páginas y
+  Láminas.
+
+## Catálogo maestro
+
+Los slugs se generan desde el título y resuelven colisiones con sufijos
+numéricos. Las posiciones de páginas y láminas son únicas por álbum y se
+administran con acciones subir/bajar. Los códigos de lámina son texto y son
+únicos sólo dentro de cada álbum. Una FK compuesta impide asociar una lámina a
+una página de otro álbum.
+
+En la interfaz, las páginas se llaman **Página / Páginas**. Internamente siguen
+viviendo en la tabla `album_sections` y en el tipo `AlbumSection`; el renombre es
+sólo de producto y no requiere migración.
+
+Publicar exige al menos una página y una lámina. Sólo se puede eliminar un
+álbum `draft` vacío. Eliminar una página **nunca** elimina sus láminas: se
+desasocian a `section_id = null` ("Sin página asignada") y las posiciones de las
+páginas restantes se compactan, todo dentro de una transacción. Las operaciones
+crear, publicar, volver a draft y eliminar álbum quedan registradas en
+`album_admin_events`. No existe todavía catálogo público ni colecciones de
+usuarios.
+
+### Tema claro/oscuro
+
+El tema se resuelve con variables CSS semánticas (`background`, `surface`,
+`text`, `muted`, `border`, `input`, `primary`, `danger`, `success`) expuestas a
+Tailwind en `tailwind.config.ts` con `darkMode: "class"`. La preferencia se
+guarda en `localStorage` bajo `app-album-theme`; en la primera visita se usa
+`prefers-color-scheme`. Un script inline en `<head>` aplica la clase antes del
+primer render para evitar el flash de tema incorrecto.
+
+### Creación masiva
+
+El editor de álbum permite crear láminas por rango numérico (`1..10`, `A1..A10`)
+o por lista de códigos (uno por línea), y páginas por rango (`Página 1..20`).
+Los límites por operación son 300 láminas y 100 páginas. La validación ocurre
+antes de persistir y la inserción es transaccional, por lo que un conflicto de
+código no deja lotes parciales.
 
 ## Bootstrap del primer administrador
 

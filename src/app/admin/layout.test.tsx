@@ -27,6 +27,18 @@ describe("/admin authorization layout", () => {
     );
   });
 
+  it("rejects a banned administrator", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      id: "admin-1",
+      username: "admin",
+      role: "admin",
+      status: "banned",
+    });
+    await expect(AdminLayout({ children: "private" })).rejects.toThrow(
+      "NEXT_REDIRECT:/app",
+    );
+  });
+
   it("renders admin routes for an active administrator", async () => {
     mocks.getCurrentUser.mockResolvedValue({
       id: "admin-1",

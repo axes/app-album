@@ -17,7 +17,7 @@ export function RegisterForm() {
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Usuario</span>
         <input
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="rounded border border-input-border bg-input px-3 py-2 text-content"
           name="username"
           autoComplete="username"
           required
@@ -30,7 +30,7 @@ export function RegisterForm() {
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Email</span>
         <input
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="rounded border border-input-border bg-input px-3 py-2 text-content"
           name="email"
           type="email"
           autoComplete="email"
@@ -41,7 +41,7 @@ export function RegisterForm() {
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">¿A quién pertenece este email?</span>
         <select
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="rounded border border-input-border bg-input px-3 py-2 text-content"
           name="emailOwnerType"
           required
           defaultValue="self"
@@ -55,7 +55,7 @@ export function RegisterForm() {
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Contraseña</span>
         <input
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="rounded border border-input-border bg-input px-3 py-2 text-content"
           name="password"
           type="password"
           autoComplete="new-password"
@@ -65,18 +65,18 @@ export function RegisterForm() {
         />
       </label>
       {state.error ? (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {state.error}
         </p>
       ) : null}
       <button
-        className="rounded bg-neutral-900 px-4 py-2 text-white disabled:opacity-50"
+        className="rounded bg-primary px-4 py-2 text-primary-text disabled:opacity-50"
         type="submit"
         disabled={pending}
       >
         {pending ? "Creando…" : "Crear cuenta"}
       </button>
-      <Link className="text-sm underline" href="/login">
+      <Link className="text-sm text-primary underline" href="/login">
         Ya tengo cuenta
       </Link>
     </form>

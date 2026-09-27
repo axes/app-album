@@ -1,8 +1,12 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  foreignKey,
+  integer,
   pgTable,
+  text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -71,3 +75,99 @@ export const userAdminEvents = pgTable(
 
 export type UserRow = typeof users.$inferSelect;
 export type NewUserRow = typeof users.$inferInsert;
+
+export const ALBUM_STATUSES = ["draft", "published"] as const;
+export type AlbumStatus = (typeof ALBUM_STATUSES)[number];
+
+export const albums = pgTable(
+  "albums",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: varchar("slug", { length: 120 }).notNull().unique(),
+    title: varchar("title", { length: 160 }).notNull(),
+    description: text("description"),
+    publisher: varchar("publisher", { length: 160 }),
+    year: integer("year"),
+    coverUrl: varchar("cover_url", { length: 2048 }),
+    status: varchar("status", { length: 16 })
+      .$type<AlbumStatus>()
+      .notNull()
+      .default("draft"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("albums_slug_format_check", sql`${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`),
+    check("albums_title_check", sql`char_length(trim(${table.title})) between 1 and 160`),
+    check("albums_status_check", sql`${table.status} in ('draft', 'published')`),
+    check("albums_year_check", sql`${table.year} is null or ${table.year} between 1800 and 2200`),
+  ],
+);
+
+export const albumSections = pgTable(
+  "album_sections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "restrict" }),
+    name: varchar("name", { length: 160 }).notNull(),
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("album_sections_album_position_unique").on(table.albumId, table.position),
+    unique("album_sections_album_id_id_unique").on(table.albumId, table.id),
+    check("album_sections_name_check", sql`char_length(trim(${table.name})) between 1 and 160`),
+  ],
+);
+
+export const stickers = pgTable(
+  "stickers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "restrict" }),
+    sectionId: uuid("section_id"),
+    code: varchar("code", { length: 64 }).notNull(),
+    name: varchar("name", { length: 160 }),
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("stickers_album_code_unique").on(table.albumId, table.code),
+    unique("stickers_album_position_unique").on(table.albumId, table.position),
+    foreignKey({
+      name: "stickers_album_section_fk",
+      columns: [table.albumId, table.sectionId],
+      foreignColumns: [albumSections.albumId, albumSections.id],
+    }).onDelete("restrict"),
+    check("stickers_code_check", sql`char_length(trim(${table.code})) between 1 and 64`),
+  ],
+);
+
+export const albumAdminEvents = pgTable(
+  "album_admin_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorUserId: uuid("actor_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    albumId: uuid("album_id").notNull(),
+    albumTitle: varchar("album_title", { length: 160 }).notNull(),
+    action: varchar("action", { length: 32 }).notNull(),
+    performedAt: timestamp("performed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check(
+      "album_admin_events_action_check",
+      sql`${table.action} in ('create', 'publish', 'unpublish', 'delete')`,
+    ),
+  ],
+);
