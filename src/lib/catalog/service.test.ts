@@ -34,6 +34,8 @@ class RecordingRepository implements CatalogRepository {
   updateSticker(actor: string, album: string, sticker: string, input: { code: string; name: string | null; sectionId: string | null }) { this.calls.push({ method: "updateSticker", values: [actor, album, sticker, input] }); return Promise.resolve(); }
   moveSticker(actor: string, album: string, sticker: string, direction: Direction) { this.calls.push({ method: "moveSticker", values: [actor, album, sticker, direction] }); return Promise.resolve(); }
   deleteSticker(actor: string, album: string, sticker: string) { this.calls.push({ method: "deleteSticker", values: [actor, album, sticker] }); return Promise.resolve(); }
+  bulkAssignStickerSection(actor: string, album: string, ids: string[], sectionId: string | null) { this.calls.push({ method: "bulkAssignStickerSection", values: [actor, album, ids, sectionId] }); return Promise.resolve(ids.length); }
+  bulkDeleteStickers(actor: string, album: string, ids: string[]) { this.calls.push({ method: "bulkDeleteStickers", values: [actor, album, ids] }); return Promise.resolve(ids.length); }
 }
 
 const validAlbum = { title: " Mundial España 1982 ", description: "", publisher: " Panini ", year: "1982", coverUrl: "" };

@@ -4,6 +4,7 @@ import {
   foreignKey,
   integer,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -169,5 +170,55 @@ export const albumAdminEvents = pgTable(
       "album_admin_events_action_check",
       sql`${table.action} in ('create', 'publish', 'unpublish', 'delete')`,
     ),
+  ],
+);
+
+/**
+ * A user's personal copy of an album from the catalog. The UUID identifies a
+ * collection instance (its logical "ejemplar"); a future feature will let
+ * collectors share that UUID without exposing account data. CASCADE/RESTRICT
+ * choices below are deliberate:
+ *
+ * - userAlbums → users/albums use RESTRICT so a user or master album can never
+ *   be deleted out from under existing collections. Master deletion is
+ *   rejected in `catalog/rules.ts` when a collection references it.
+ * - userAlbumStickers.userAlbumId uses CASCADE because removing the user's own
+ *   collection explicitly removes its progress (a single user-driven action).
+ * - userAlbumStickers.stickerId uses RESTRICT so progress is preserved when a
+ *   master sticker would otherwise be deleted. Master deletion is rejected in
+ *   `catalog/rules.ts` when a user row references the sticker.
+ */
+export const userAlbums = pgTable(
+  "user_albums",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("user_albums_user_album_unique").on(table.userId, table.albumId),
+  ],
+);
+
+export const userAlbumStickers = pgTable(
+  "user_album_stickers",
+  {
+    userAlbumId: uuid("user_album_id")
+      .notNull()
+      .references(() => userAlbums.id, { onDelete: "cascade" }),
+    stickerId: uuid("sticker_id")
+      .notNull()
+      .references(() => stickers.id, { onDelete: "restrict" }),
+    quantity: integer("quantity").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userAlbumId, table.stickerId] }),
+    check("user_album_stickers_quantity_check", sql`${table.quantity} >= 1`),
   ],
 );

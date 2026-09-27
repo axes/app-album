@@ -2,12 +2,22 @@ import type { AlbumStatus } from "@/lib/db/schema";
 import { CatalogError } from "./service";
 
 export function assertCanPublish(title: string, sectionCount: number, stickerCount: number) {
-  if (!title.trim() || sectionCount < 1 || stickerCount < 1) {
+  // Pages are optional organization: an album may publish with 0 pages and any
+  // number of stickers in `Sin página asignada`. The only hard requirement is a
+  // non-empty body and a title.
+  void sectionCount;
+  if (!title.trim() || stickerCount < 1) {
     throw new CatalogError("publication_incomplete");
   }
 }
 
-export function assertCanDeleteAlbum(status: AlbumStatus, sectionCount: number, stickerCount: number) {
+export function assertCanDeleteAlbum(
+  status: AlbumStatus,
+  sectionCount: number,
+  stickerCount: number,
+  collectionCount = 0,
+) {
+  if (collectionCount > 0) throw new CatalogError("album_has_collections");
   if (status === "published") throw new CatalogError("published_delete");
   if (sectionCount > 0 || stickerCount > 0) throw new CatalogError("album_not_empty");
 }

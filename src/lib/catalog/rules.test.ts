@@ -12,10 +12,14 @@ import {
 function code(run: () => void) { try { run(); return null; } catch (error) { return error instanceof CatalogError ? error.code : "unexpected"; } }
 
 describe("catalog integrity rules", () => {
-  it("requires title, a section and a sticker to publish", () => {
-    expect(() => assertCanPublish("Album", 1, 1)).not.toThrow();
-    expect(code(() => assertCanPublish("Album", 0, 1))).toBe("publication_incomplete");
-    expect(code(() => assertCanPublish("Album", 1, 0))).toBe("publication_incomplete");
+  it("requires title and at least one sticker; pages are optional", () => {
+    // Happy paths
+    expect(() => assertCanPublish("Album", 0, 1)).not.toThrow();
+    expect(() => assertCanPublish("Album", 24, 240)).not.toThrow();
+    // Failure modes
+    expect(code(() => assertCanPublish("", 24, 240))).toBe("publication_incomplete");
+    expect(code(() => assertCanPublish("Album", 0, 0))).toBe("publication_incomplete");
+    expect(code(() => assertCanPublish("Album", 24, 0))).toBe("publication_incomplete");
   });
   it("allows deletion only for an empty draft", () => {
     expect(() => assertCanDeleteAlbum("draft", 0, 0)).not.toThrow();

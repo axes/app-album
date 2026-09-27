@@ -6,6 +6,8 @@ import {
   albums,
   albumSections,
   stickers,
+  userAlbumStickers,
+  userAlbums,
   users,
 } from "@/lib/db/schema";
 import {
@@ -75,7 +77,9 @@ async function compactPositions(
 export class DrizzleCatalogRepository implements CatalogRepository {
   async listAlbums(): Promise<AlbumSummary[]> {
     // Aggregate each child table independently before joining. This keeps the
-    // listing to one query without multiplying pages × stickers for an album.
+    // listing to one query without multiplying pages × stickers × collections
+    // for an album. Each subquery is grouped by album_id so the final LEFT JOIN
+    // produces exactly one row per album.
     const sectionCounts = db
       .select({
         albumId: albumSections.albumId,
@@ -92,6 +96,14 @@ export class DrizzleCatalogRepository implements CatalogRepository {
       .from(stickers)
       .groupBy(stickers.albumId)
       .as("sticker_counts");
+    const collectionCounts = db
+      .select({
+        albumId: userAlbums.albumId,
+        value: count(userAlbums.id).as("collection_count"),
+      })
+      .from(userAlbums)
+      .groupBy(userAlbums.albumId)
+      .as("collection_counts");
 
     const rows = await db
       .select({
@@ -100,10 +112,12 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         coverUrl: albums.coverUrl, status: albums.status,
         sectionCount: sql<number>`coalesce(${sectionCounts.value}, 0)::int`,
         stickerCount: sql<number>`coalesce(${stickerCounts.value}, 0)::int`,
+        collectionCount: sql<number>`coalesce(${collectionCounts.value}, 0)::int`,
       })
       .from(albums)
       .leftJoin(sectionCounts, eq(sectionCounts.albumId, albums.id))
       .leftJoin(stickerCounts, eq(stickerCounts.albumId, albums.id))
+      .leftJoin(collectionCounts, eq(collectionCounts.albumId, albums.id))
       .orderBy(asc(albums.title));
     return rows;
   }
@@ -114,8 +128,9 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         id: albums.id, slug: albums.slug, title: albums.title,
         description: albums.description, publisher: albums.publisher, year: albums.year,
         coverUrl: albums.coverUrl, status: albums.status,
-        sectionCount: sql<number>`(select count(*)::int from album_sections s where s.album_id = ${albums.id})`,
-        stickerCount: sql<number>`(select count(*)::int from stickers st where st.album_id = ${albums.id})`,
+        sectionCount: sql<number>`(select count(*)::int from album_sections s where s.album_id = ${id})`,
+        stickerCount: sql<number>`(select count(*)::int from stickers st where st.album_id = ${id})`,
+        collectionCount: sql<number>`(select count(*)::int from user_albums ua where ua.album_id = ${id})`,
       })
       .from(albums).where(eq(albums.id, id)).limit(1);
     if (!album) return null;
@@ -179,11 +194,17 @@ export class DrizzleCatalogRepository implements CatalogRepository {
       await lockAlbum(tx, albumId);
       const [album] = await tx.select().from(albums).where(eq(albums.id, albumId)).limit(1);
       if (!album) throw new CatalogError("not_found");
-      const [[sections], [stickerTotal]] = await Promise.all([
+      const [[sections], [stickerTotal], [collectionTotal]] = await Promise.all([
         tx.select({ value: count() }).from(albumSections).where(eq(albumSections.albumId, albumId)),
         tx.select({ value: count() }).from(stickers).where(eq(stickers.albumId, albumId)),
+        tx.select({ value: count() }).from(userAlbums).where(eq(userAlbums.albumId, albumId)),
       ]);
-      assertCanDeleteAlbum(album.status, sections?.value ?? 0, stickerTotal?.value ?? 0);
+      assertCanDeleteAlbum(
+        album.status,
+        sections?.value ?? 0,
+        stickerTotal?.value ?? 0,
+        collectionTotal?.value ?? 0,
+      );
       await tx.insert(albumAdminEvents).values({ actorUserId: actorId, albumId, albumTitle: album.title, action: "delete" });
       await tx.delete(albums).where(eq(albums.id, albumId));
     });
@@ -367,6 +388,12 @@ export class DrizzleCatalogRepository implements CatalogRepository {
   async deleteSticker(actorId: string, albumId: string, stickerId: string): Promise<void> {
     await db.transaction(async (tx) => {
       await assertAdmin(tx, actorId); await lockAlbum(tx, albumId);
+      // A sticker referenced by any collector's progress must never be deleted
+      // silently: the FK is RESTRICT, and this check turns the raw 23503 into a
+      // domain error the admin UI can explain.
+      const [progress] = await tx.select({ value: count() }).from(userAlbumStickers)
+        .where(eq(userAlbumStickers.stickerId, stickerId));
+      if ((progress?.value ?? 0) > 0) throw new CatalogError("sticker_has_progress");
       const [sticker] = await tx.delete(stickers).where(and(eq(stickers.id, stickerId), eq(stickers.albumId, albumId))).returning({ position: stickers.position });
       if (!sticker) throw new CatalogError("not_found");
       // Same two-phase shift as pages: a plain `position - 1` can collide with
@@ -377,6 +404,83 @@ export class DrizzleCatalogRepository implements CatalogRepository {
       await tx.update(stickers)
         .set({ position: sql`${stickers.position} - ${POSITION_OFFSET + 1}` })
         .where(and(eq(stickers.albumId, albumId), sql`${stickers.position} > ${POSITION_OFFSET + sticker.position}`));
+    });
+  }
+
+  async bulkAssignStickerSection(
+    actorId: string,
+    albumId: string,
+    stickerIds: string[],
+    sectionId: string | null,
+  ): Promise<number> {
+    return db.transaction(async (tx) => {
+      await assertAdmin(tx, actorId);
+      await lockAlbum(tx, albumId);
+      const [album] = await tx.select({ id: albums.id }).from(albums)
+        .where(eq(albums.id, albumId)).limit(1);
+      if (!album) throw new CatalogError("not_found");
+      if (sectionId !== null) {
+        const [section] = await tx.select({ id: albumSections.id }).from(albumSections)
+          .where(and(eq(albumSections.id, sectionId), eq(albumSections.albumId, albumId)))
+          .limit(1);
+        assertSectionBelongsToAlbum(section ? albumId : null, albumId);
+      }
+      // Verify ownership of every sticker before mutating: the count must match
+      // the request length or the operation is aborted wholesale.
+      const owned = await tx.select({ id: stickers.id })
+        .from(stickers)
+        .where(and(eq(stickers.albumId, albumId), inArray(stickers.id, stickerIds)));
+      if (owned.length !== stickerIds.length) throw new CatalogError("not_found");
+      const result = await tx.update(stickers)
+        .set({ sectionId, updatedAt: new Date() })
+        .where(and(eq(stickers.albumId, albumId), inArray(stickers.id, stickerIds)))
+        .returning({ id: stickers.id });
+      return result.length;
+    });
+  }
+
+  async bulkDeleteStickers(
+    actorId: string,
+    albumId: string,
+    stickerIds: string[],
+  ): Promise<number> {
+    return db.transaction(async (tx) => {
+      await assertAdmin(tx, actorId);
+      await lockAlbum(tx, albumId);
+      const owned = await tx.select({ id: stickers.id })
+        .from(stickers)
+        .where(and(eq(stickers.albumId, albumId), inArray(stickers.id, stickerIds)));
+      if (owned.length !== stickerIds.length) throw new CatalogError("not_found");
+      // Any progress anywhere in the batch kills the entire batch.
+      const [progress] = await tx.select({ value: count() }).from(userAlbumStickers)
+        .where(inArray(userAlbumStickers.stickerId, stickerIds));
+      if ((progress?.value ?? 0) > 0) throw new CatalogError("sticker_has_progress");
+      await tx.delete(stickers)
+        .where(and(eq(stickers.albumId, albumId), inArray(stickers.id, stickerIds)));
+      // Normalize positions deterministically. Two phases avoids the unique
+      // `(album_id, position)` index collision: phase 1 moves every remaining
+      // row into a disjoint high range, phase 2 rewrites them to a contiguous
+      // 1..N range. The OFFSET is large enough to never collide with real
+      // positions even on a long-lived album.
+      const surviving = await tx.select({ id: stickers.id })
+        .from(stickers)
+        .where(eq(stickers.albumId, albumId))
+        .orderBy(asc(stickers.position));
+      let slot = 0;
+      for (const row of surviving) {
+        slot += 1;
+        await tx.update(stickers)
+          .set({ position: POSITION_OFFSET + slot })
+          .where(eq(stickers.id, row.id));
+      }
+      slot = 0;
+      for (const row of surviving) {
+        slot += 1;
+        await tx.update(stickers)
+          .set({ position: slot })
+          .where(eq(stickers.id, row.id));
+      }
+      return stickerIds.length;
     });
   }
 }

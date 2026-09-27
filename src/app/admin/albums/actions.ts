@@ -18,9 +18,13 @@ function message(error: unknown) {
       not_found: "El elemento ya no existe.",
       duplicate_code: "Ese código ya existe en el álbum.",
       invalid_section: "La página seleccionada no pertenece al álbum.",
-      publication_incomplete: "Para publicar se necesita al menos una página y una lámina.",
+      publication_incomplete: "Para publicar se necesita al menos una lámina.",
       published_delete: "Un álbum publicado no puede eliminarse. Primero vuelve a borrador.",
       album_not_empty: "El álbum debe estar vacío antes de eliminarlo.",
+      album_has_collections:
+        "Este álbum ya pertenece a colecciones de usuarios y no puede eliminarse.",
+      sticker_has_progress:
+        "Esta lámina tiene progreso registrado en una o más colecciones y no puede eliminarse.",
       bulk_limit_exceeded: "La operación supera el máximo permitido por vez.",
       duplicate_in_input: "Hay códigos repetidos en la lista ingresada.",
       invalid_range: "El rango ingresado no es válido.",
@@ -122,5 +126,52 @@ export async function createSectionRangeAction(_state: CatalogActionState, f: Fo
     const created = await ctx.service.createSections(ctx.actorId, f.get("albumId"), names);
     refresh(f.get("albumId"));
     return { success: `${created} páginas creadas.` };
+  } catch (error) { return { error: message(error) }; }
+}
+
+/**
+ * Bulk operations over the sticker table. Selection is stored only in the
+ * client component; the actor must send every sticker id explicitly so the
+ * server cannot rely on the (mutable) UI state for authorization.
+ */
+function parseStickerIds(formData: FormData): string[] {
+  const raw = formData.get("stickerIds");
+  if (typeof raw !== "string") return [];
+  return raw
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+}
+
+export async function bulkAssignStickerSectionAction(
+  _state: CatalogActionState,
+  f: FormData,
+): Promise<CatalogActionState> {
+  const ctx = await context(); if (!ctx) return { error: unauthorized };
+  try {
+    const updated = await ctx.service.bulkAssignStickerSection(
+      ctx.actorId,
+      f.get("albumId"),
+      parseStickerIds(f),
+      f.get("sectionId"),
+    );
+    refresh(f.get("albumId"));
+    return { success: `${updated} láminas asignadas.` };
+  } catch (error) { return { error: message(error) }; }
+}
+
+export async function bulkDeleteStickersAction(
+  _state: CatalogActionState,
+  f: FormData,
+): Promise<CatalogActionState> {
+  const ctx = await context(); if (!ctx) return { error: unauthorized };
+  try {
+    const removed = await ctx.service.bulkDeleteStickers(
+      ctx.actorId,
+      f.get("albumId"),
+      parseStickerIds(f),
+    );
+    refresh(f.get("albumId"));
+    return { success: `${removed} láminas eliminadas.` };
   } catch (error) { return { error: message(error) }; }
 }

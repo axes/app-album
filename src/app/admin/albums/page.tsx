@@ -25,6 +25,7 @@ export default async function AdminAlbumsPage() {
               <th className="p-2">Editorial / año</th>
               <th className="p-2 text-right">Páginas</th>
               <th className="p-2 text-right">Láminas</th>
+              <th className="p-2 text-right">En colección</th>
             </tr>
           </thead>
           <tbody>
@@ -46,6 +47,7 @@ export default async function AdminAlbumsPage() {
                 <td className="p-2">{[album.publisher, album.year].filter(Boolean).join(" · ") || "—"}</td>
                 <td className="p-2 text-right tabular-nums">{album.sectionCount}</td>
                 <td className="p-2 text-right tabular-nums">{album.stickerCount}</td>
+                <td className="p-2 text-right tabular-nums">{album.collectionCount}</td>
               </tr>
             ))}
           </tbody>

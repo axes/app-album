@@ -18,9 +18,18 @@ import {
   moveSectionAction,
 } from "../actions";
 
-const field = "rounded border border-input-border bg-input px-2 py-1 text-sm text-content";
-const button =
+// Inputs use `w-full min-w-0` so they shrink to their container and never
+// overflow the grid column. Number/text inputs default to `min-width: auto`
+// (their placeholder width), which would otherwise expand the grid column
+// past `1fr` and overflow the card.
+const field =
+  "w-full min-w-0 rounded border border-input-border bg-input px-2 py-1 text-sm text-content";
+const iconButton =
   "rounded border border-border bg-surface px-2 py-1 text-sm text-content hover:bg-surface-muted";
+// Creation CTAs use the primary palette; secondary actions keep the neutral
+// surface style and destructive actions keep `danger`.
+const primaryButton =
+  "rounded bg-primary px-2 py-1 text-sm text-primary-text hover:underline disabled:opacity-50";
 
 function StatusBadge({ status }: { status: "draft" | "published" }) {
   const published = status === "published";
@@ -138,7 +147,8 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
         title="Páginas"
         subtitle={`${album.sections.length} ${album.sections.length === 1 ? "página" : "páginas"} · ${album.stickers.length - unassigned.length} láminas asignadas`}
       >
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="min-w-0">
           <Collapsible title="Crear una página">
             <ActionForm action={createSectionAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
@@ -149,10 +159,12 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                 maxLength={160}
                 placeholder="Nombre de la página"
               />
-              <button className={button}>Crear página</button>
+              <button className={primaryButton}>Crear página</button>
             </ActionForm>
           </Collapsible>
+          </div>
 
+          <div className="min-w-0">
           <Collapsible title="Crear páginas por rango">
             <ActionForm action={createSectionRangeAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
@@ -183,9 +195,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                   aria-label="Hasta"
                 />
               </div>
-              <button className={button}>Crear rango</button>
+              <button className={primaryButton}>Crear rango</button>
             </ActionForm>
           </Collapsible>
+          </div>
         </div>
 
         {album.sections.length === 0 ? (
@@ -222,7 +235,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                             <input type="hidden" name="sectionId" value={section.id} />
                             <input type="hidden" name="direction" value="up" />
                             <button
-                              className={button}
+                              className={iconButton}
                               disabled={index === 0}
                               aria-label={`Subir página ${section.name}`}
                             >
@@ -234,7 +247,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                             <input type="hidden" name="sectionId" value={section.id} />
                             <input type="hidden" name="direction" value="down" />
                             <button
-                              className={button}
+                              className={iconButton}
                               disabled={index === album.sections.length - 1}
                               aria-label={`Bajar página ${section.name}`}
                             >
@@ -264,7 +277,8 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
         subtitle={`${album.stickers.length} ${album.stickers.length === 1 ? "lámina" : "láminas"} · ${unassigned.length} sin página asignada`}
         defaultOpen
       >
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="mb-4 grid gap-3 border-b border-border pb-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="min-w-0">
           <Collapsible title="Crear una lámina">
             <ActionForm action={createStickerAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
@@ -277,10 +291,12 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
               />
               <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
               <PageSelect pages={pages} label="Página destino" />
-              <button className={button}>Crear lámina</button>
+              <button className={primaryButton}>Crear lámina</button>
             </ActionForm>
           </Collapsible>
+          </div>
 
+          <div className="min-w-0">
           <Collapsible title="Crear por rango">
             <ActionForm action={createStickerRangeAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
@@ -312,10 +328,12 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                 placeholder="Prefijo opcional (ej. A)"
               />
               <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
-              <button className={button}>Crear rango</button>
+              <button className={primaryButton}>Crear rango</button>
             </ActionForm>
           </Collapsible>
+          </div>
 
+          <div className="min-w-0">
           <Collapsible title="Crear por lista de códigos">
             <ActionForm action={createStickerListAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
@@ -328,9 +346,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                 placeholder={"A1\nA2\nESP-01\nLOGO"}
               />
               <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
-              <button className={button}>Crear lista</button>
+              <button className={primaryButton}>Crear lista</button>
             </ActionForm>
           </Collapsible>
+          </div>
         </div>
 
         {album.stickers.length === 0 ? (

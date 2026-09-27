@@ -15,6 +15,12 @@ export type AlbumSummary = AlbumInput & {
   status: AlbumStatus;
   sectionCount: number;
   stickerCount: number;
+  /**
+   * Number of distinct users that have added this album to their collection.
+   * Independent from progress: it counts `user_albums` rows for the album,
+   * not completed albums, sticker quantities, visits or shares.
+   */
+  collectionCount: number;
 };
 
 export type AlbumSection = {
@@ -75,6 +81,28 @@ export interface CatalogRepository {
   ): Promise<void>;
   moveSticker(actorId: string, albumId: string, stickerId: string, direction: Direction): Promise<void>;
   deleteSticker(actorId: string, albumId: string, stickerId: string): Promise<void>;
+  /**
+   * Reassigns each of `stickerIds` to `sectionId` (or null = "Sin página asignada")
+   * atomically. Every sticker must belong to the album; the section, if set,
+   * must also belong to that album. Returns the number of updated stickers.
+   * Aborts without partial mutations if any id is invalid.
+   */
+  bulkAssignStickerSection(
+    actorId: string,
+    albumId: string,
+    stickerIds: string[],
+    sectionId: string | null,
+  ): Promise<number>;
+  /**
+   * Deletes each sticker of `stickerIds` atomically. Refuses the entire batch
+   * if ANY sticker has progress in `user_album_stickers`, belongs to a
+   * different album, or does not exist. Returns the number of deleted rows.
+   */
+  bulkDeleteStickers(
+    actorId: string,
+    albumId: string,
+    stickerIds: string[],
+  ): Promise<number>;
 }
 
 export type CatalogErrorCode =
@@ -88,7 +116,9 @@ export type CatalogErrorCode =
   | "album_not_empty"
   | "bulk_limit_exceeded"
   | "duplicate_in_input"
-  | "invalid_range";
+  | "invalid_range"
+  | "album_has_collections"
+  | "sticker_has_progress";
 
 export class CatalogError extends Error {
   constructor(public readonly code: CatalogErrorCode) {
@@ -339,6 +369,48 @@ export class CatalogService {
 
   deleteSticker(actorId: unknown, albumId: unknown, stickerId: unknown) {
     return this.repository.deleteSticker(parseId(actorId), parseId(albumId), parseId(stickerId));
+  }
+
+  bulkAssignStickerSection(
+    actorId: unknown,
+    albumId: unknown,
+    stickerIds: unknown,
+    sectionId: unknown,
+  ) {
+    const actor = parseId(actorId);
+    const album = parseId(albumId);
+    const parsedIds = z
+      .array(z.string().uuid())
+      .min(1)
+      .max(MAX_BULK_STICKERS)
+      .safeParse(stickerIds);
+    if (!parsedIds.success) throw new CatalogError("invalid_input");
+    const dedup = new Set(parsedIds.data);
+    if (dedup.size !== parsedIds.data.length) {
+      throw new CatalogError("duplicate_in_input");
+    }
+    const parsedSection = z.preprocess(
+      (value) => (value === "" || value === null || value === undefined ? null : value),
+      z.string().uuid().nullable(),
+    ).safeParse(sectionId);
+    if (!parsedSection.success) throw new CatalogError("invalid_input");
+    return this.repository.bulkAssignStickerSection(actor, album, parsedIds.data, parsedSection.data);
+  }
+
+  bulkDeleteStickers(actorId: unknown, albumId: unknown, stickerIds: unknown) {
+    const actor = parseId(actorId);
+    const album = parseId(albumId);
+    const parsedIds = z
+      .array(z.string().uuid())
+      .min(1)
+      .max(MAX_BULK_STICKERS)
+      .safeParse(stickerIds);
+    if (!parsedIds.success) throw new CatalogError("invalid_input");
+    const dedup = new Set(parsedIds.data);
+    if (dedup.size !== parsedIds.data.length) {
+      throw new CatalogError("duplicate_in_input");
+    }
+    return this.repository.bulkDeleteStickers(actor, album, parsedIds.data);
   }
 }
 

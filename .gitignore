@@ -30,3 +30,5 @@ yarn-error.log*
 
 # agent task metadata
 .nanobot-task/
+.nanobot/
+**/.nanobot_index/
