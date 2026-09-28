@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   CollectionError,
   CollectionService,
+  SHARE_TOKEN_LENGTH,
   computeProgress,
+  generateShareToken,
+  isValidShareToken,
   type AlbumHeader,
   type CollectionRepository,
+  type EnableSharingResult,
   type Progress,
+  type PublicAlbumView,
   type PublishedAlbumListing,
   type SetQuantityInput,
   type StickerQuantityChange,
@@ -35,6 +40,13 @@ class InMemoryRepository implements CollectionRepository {
   stickers: Map<string, string> = new Map(); // stickerId -> albumId
   entries: Map<string, Map<string, Stored>> = new Map(); // userAlbumId -> stickerId -> row
   counters = { albumHasCollections: 0, stickerHasProgress: 0 };
+  /** Number of upcoming enableSharing calls that must report a collision. */
+  collisions = 0;
+  /** Tokens already taken by another collection (simulates the UNIQUE index). */
+  takenTokens: Set<string> = new Set();
+  /** Public views keyed by token, used by getPublicAlbumByToken. */
+  publicViews: Map<string, PublicAlbumView> = new Map();
+  enableCalls = 0;
   albumHasCollections(albumId: string): Promise<boolean> {
     this.counters.albumHasCollections += 1;
     return Promise.resolve(Array.from(this.users.values()).some((row) => row.albumId === albumId));
@@ -52,7 +64,7 @@ class InMemoryRepository implements CollectionRepository {
       throw new CollectionError("duplicate_collection");
     }
     const id = crypto.randomUUID();
-    const row = { id, userId: actorId, albumId, createdAt: new Date() };
+    const row = { id, userId: actorId, albumId, shareToken: null, sharingEnabled: false, createdAt: new Date() };
     this.users.set(id, row);
     return row;
   }
@@ -88,7 +100,14 @@ class InMemoryRepository implements CollectionRepository {
     const stickers = Array.from(this.stickers.entries()).filter(([, album]) => album === row.albumId);
     const quantities = stickers.map(([stickerId]) => entries.get(stickerId)?.quantity ?? 0);
     const progress = computeProgress(quantities, stickers.length);
-    return { ...row, album: header, progress, sections: [], unassigned: [] };
+    return {
+      ...row,
+      album: header,
+      progress,
+      sharing: { enabled: row.sharingEnabled, token: row.shareToken },
+      sections: [],
+      unassigned: [],
+    };
   }
   async removeAlbum(actorId: string, userAlbumId: string): Promise<void> {
     const row = this.users.get(userAlbumId);
@@ -130,6 +149,39 @@ class InMemoryRepository implements CollectionRepository {
       bucket.set(stickerId, { quantity: target });
     }
     this.entries.set(userAlbumId, bucket);
+  }
+  async enableSharing(
+    actorId: string,
+    userAlbumId: string,
+    candidateToken: string,
+  ): Promise<EnableSharingResult> {
+    this.enableCalls += 1;
+    const row = this.users.get(userAlbumId);
+    if (!row || row.userId !== actorId) throw new CollectionError("forbidden");
+    if (this.collisions > 0) {
+      this.collisions -= 1;
+      return { status: "collision" };
+    }
+    if (row.shareToken) {
+      row.sharingEnabled = true;
+      return { status: "enabled", token: row.shareToken };
+    }
+    if (this.takenTokens.has(candidateToken)) return { status: "collision" };
+    row.shareToken = candidateToken;
+    row.sharingEnabled = true;
+    return { status: "enabled", token: candidateToken };
+  }
+  async disableSharing(actorId: string, userAlbumId: string): Promise<void> {
+    const row = this.users.get(userAlbumId);
+    if (!row || row.userId !== actorId) throw new CollectionError("forbidden");
+    row.sharingEnabled = false;
+  }
+  async getPublicAlbumByToken(token: string): Promise<PublicAlbumView | null> {
+    const row = Array.from(this.users.values()).find(
+      (entry) => entry.shareToken === token && entry.sharingEnabled,
+    );
+    if (!row) return null;
+    return this.publicViews.get(token) ?? null;
   }
   private decorate(row: UserAlbum): UserAlbumListing {
     const header = this.headers.get(row.albumId);
@@ -342,5 +394,126 @@ describe("collection service", () => {
     expect(() => service.adjustQuantity(USER_A, userA.id, STICKER_MINE, { change: "increment", quantity: 2 })).toThrow(CollectionError);
     expect(() => service.adjustQuantity(USER_A, userA.id, STICKER_MINE, { change: "no-such" } as unknown as SetQuantityInput)).toThrow(CollectionError);
     expect(repository.entries.size).toBe(0);
+  });
+});
+
+describe("collection sharing", () => {
+  it("generates 43-character URL-safe tokens with 256 bits of entropy", () => {
+    const tokens = new Set<string>();
+    for (let index = 0; index < 200; index += 1) {
+      const token = generateShareToken();
+      expect(token).toHaveLength(SHARE_TOKEN_LENGTH);
+      expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
+      expect(isValidShareToken(token)).toBe(true);
+      tokens.add(token);
+    }
+    // 200 draws from a 256-bit space must all be distinct.
+    expect(tokens.size).toBe(200);
+  });
+
+  it("rejects malformed tokens without touching the repository", async () => {
+    const repository = new InMemoryRepository();
+    seed(repository);
+    const service = new CollectionService(repository);
+    expect(isValidShareToken("short")).toBe(false);
+    expect(isValidShareToken("a".repeat(43))).toBe(true);
+    expect(isValidShareToken(`${"a".repeat(42)}!`)).toBe(false);
+    expect(isValidShareToken(null)).toBe(false);
+    await expect(service.getPublicAlbumByToken("not-a-token")).resolves.toBeNull();
+    await expect(service.getPublicAlbumByToken(undefined)).resolves.toBeNull();
+  });
+
+  it("lets the owner enable sharing and returns a valid token", async () => {
+    const repository = new InMemoryRepository();
+    seed(repository);
+    const service = new CollectionService(repository);
+    const userA = await service.addAlbum(USER_A, ALBUM_ID);
+
+    const { token } = await service.enableSharing(USER_A, userA.id);
+    expect(isValidShareToken(token)).toBe(true);
+    expect(token).not.toBe(userA.id);
+    expect(repository.users.get(userA.id)?.sharingEnabled).toBe(true);
+    expect(repository.users.get(userA.id)?.shareToken).toBe(token);
+  });
+
+  it("is idempotent and keeps the same token on a second activation", async () => {
+    const repository = new InMemoryRepository();
+    seed(repository);
+    const service = new CollectionService(repository);
+    const userA = await service.addAlbum(USER_A, ALBUM_ID);
+
+    const first = await service.enableSharing(USER_A, userA.id);
+    const second = await service.enableSharing(USER_A, userA.id);
+    expect(second.token).toBe(first.token);
+    expect(repository.enableCalls).toBe(2);
+  });
+
+  it("rejects a non-owner on enable and disable", async () => {
+    const repository = new InMemoryRepository();
+    seed(repository);
+    const service = new CollectionService(repository);
+    const userA = await service.addAlbum(USER_A, ALBUM_ID);
+
+    await expect(service.enableSharing(USER_B, userA.id)).rejects.toMatchObject({ code: "forbidden" });
+    await expect(service.enableSharing(ADMIN, userA.id)).rejects.toMatchObject({ code: "forbidden" });
+    await expect(service.disableSharing(USER_B, userA.id)).rejects.toMatchObject({ code: "forbidden" });
+    expect(repository.users.get(userA.id)?.sharingEnabled).toBe(false);
+  });
+
+  it("hides the share when disabled and reuses the token when reactivated", async () => {
+    const repository = new InMemoryRepository();
+    seed(repository);
+    const service = new CollectionService(repository);
+    const userA = await service.addAlbum(USER_A, ALBUM_ID);
+    const { token } = await service.enableSharing(USER_A, userA.id);
+    repository.publicViews.set(token, {
+      album: { title: "Álbum", publisher: "Panini", year: 2026, coverUrl: null },
+      progress: { total: 1, owned: 0, missing: 1, duplicates: 0, percentage: 0 },
+      missing: [{ name: "Sin página asignada", stickers: [{ code: "A1", name: null }] }],
+      duplicates: [],
+    });
+
+    await expect(service.getPublicAlbumByToken(token)).resolves.not.toBeNull();
+    await service.disableSharing(USER_A, userA.id);
+    await expect(service.getPublicAlbumByToken(token)).resolves.toBeNull();
+
+    const reactivated = await service.enableSharing(USER_A, userA.id);
+    expect(reactivated.token).toBe(token);
+    await expect(service.getPublicAlbumByToken(token)).resolves.not.toBeNull();
+  });
+
+  it("retries token collisions up to five attempts and then fails controlled", async () => {
+    const repository = new InMemoryRepository();
+    seed(repository);
+    const service = new CollectionService(repository);
+    const userA = await service.addAlbum(USER_A, ALBUM_ID);
+
+    repository.collisions = 4;
+    const { token } = await service.enableSharing(USER_A, userA.id);
+    expect(isValidShareToken(token)).toBe(true);
+    expect(repository.enableCalls).toBe(5);
+
+    const repository2 = new InMemoryRepository();
+    seed(repository2);
+    const service2 = new CollectionService(repository2);
+    const userB = await service2.addAlbum(USER_B, ALBUM_ID);
+    repository2.collisions = 5;
+    await expect(service2.enableSharing(USER_B, userB.id)).rejects.toMatchObject({ code: "share_token_collision" });
+    expect(repository2.enableCalls).toBe(5);
+    expect(repository2.users.get(userB.id)?.sharingEnabled).toBe(false);
+  });
+
+  it("exposes sharing state only in the owner detail", async () => {
+    const repository = new InMemoryRepository();
+    seed(repository);
+    const service = new CollectionService(repository);
+    const userA = await service.addAlbum(USER_A, ALBUM_ID);
+    const { token } = await service.enableSharing(USER_A, userA.id);
+
+    const detail = await service.getAlbumDetail(USER_A, userA.id);
+    expect(detail.sharing).toEqual({ enabled: true, token });
+    // A non-owner never reaches the detail (the repository returns null and the
+    // service maps it to not_found), so sharing state stays private.
+    await expect(service.getAlbumDetail(USER_B, userA.id)).rejects.toMatchObject({ code: "not_found" });
   });
 });

@@ -13,7 +13,12 @@ import {
   CollectionRepository,
   computeProgress,
   type AlbumHeader,
+  type EnableSharingResult,
   type Progress,
+  type PublicAlbumView,
+  type PublicDuplicate,
+  type PublicGroup,
+  type PublicSticker,
   type PublishedAlbumListing,
   type StickerQuantityChange,
   type UserAlbum,
@@ -23,6 +28,8 @@ import {
 import { assertAlbumIsPublishable, assertStickerBelongsToAlbum } from "./rules";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+const SHARE_TOKEN_CONSTRAINT = "user_albums_share_token_unique";
 
 function isUnique(error: unknown, constraint: string) {
   if (typeof error !== "object" || error === null) return false;
@@ -242,6 +249,7 @@ export class DrizzleCollectionRepository implements CollectionRepository {
         ...ownership,
         album: header,
         progress,
+        sharing: { enabled: ownership.sharingEnabled, token: ownership.shareToken },
         sections: grouped,
         unassigned,
       };
@@ -309,6 +317,175 @@ export class DrizzleCollectionRepository implements CollectionRepository {
       } else {
         await tx.insert(userAlbumStickers).values({ userAlbumId: ownership.id, stickerId, quantity: target });
       }
+    });
+  }
+
+  async enableSharing(
+    actorId: string,
+    userAlbumId: string,
+    candidateToken: string,
+  ): Promise<EnableSharingResult> {
+    try {
+      return await db.transaction(async (tx) => {
+        await lockUserAlbum(tx, userAlbumId);
+        const ownership = await loadOwnerOrForbid(tx, userAlbumId, actorId);
+        // Reuse the existing token so reactivating keeps the same link.
+        if (ownership.shareToken) {
+          if (!ownership.sharingEnabled) {
+            await tx
+              .update(userAlbums)
+              .set({ sharingEnabled: true })
+              .where(eq(userAlbums.id, ownership.id));
+          }
+          return { status: "enabled", token: ownership.shareToken };
+        }
+        const [updated] = await tx
+          .update(userAlbums)
+          .set({ shareToken: candidateToken, sharingEnabled: true })
+          .where(eq(userAlbums.id, ownership.id))
+          .returning({ token: userAlbums.shareToken });
+        if (!updated?.token) throw new Error("Share token update failed");
+        return { status: "enabled", token: updated.token };
+      });
+    } catch (error) {
+      // Only the share_token unique constraint is a retryable collision; every
+      // other failure (including the ownership error) propagates untouched.
+      if (isUnique(error, SHARE_TOKEN_CONSTRAINT)) return { status: "collision" };
+      throw error;
+    }
+  }
+
+  async disableSharing(actorId: string, userAlbumId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await lockUserAlbum(tx, userAlbumId);
+      const ownership = await loadOwnerOrForbid(tx, userAlbumId, actorId);
+      if (!ownership.sharingEnabled) return;
+      await tx
+        .update(userAlbums)
+        .set({ sharingEnabled: false })
+        .where(eq(userAlbums.id, ownership.id));
+    });
+  }
+
+  async getPublicAlbumByToken(token: string): Promise<PublicAlbumView | null> {
+    return db.transaction(async (tx) => {
+      // Provisional lookup: it only discovers which collection owns the token.
+      // The authoritative check happens after the advisory lock, so a
+      // concurrent disable/delete cannot slip between the read and the catalog
+      // load (READ COMMITTED would otherwise let each statement see a different
+      // snapshot and serve an already revoked link).
+      const [provisional] = await tx
+        .select({ id: userAlbums.id })
+        .from(userAlbums)
+        .where(and(eq(userAlbums.shareToken, token), eq(userAlbums.sharingEnabled, true)))
+        .limit(1);
+      if (!provisional) return null;
+
+      // Same serialization order as enableSharing/disableSharing/removeAlbum:
+      // if revocation wins the lock, the re-read below returns null; if the
+      // lookup wins, it is linearized before the revocation.
+      await lockUserAlbum(tx, provisional.id);
+      const [shared] = await tx
+        .select({ id: userAlbums.id, albumId: userAlbums.albumId })
+        .from(userAlbums)
+        .where(
+          and(
+            eq(userAlbums.id, provisional.id),
+            eq(userAlbums.shareToken, token),
+            eq(userAlbums.sharingEnabled, true),
+          ),
+        )
+        .limit(1);
+      if (!shared) return null;
+      const header = await loadAlbumHeader(tx, shared.albumId);
+      if (!header) return null;
+
+      // Three set-based queries (sections, stickers, quantities) keep the
+      // public view free of N+1 lookups per sticker.
+      const [sections, stickerRows, quantityRows] = await Promise.all([
+        tx
+          .select({ id: albumSections.id, name: albumSections.name, position: albumSections.position })
+          .from(albumSections)
+          .where(eq(albumSections.albumId, shared.albumId))
+          .orderBy(asc(albumSections.position)),
+        tx
+          .select({
+            id: stickers.id,
+            code: stickers.code,
+            name: stickers.name,
+            position: stickers.position,
+            sectionId: stickers.sectionId,
+          })
+          .from(stickers)
+          .where(eq(stickers.albumId, shared.albumId))
+          .orderBy(asc(stickers.position)),
+        tx
+          .select({ stickerId: userAlbumStickers.stickerId, quantity: userAlbumStickers.quantity })
+          .from(userAlbumStickers)
+          .where(eq(userAlbumStickers.userAlbumId, shared.id)),
+      ]);
+
+      const quantities = new Map(quantityRows.map((row) => [row.stickerId, row.quantity]));
+      const progress = computeProgress(
+        stickerRows.map((sticker) => quantities.get(sticker.id) ?? 0),
+        stickerRows.length,
+      );
+
+      const missingBySection = new Map<string, PublicSticker[]>();
+      const duplicatesBySection = new Map<string, PublicDuplicate[]>();
+      const missingUnassigned: PublicSticker[] = [];
+      const duplicatesUnassigned: PublicDuplicate[] = [];
+      for (const sticker of stickerRows) {
+        const quantity = quantities.get(sticker.id) ?? 0;
+        if (quantity === 0) {
+          const entry: PublicSticker = { code: sticker.code, name: sticker.name };
+          if (sticker.sectionId) {
+            const bucket = missingBySection.get(sticker.sectionId) ?? [];
+            bucket.push(entry);
+            missingBySection.set(sticker.sectionId, bucket);
+          } else {
+            missingUnassigned.push(entry);
+          }
+        } else if (quantity >= 2) {
+          const entry: PublicDuplicate = {
+            code: sticker.code,
+            name: sticker.name,
+            duplicates: quantity - 1,
+          };
+          if (sticker.sectionId) {
+            const bucket = duplicatesBySection.get(sticker.sectionId) ?? [];
+            bucket.push(entry);
+            duplicatesBySection.set(sticker.sectionId, bucket);
+          } else {
+            duplicatesUnassigned.push(entry);
+          }
+        }
+      }
+
+      const missing: PublicGroup<PublicSticker>[] = sections
+        .map((section) => ({ name: section.name, stickers: missingBySection.get(section.id) ?? [] }))
+        .filter((group) => group.stickers.length > 0);
+      if (missingUnassigned.length > 0) {
+        missing.push({ name: "Sin página asignada", stickers: missingUnassigned });
+      }
+      const duplicates: PublicGroup<PublicDuplicate>[] = sections
+        .map((section) => ({ name: section.name, stickers: duplicatesBySection.get(section.id) ?? [] }))
+        .filter((group) => group.stickers.length > 0);
+      if (duplicatesUnassigned.length > 0) {
+        duplicates.push({ name: "Sin página asignada", stickers: duplicatesUnassigned });
+      }
+
+      return {
+        album: {
+          title: header.title,
+          publisher: header.publisher,
+          year: header.year,
+          coverUrl: header.coverUrl,
+        },
+        progress,
+        missing,
+        duplicates,
+      };
     });
   }
 

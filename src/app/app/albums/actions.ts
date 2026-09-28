@@ -21,6 +21,7 @@ function message(error: unknown): string {
       album_not_published: "Este álbum ya no está disponible para añadir.",
       sticker_not_in_album: "La lámina no pertenece a este álbum.",
       duplicate_collection: "Este álbum ya está en tu colección.",
+      share_token_collision: "No se pudo generar un enlace público. Inténtalo de nuevo.",
     };
     return messages[error.code] ?? "No se pudo completar la operación.";
   }
@@ -73,4 +74,30 @@ export async function removeAlbumAction(formData: FormData): Promise<void> {
   revalidatePath("/app");
   revalidatePath("/app/albums");
   redirect("/app");
+}
+
+export async function enableSharingAction(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const userAlbumId = formData.get("userAlbumId");
+  try {
+    await service().enableSharing(user.id, userAlbumId);
+  } catch (error) {
+    if (error instanceof CollectionError && ["forbidden", "not_found"].includes(error.code)) redirect("/app");
+    throw new Error(message(error));
+  }
+  if (typeof userAlbumId === "string") revalidatePath(`/app/albums/${userAlbumId}`);
+}
+
+export async function disableSharingAction(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const userAlbumId = formData.get("userAlbumId");
+  try {
+    await service().disableSharing(user.id, userAlbumId);
+  } catch (error) {
+    if (error instanceof CollectionError && ["forbidden", "not_found"].includes(error.code)) redirect("/app");
+    throw new Error(message(error));
+  }
+  if (typeof userAlbumId === "string") revalidatePath(`/app/albums/${userAlbumId}`);
 }

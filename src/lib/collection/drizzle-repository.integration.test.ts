@@ -19,6 +19,7 @@ const suite = url ? describe : describe.skip;
 
 suite("drizzle collection repository (integration)", () => {
   let sql: ReturnType<typeof postgres>;
+  let createClient: typeof postgres;
   const stamp = Date.now();
   let catalog: DrizzleCatalogRepository;
   let collections: DrizzleCollectionRepository;
@@ -48,12 +49,40 @@ suite("drizzle collection repository (integration)", () => {
     );
   }
 
+  /**
+   * Advisory-lock key the collection repository uses for a `user_albums` row.
+   * Kept in sync with `lockUserAlbum` in `src/lib/collection/drizzle-repository.ts`.
+   */
+  function advisoryKey(userAlbumId: string) {
+    return `collection:user-album:${userAlbumId}`;
+  }
+
+  /**
+   * Observable barrier: resolves once some backend is actually blocked on the
+   * collection advisory lock. Without it a concurrency test could pass while
+   * never reaching the window it claims to cover.
+   */
+  async function waitForAdvisoryWait(key: string, timeoutMs = 5000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const [row] = await sql<{ value: number }[]>`
+        select count(*)::int as value from pg_locks
+        where locktype = 'advisory' and not granted
+          and classid = ((hashtext(${key})::bigint >> 32) & 4294967295)
+          and objid = (hashtext(${key})::bigint & 4294967295)`;
+      if ((row?.value ?? 0) > 0) return true;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    return false;
+  }
+
   beforeAll(async () => {
-    const [{ default: createClient }, catalogModule, collectionModule] = await Promise.all([
+    const [{ default: postgresClient }, catalogModule, collectionModule] = await Promise.all([
       import("postgres"),
       import("@/lib/catalog/drizzle-repository"),
       import("@/lib/collection/drizzle-repository"),
     ]);
+    createClient = postgresClient;
     sql = createClient(url as string, { max: 1 });
     catalog = new catalogModule.DrizzleCatalogRepository();
     collections = new collectionModule.DrizzleCollectionRepository();
@@ -231,7 +260,196 @@ suite("drizzle collection repository (integration)", () => {
     expect(detail?.sections).toHaveLength(1);
     expect(detail?.sections[0]?.stickers.some((entry) => entry.quantity === 1)).toBe(true);
     expect(detail?.unassigned.length).toBe(1);
+    expect(detail?.sharing).toEqual({ enabled: false, token: null });
 
     await expect(collections.getAlbumDetail(userBId, collection.id)).rejects.toBeInstanceOf(CollectionError);
+  });
+
+  it("enables, disables and reactivates sharing while keeping the token", async () => {
+    const collection = await collections.addAlbum(userAId, publishedAlbumId);
+    const first = await collections.enableSharing(userAId, collection.id, "a".repeat(43));
+    expect(first).toEqual({ status: "enabled", token: "a".repeat(43) });
+
+    const detail = await collections.getAlbumDetail(userAId, collection.id);
+    expect(detail?.sharing).toEqual({ enabled: true, token: "a".repeat(43) });
+
+    await collections.disableSharing(userAId, collection.id);
+    const disabled = await collections.getAlbumDetail(userAId, collection.id);
+    expect(disabled?.sharing).toEqual({ enabled: false, token: "a".repeat(43) });
+
+    // Reactivation reuses the stored token even when a new candidate is offered.
+    const reactivated = await collections.enableSharing(userAId, collection.id, "b".repeat(43));
+    expect(reactivated).toEqual({ status: "enabled", token: "a".repeat(43) });
+  });
+
+  it("rejects non-owners on enable and disable", async () => {
+    const collection = await collections.addAlbum(userAId, publishedAlbumId);
+    await expect(collections.enableSharing(userBId, collection.id, "c".repeat(43))).rejects.toMatchObject({ code: "forbidden" });
+    await expect(collections.enableSharing(adminId, collection.id, "c".repeat(43))).rejects.toMatchObject({ code: "forbidden" });
+    await expect(collections.disableSharing(userBId, collection.id)).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("enforces the share_token UNIQUE constraint as a collision", async () => {
+    const first = await collections.addAlbum(userAId, publishedAlbumId);
+    const second = await collections.addAlbum(userBId, publishedAlbumId);
+    const token = "d".repeat(43);
+    await expect(collections.enableSharing(userAId, first.id, token)).resolves.toEqual({ status: "enabled", token });
+    await expect(collections.enableSharing(userBId, second.id, token)).resolves.toEqual({ status: "collision" });
+    const [row] = await sql<{ sharing_enabled: boolean }[]>`
+      select sharing_enabled from user_albums where id = ${second.id}`;
+    expect(row?.sharing_enabled).toBe(false);
+  });
+
+  it("serves the public view only while enabled and never leaks internal ids", async () => {
+    const collection = await collections.addAlbum(userAId, publishedAlbumId);
+    const [sticker] = await sql<{ id: string }[]>`select id from stickers where album_id = ${publishedAlbumId} and code = 'PUB-1'`;
+    await collections.adjustQuantity(userAId, collection.id, sticker!.id, "increment");
+    await collections.adjustQuantity(userAId, collection.id, sticker!.id, "increment");
+    const token = "e".repeat(43);
+    await collections.enableSharing(userAId, collection.id, token);
+
+    const view = await collections.getPublicAlbumByToken(token);
+    expect(view?.album.title).toBe("Álbum publicado");
+    expect(view?.progress).toMatchObject({ total: 2, owned: 1, missing: 1, duplicates: 1 });
+    expect(view?.missing).toEqual([{ name: "Sin página asignada", stickers: [{ code: "PUB-2", name: null }] }]);
+    expect(view?.duplicates).toEqual([{ name: "Página 1", stickers: [{ code: "PUB-1", name: null, duplicates: 1 }] }]);
+    const serialized = JSON.stringify(view);
+    expect(serialized).not.toContain(collection.id);
+    expect(serialized).not.toContain(publishedAlbumId);
+    expect(serialized).not.toContain(userAId);
+    expect(serialized).not.toContain(sticker!.id);
+
+    await collections.disableSharing(userAId, collection.id);
+    await expect(collections.getPublicAlbumByToken(token)).resolves.toBeNull();
+  });
+
+  it("returns null for unknown tokens and after the collection is deleted", async () => {
+    const collection = await collections.addAlbum(userAId, publishedAlbumId);
+    const token = "f".repeat(43);
+    await collections.enableSharing(userAId, collection.id, token);
+    await expect(collections.getPublicAlbumByToken("g".repeat(43))).resolves.toBeNull();
+    await collections.removeAlbum(userAId, collection.id);
+    await expect(collections.getPublicAlbumByToken(token)).resolves.toBeNull();
+  });
+
+  /**
+   * Coordinated concurrency coverage for the public lookup.
+   *
+   * The repository serializes `getPublicAlbumByToken`, `enableSharing`,
+   * `disableSharing` and `removeAlbum` on the same per-collection advisory
+   * lock. These tests hold that lock from an independent connection so the
+   * lookup is forced to stop right after its provisional read, then let the
+   * revocation win the lock and commit. The lookup under test is always the
+   * real repository method; the blocker only replays the exact lock + mutation
+   * sequence that `disableSharing` / `removeAlbum` perform, because those
+   * methods share the single-connection client the blocked lookup is holding.
+   */
+  it("serializes the public lookup against a concurrent disable", async () => {
+    const collection = await collections.addAlbum(userAId, publishedAlbumId);
+    const token = "h".repeat(43);
+    await collections.enableSharing(userAId, collection.id, token);
+
+    const blocker = createClient(url as string, { max: 1 });
+    const key = advisoryKey(collection.id);
+    let committed = false;
+    try {
+      await blocker`begin`;
+      await blocker`select pg_advisory_xact_lock(hashtext(${key}))`;
+
+      const lookup = collections.getPublicAlbumByToken(token);
+      // The lookup already read the enabled token and is now waiting on the lock.
+      expect(await waitForAdvisoryWait(key)).toBe(true);
+
+      // Revocation wins the lock: exactly what `disableSharing` commits.
+      await blocker`update user_albums set sharing_enabled = false where id = ${collection.id}`;
+      await blocker`commit`;
+      committed = true;
+
+      // The post-lock re-read must observe the revocation and serve nothing.
+      await expect(lookup).resolves.toBeNull();
+
+      // The replayed mutation left the real domain state consistent.
+      const detail = await collections.getAlbumDetail(userAId, collection.id);
+      expect(detail?.sharing).toEqual({ enabled: false, token });
+    } finally {
+      if (!committed) {
+        try {
+          await blocker`rollback`;
+        } catch {
+          // The blocker connection is discarded below regardless.
+        }
+      }
+      await blocker.end();
+    }
+  });
+
+  it("serializes the public lookup against a concurrent delete", async () => {
+    const collection = await collections.addAlbum(userAId, publishedAlbumId);
+    const token = "i".repeat(43);
+    await collections.enableSharing(userAId, collection.id, token);
+
+    const blocker = createClient(url as string, { max: 1 });
+    const key = advisoryKey(collection.id);
+    let committed = false;
+    try {
+      await blocker`begin`;
+      await blocker`select pg_advisory_xact_lock(hashtext(${key}))`;
+
+      const lookup = collections.getPublicAlbumByToken(token);
+      expect(await waitForAdvisoryWait(key)).toBe(true);
+
+      // Deletion wins the lock: exactly what `removeAlbum` commits.
+      await blocker`delete from user_albums where id = ${collection.id}`;
+      await blocker`commit`;
+      committed = true;
+
+      await expect(lookup).resolves.toBeNull();
+      const [row] = await sql<{ value: number }[]>`
+        select count(*)::int as value from user_albums where id = ${collection.id}`;
+      expect(row?.value ?? 0).toBe(0);
+    } finally {
+      if (!committed) {
+        try {
+          await blocker`rollback`;
+        } catch {
+          // The blocker connection is discarded below regardless.
+        }
+      }
+      await blocker.end();
+    }
+  });
+
+  it("waits for the lock and still serves the view when nothing is revoked", async () => {
+    const collection = await collections.addAlbum(userAId, publishedAlbumId);
+    const token = "j".repeat(43);
+    await collections.enableSharing(userAId, collection.id, token);
+
+    const blocker = createClient(url as string, { max: 1 });
+    const key = advisoryKey(collection.id);
+    let committed = false;
+    try {
+      await blocker`begin`;
+      await blocker`select pg_advisory_xact_lock(hashtext(${key}))`;
+
+      const lookup = collections.getPublicAlbumByToken(token);
+      expect(await waitForAdvisoryWait(key)).toBe(true);
+
+      // The concurrent transaction commits without revoking anything.
+      await blocker`commit`;
+      committed = true;
+
+      const view = await lookup;
+      expect(view?.album.title).toBe("Álbum publicado");
+      expect(view?.progress.total).toBe(2);
+    } finally {
+      if (!committed) {
+        try {
+          await blocker`rollback`;
+        } catch {
+          // The blocker connection is discarded below regardless.
+        }
+      }
+      await blocker.end();
+    }
   });
 });

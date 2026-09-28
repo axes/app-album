@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   foreignKey,
   integer,
@@ -198,6 +199,12 @@ export const userAlbums = pgTable(
     albumId: uuid("album_id")
       .notNull()
       .references(() => albums.id, { onDelete: "restrict" }),
+    // Public sharing state lives 1:1 with the collection: it has no independent
+    // lifecycle and disappears naturally when the collection is deleted. The
+    // token is a 256-bit base64url secret (43 chars) generated server-side and
+    // never derived from ids or catalog data.
+    shareToken: varchar("share_token", { length: 43 }).unique(),
+    sharingEnabled: boolean("sharing_enabled").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

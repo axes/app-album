@@ -7,7 +7,7 @@ export function QuantityButton({ label, children, disabled = false }: { label: s
   return (
     <button
       aria-label={label}
-      className="h-9 min-w-9 rounded border border-border bg-surface text-content hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:text-muted"
+      className="h-10 min-w-10 rounded border border-border bg-surface text-content hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:text-muted"
       disabled={disabled || pending}
       type="submit"
     >
