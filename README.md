@@ -205,6 +205,18 @@ Nunca devuelve host, nombre de base, versiones, cadena de conexión ni secretos,
 y responde con `Cache-Control: no-store` para que ningún caché sirva un `ok`
 obsoleto. No reemplaza monitoreo: es sólo un chequeo de disponibilidad.
 
+## Production Workflow
+
+Reglas operativas para trabajar con producción real y la marcha blanca
+(branching, migraciones, Neon, Vercel, QA, incidentes y rollback):
+
+➡️ **[`docs/PRODUCTION_WORKFLOW.md`](docs/PRODUCTION_WORKFLOW.md)**
+
+Resumen: `main` es producción y despliega automáticamente en Vercel; el
+desarrollo va en ramas `feat/*`, `fix/*`, `chore/*` o `docs/*` validadas en
+Preview antes del merge. Las migraciones se aplican explícitamente contra Neon
+`production` **antes** del deploy; Vercel nunca las ejecuta.
+
 ## Production / Deployment
 
 ### 1. Prerequisitos
