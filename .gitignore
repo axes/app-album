@@ -25,6 +25,18 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 
+# database dumps and backups (never version data)
+*.dump
+*.sql.gz
+dump.sql
+backup.sql
+
+# local scratch / temporary files
+*.tmp
+*.log
+tmp/
+scratch/
+
 # typescript
 *.tsbuildinfo
 
