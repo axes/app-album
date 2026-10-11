@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AlbumCover } from "@/app/admin/albums/album-cover";
+import { AppShell } from "@/components/ui/app-shell";
 import { DrizzleCollectionRepository } from "@/lib/collection/drizzle-repository";
 import { CollectionService, type PublicAlbumView } from "@/lib/collection/service";
 
@@ -38,58 +39,59 @@ export default async function SharedAlbumPage({ params }: { params: Promise<{ to
   const view = await loadShared(token);
 
   return (
-    <section className="flex flex-col gap-6">
-      <header className="grid gap-5 rounded border border-border bg-surface p-4 sm:grid-cols-[10rem_1fr]">
-        <div className="mx-auto w-32 sm:w-full">
-          <AlbumCover title={view.album.title} url={view.album.coverUrl} />
-        </div>
-        <div className="flex flex-col gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">{view.album.title}</h1>
-            <p className="text-sm text-muted">
-              {[view.album.publisher, view.album.year].filter(Boolean).join(" · ") || "Sin datos editoriales"}
-            </p>
+    <AppShell>
+      <section className="flex flex-col gap-6">
+        <header className="grid gap-5 rounded border border-border bg-surface p-4 sm:grid-cols-[10rem_1fr]">
+          <div className="mx-auto w-32 sm:w-full">
+            <AlbumCover title={view.album.title} url={view.album.coverUrl} />
           </div>
-          <div className="flex flex-col gap-2">
-            <p className="font-medium tabular-nums">
-              {view.progress.owned} / {view.progress.total} láminas · {view.progress.percentage}%
-            </p>
-            <div
-              aria-label={`${view.progress.percentage}% completado`}
-              aria-valuemax={100}
-              aria-valuemin={0}
-              aria-valuenow={view.progress.percentage}
-              className="h-2 overflow-hidden rounded bg-surface-muted"
-              role="progressbar"
-            >
-              <div className="h-full bg-success" style={{ width: `${view.progress.percentage}%` }} />
+          <div className="flex flex-col gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold">{view.album.title}</h1>
+              <p className="text-sm text-muted">
+                {[view.album.publisher, view.album.year].filter(Boolean).join(" · ") || "Sin datos editoriales"}
+              </p>
             </div>
-            <p className="text-sm text-muted">
-              {view.progress.missing} faltantes · {view.progress.duplicates} repetidas
-            </p>
-          </div>
-        </div>
-      </header>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Faltantes</h2>
-        {view.missing.length === 0 ? (
-          <p className="rounded border border-border bg-surface p-4 text-success">Álbum completo</p>
-        ) : (
-          view.missing.map((group) => (
-            <details className="rounded border border-border bg-surface" key={group.name} open>
-              <summary className="cursor-pointer px-4 py-3 font-medium">
-                {group.name} — {group.stickers.length}
-              </summary>
-              <div className="border-t border-border p-3">
-                <StickerList stickers={group.stickers} />
+            <div className="flex flex-col gap-2">
+              <p className="font-medium tabular-nums">
+                {view.progress.owned} / {view.progress.total} láminas · {view.progress.percentage}%
+              </p>
+              <div
+                aria-label={`${view.progress.percentage}% completado`}
+                aria-valuemax={100}
+                aria-valuemin={0}
+                aria-valuenow={view.progress.percentage}
+                className="h-2 overflow-hidden rounded bg-surface-muted"
+                role="progressbar"
+              >
+                <div className="h-full bg-success" style={{ width: `${view.progress.percentage}%` }} />
               </div>
-            </details>
-          ))
-        )}
-      </section>
+              <p className="text-sm text-muted">
+                {view.progress.missing} faltantes · {view.progress.duplicates} repetidas
+              </p>
+            </div>
+          </div>
+        </header>
 
-      <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">Faltantes</h2>
+          {view.missing.length === 0 ? (
+            <p className="rounded border border-border bg-surface p-4 text-success">Álbum completo</p>
+          ) : (
+            view.missing.map((group) => (
+              <details className="rounded border border-border bg-surface" key={group.name} open>
+                <summary className="cursor-pointer px-4 py-3 font-medium">
+                  {group.name} — {group.stickers.length}
+                </summary>
+                <div className="border-t border-border p-3">
+                  <StickerList stickers={group.stickers} />
+                </div>
+              </details>
+            ))
+          )}
+        </section>
+
+        <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Repetidas</h2>
         {view.duplicates.length === 0 ? (
           <p className="rounded border border-border bg-surface p-4 text-muted">Sin repetidas</p>
@@ -113,7 +115,8 @@ export default async function SharedAlbumPage({ params }: { params: Promise<{ to
             </details>
           ))
         )}
+        </section>
       </section>
-    </section>
+    </AppShell>
   );
 }

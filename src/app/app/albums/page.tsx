@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlbumCover } from "@/app/admin/albums/album-cover";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { DrizzleCollectionRepository } from "@/lib/collection/drizzle-repository";
 import { CollectionService } from "@/lib/collection/service";
-import { CollectionNav } from "../collection-nav";
 import { AddAlbumButton } from "./add-button";
 
 export const runtime = "nodejs";
@@ -17,13 +18,12 @@ export default async function AlbumsPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <CollectionNav user={user} />
-      <div>
-        <h1 className="text-2xl font-semibold">Explorar álbumes</h1>
-        <p className="mt-1 text-sm text-muted">Álbumes publicados disponibles para tu colección.</p>
-      </div>
+      <PageHeader
+        title="Explorar álbumes"
+        description="Álbumes publicados disponibles para tu colección."
+      />
       {albums.length === 0 ? (
-        <p className="rounded border border-border bg-surface p-6 text-muted">No hay álbumes publicados disponibles.</p>
+        <EmptyState title="No hay álbumes publicados disponibles." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {albums.map((album) => (

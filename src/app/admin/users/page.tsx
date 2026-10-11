@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { DrizzleAdminUserRepository } from "@/lib/admin/drizzle-repository";
 import { AdminUserService } from "@/lib/admin/service";
 import { UserActions } from "./user-actions";
@@ -15,13 +15,7 @@ export default async function AdminUsersPage() {
 
   return (
     <section className="flex flex-col gap-5">
-      <div>
-        <nav className="flex gap-4 text-sm">
-          <Link className="text-primary underline" href="/app">← Área protegida</Link>
-          <Link className="text-primary underline" href="/admin/albums">Álbumes</Link>
-        </nav>
-        <h1 className="mt-2 text-2xl font-semibold">Administración de usuarios</h1>
-      </div>
+      <PageHeader title="Administración de usuarios" />
       <div className="overflow-x-auto rounded border border-border bg-surface">
         <table className="w-full border-collapse text-left text-sm">
           <thead>

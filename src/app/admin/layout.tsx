@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { AppShell } from "@/components/ui/app-shell";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isActiveAdmin } from "@/lib/admin/authorization";
 
@@ -10,5 +11,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!isActiveAdmin(user)) {
     redirect("/app");
   }
-  return children;
+  return <AppShell user={user}>{children}</AppShell>;
 }

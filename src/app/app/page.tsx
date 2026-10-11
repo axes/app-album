@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlbumCover } from "@/app/admin/albums/album-cover";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { DrizzleCollectionRepository } from "@/lib/collection/drizzle-repository";
 import { CollectionService } from "@/lib/collection/service";
-import { CollectionNav } from "./collection-nav";
 import { ProgressSummary } from "./progress";
 
 export const runtime = "nodejs";
@@ -18,18 +20,16 @@ export default async function AppPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <CollectionNav user={user} />
-      <div>
-        <h1 className="text-2xl font-semibold">Mis álbumes</h1>
-        <p className="mt-1 text-sm text-muted">Colección de {user.username}</p>
-      </div>
+      <PageHeader title="Mis álbumes" description={`Colección de ${user.username}`} />
       {albums.length === 0 ? (
-        <div className="rounded border border-border bg-surface p-6 text-center">
-          <p>Todavía no tienes álbumes en tu colección.</p>
-          <Link className="mt-4 inline-block rounded bg-primary px-4 py-2 text-primary-text" href="/app/albums">
-            Explorar álbumes
-          </Link>
-        </div>
+        <EmptyState
+          title="Todavía no tienes álbumes en tu colección."
+          action={(
+            <Button asChild>
+              <Link href="/app/albums">Explorar álbumes</Link>
+            </Button>
+          )}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {albums.map((entry) => (
