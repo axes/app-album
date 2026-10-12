@@ -233,4 +233,3 @@ export const productiveShadowTokens: typeof proposalShadowTokens =
 export const productiveMotionTokens: typeof motionTokens = motionTokens;
 export const productiveTypographyTokens: typeof typographyTokens =
   typographyTokens;
-
