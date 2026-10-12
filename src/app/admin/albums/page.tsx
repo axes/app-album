@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { DrizzleCatalogRepository } from "@/lib/catalog/drizzle-repository";
 import { CatalogService } from "@/lib/catalog/service";
 
@@ -6,16 +8,14 @@ export default async function AdminAlbumsPage() {
   const albums = await new CatalogService(new DrizzleCatalogRepository()).listAlbums();
   return (
     <section className="flex flex-col gap-5">
-      <nav className="flex gap-4 text-sm">
-        <Link className="text-primary underline" href="/app">← Área protegida</Link>
-        <Link className="text-primary underline" href="/admin/users">Usuarios</Link>
-      </nav>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Álbumes</h1>
-        <Link className="rounded bg-primary px-4 py-2 text-primary-text" href="/admin/albums/new">
-          Crear álbum
-        </Link>
-      </div>
+      <PageHeader
+        title="Álbumes"
+        actions={(
+          <Button asChild>
+            <Link href="/admin/albums/new">Crear álbum</Link>
+          </Button>
+        )}
+      />
       <div className="overflow-x-auto rounded border border-border bg-surface">
         <table className="w-full border-collapse text-left text-sm">
           <thead>

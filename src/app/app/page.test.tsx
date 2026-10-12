@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReactElement, ReactNode } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 /**
  * Integration tests for the REAL `/app` Server Component.
@@ -10,14 +10,11 @@ import type { ReactElement, ReactNode } from "react";
  *   - `next/navigation`             -> `redirect` (throws, like Next.js does)
  *   - `@/lib/auth/current-user`     -> `getCurrentUser`
  *   - `@/app/logout/actions`        -> `logoutAction`
- *   - `@/app/app/collection-nav`    -> leaves the component in place so we
- *                                     exercise navigation contract
  *   - `@/lib/collection/drizzle...` -> no real database access
  *   - `@/lib/collection/service`    -> inspectable fake service
  *
- * The `CollectionNav` component used to be inlined into the page; now it owns
- * the logout form. Tests for that responsibility live in
- * `collection-nav.test.tsx` next to the component.
+ * Global authenticated navigation and logout now belong to the `/app` layout
+ * through `AppShell`; this page remains responsible only for collection data.
  */
 const mocks = vi.hoisted(() => ({
   redirect: vi.fn((url: string) => {
@@ -53,20 +50,6 @@ vi.mock("@/lib/collection/service", () => ({
 
 import AppPage from "./page";
 
-function collectText(node: ReactNode): string {
-  if (node === null || node === undefined || typeof node === "boolean") {
-    return "";
-  }
-  if (typeof node === "string" || typeof node === "number") {
-    return String(node);
-  }
-  if (Array.isArray(node)) {
-    return node.map(collectText).join("");
-  }
-  const element = node as ReactElement<{ children?: ReactNode }>;
-  return collectText(element.props?.children);
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.listAlbumsForOwner.mockResolvedValue([]);
@@ -91,7 +74,7 @@ describe("/app Server Component", () => {
       status: "active",
     });
 
-    const text = collectText(await AppPage());
+    const text = renderToStaticMarkup(await AppPage());
 
     expect(mocks.redirect).not.toHaveBeenCalled();
     expect(text).toContain("erin");
@@ -114,7 +97,7 @@ describe("/app Server Component", () => {
       },
     ]);
 
-    const text = collectText(await AppPage());
+    const text = renderToStaticMarkup(await AppPage());
 
     expect(mocks.listAlbumsForOwner).toHaveBeenCalledWith("user-1");
     expect(text).toContain("Minecraft");

@@ -89,9 +89,8 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
 
   return (
     <section className="flex flex-col gap-6">
-      <nav className="flex gap-4 text-sm">
+      <nav aria-label="Navegación contextual" className="flex gap-4 text-sm">
         <Link className="text-primary underline" href="/admin/albums">← Álbumes</Link>
-        <Link className="text-primary underline" href="/admin/users">Usuarios</Link>
       </nav>
 
       <header className="flex flex-wrap items-center justify-between gap-3">

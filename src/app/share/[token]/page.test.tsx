@@ -25,6 +25,17 @@ vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
 }));
 
+// AppShell renders the public navigation in this route, but imports the logout
+// Server Action for its authenticated mode. Keep this public route test isolated
+// from session environment validation without changing the six sharing cases.
+vi.mock("@/app/logout/actions", () => ({
+  logoutAction: vi.fn(),
+}));
+
+vi.mock("@/components/theme-toggle", () => ({
+  ThemeToggle: () => <span data-testid="theme-toggle" />,
+}));
+
 vi.mock("@/lib/collection/drizzle-repository", () => ({
   DrizzleCollectionRepository: class {},
 }));

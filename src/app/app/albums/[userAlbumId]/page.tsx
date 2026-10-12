@@ -3,7 +3,6 @@ import { AlbumCover } from "@/app/admin/albums/album-cover";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { DrizzleCollectionRepository } from "@/lib/collection/drizzle-repository";
 import { CollectionError, CollectionService, type UserAlbumDetail } from "@/lib/collection/service";
-import { CollectionNav } from "../../collection-nav";
 import { ProgressSummary } from "../../progress";
 import { RemoveAlbumButton } from "../remove-button";
 import { ShareControls } from "./share-controls";
@@ -26,7 +25,6 @@ export default async function UserAlbumPage({ params }: { params: Promise<{ user
 
   return (
     <section className="flex flex-col gap-6">
-      <CollectionNav user={user} />
       <header className="grid gap-5 rounded border border-border bg-surface p-4 sm:grid-cols-[10rem_1fr]">
         <div className="mx-auto w-32 sm:w-full"><AlbumCover title={detail.album.title} url={detail.album.coverUrl} /></div>
         <div className="flex flex-col gap-3">
