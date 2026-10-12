@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>App Álbum — Propuesta de diseño</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="light"]{
+color-scheme:light;
+--album-primary:#4a1fb8;--album-primary-content:#fff;
+--album-accent:#d93a00;--album-accent-content:#fff;
+--album-secondary:#5b5280;
+--album-background:#f7f5ff;--album-surface:#fff;--album-surface-soft:#efebfb;
+--album-border:#ddd6f3;--album-input:#fff;--album-input-border:#8e81c2;
+--album-text:#170b4a;--album-text-muted:#5b5280;--album-focus:#6d43e8;
+--album-success:#0f7a4f;--album-success-content:#fff;
+--album-warning:#9a5200;--album-warning-content:#fff;
+--album-danger:#b3261e;--album-danger-content:#fff;
+--radius-control:.75rem;--radius-card:1.25rem;--radius-sticker:.875rem;--radius-full:9999px;
+--shadow-sm:0 1px 2px rgb(23 11 74/.06);
+--shadow-md:0 6px 14px -4px rgb(23 11 74/.14);
+--shadow-lg:0 18px 30px -10px rgb(23 11 74/.24);
+--motion-fast:150ms;--motion-normal:200ms;--motion-ease:cubic-bezier(.2,0,0,1);
+--font-display:'Poppins',system-ui,sans-serif;
+--font-body:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+[data-theme="dark"]{
+color-scheme:dark;
+--album-primary:#a78bfa;--album-primary-content:#120b2e;
+--album-accent:#ff7a3d;--album-accent-content:#120b2e;
+--album-secondary:#b0a6da;
+--album-background:#120b2e;--album-surface:#1d1347;--album-surface-soft:#160e3a;
+--album-border:#36286e;--album-input:#1d1347;--album-input-border:#7a6cba;
+--album-text:#f4f1ff;--album-text-muted:#b0a6da;--album-focus:#c4b5fd;
+--album-success:#4ade80;--album-success-content:#062b17;
+--album-warning:#fbbf24;--album-warning-content:#2b1a00;
+--album-danger:#ff8a80;--album-danger-content:#3a0906;
+--shadow-sm:0 1px 2px rgb(0 0 0/.3);
+--shadow-md:0 6px 14px -4px rgb(0 0 0/.45);
+--shadow-lg:0 18px 30px -10px rgb(0 0 0/.55);
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font-family:var(--font-body);background:var(--album-background);color:var(--album-text);-webkit-font-smoothing:antialiased;line-height:1.5}
+:focus-visible{outline:3px solid var(--album-focus);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.25rem 4rem}
+h1,h2,h3{font-family:var(--font-display);margin:0}
+.top{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:.875rem}
+.brand svg{width:48px;height:48px}
+.t-display{font-size:2rem;line-height:1.15;font-weight:700;letter-spacing:-.02em}
+.t-title{font-size:1.375rem;line-height:1.25;font-weight:600}
+.t-sub{font-size:1rem;color:var(--album-text-muted)}
+.t-body{font-size:.9375rem}
+.t-label{font-size:.8125rem;font-weight:600}
+.t-cap{font-size:.75rem;color:var(--album-text-muted)}
+.muted{color:var(--album-text-muted)}
+.seg{display:inline-flex;padding:.25rem;gap:.25rem;background:var(--album-surface-soft);border:1px solid var(--album-border);border-radius:var(--radius-full)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--album-text-muted);font:inherit;font-size:.875rem;font-weight:600;min-height:40px;padding:0 1rem;border-radius:var(--radius-full);cursor:pointer;transition:background var(--motion-fast) var(--motion-ease),color var(--motion-fast) var(--motion-ease)}
+.seg button[aria-pressed="true"]{background:var(--album-primary);color:var(--album-primary-content)}
+section{margin-top:3rem}
+section>h2{font-size:1.25rem}
+.hint{color:var(--album-text-muted);font-size:.875rem;margin:.25rem 0 1rem;max-width:68ch}
+.chg{display:inline-block;font-size:.75rem;font-weight:600;color:var(--album-accent);margin-bottom:.5rem}
+.card{background:var(--album-surface);border:1px solid var(--album-border);border-radius:var(--radius-card);padding:1.25rem;box-shadow:var(--shadow-sm)}
+.grid{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.sw{border:1px solid var(--album-border);border-radius:var(--radius-control);overflow:hidden;background:var(--album-surface);font-size:.75rem}
+.sw i{display:block;height:56px;border-bottom:1px solid var(--album-border)}
+.sw b{display:block;padding:.5rem .625rem 0;font-weight:600}
+.sw span{display:block;padding:0 .625rem .5rem;color:var(--album-text-muted);font-family:ui-monospace,Menlo,monospace}
+.ct{display:grid;gap:.5rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.ct div{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.625rem .875rem;border-radius:var(--radius-control);font-size:.8125rem;font-weight:600}
+.ct em{font-style:normal;font-family:ui-monospace,Menlo,monospace;font-size:.75rem}
+.trow{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap;padding:.625rem 0;border-bottom:1px dashed var(--album-border)}
+.trow:last-child{border:0}
+.trow .l{width:7rem;font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;color:var(--album-text-muted)}
+.box{width:96px;height:72px;background:var(--album-primary);color:var(--album-primary-content);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600}
+.btn{appearance:none;font:inherit;font-size:.9375rem;font-weight:600;min-height:44px;padding:0 1.25rem;border-radius:var(--radius-control);border:1.5px solid transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;transition:filter var(--motion-fast) var(--motion-ease),transform var(--motion-fast) var(--motion-ease),background var(--motion-fast) var(--motion-ease)}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none;transform:none}
+.btn-primary{background:var(--album-primary);color:var(--album-primary-content)}
+.btn-accent{background:var(--album-accent);color:var(--album-accent-content)}
+.btn-secondary{background:var(--album-surface);color:var(--album-text);border-color:var(--album-input-border)}
+.btn-ghost{background:transparent;color:var(--album-primary)}
+.btn-danger{background:var(--album-danger);color:var(--album-danger-content)}
+.btn-sm{min-height:36px;padding:0 .875rem;font-size:.8125rem}
+.spin::before{content:"";width:1rem;height:1rem;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.field{display:flex;flex-direction:column;gap:.375rem;flex:1 1 200px}
+.field label{font-size:.8125rem;font-weight:600}
+.field input,.field select{min-height:44px;padding:0 .875rem;font:inherit;font-size:.9375rem;background:var(--album-input);color:var(--album-text);border:1.5px solid var(--album-input-border);border-radius:var(--radius-control);transition:box-shadow var(--motion-fast) var(--motion-ease),border-color var(--motion-fast) var(--motion-ease)}
+.field input:focus-visible,.field select:focus-visible{outline:0;border-color:var(--album-focus);box-shadow:0 0 0 4px color-mix(in srgb,var(--album-focus) 30%,transparent)}
+.field .help{font-size:.75rem;color:var(--album-text-muted)}
+.field.bad input{border-color:var(--album-danger)}
+.field .err{font-size:.75rem;color:var(--album-danger);font-weight:600}
+.alert{--c:var(--album-success);display:flex;gap:.75rem;align-items:flex-start;padding:.875rem 1rem;border-radius:var(--radius-control);font-size:.875rem;background:color-mix(in srgb,var(--c) 10%,var(--album-surface));border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.alert svg{flex:none;width:20px;height:20px;color:var(--c)}
+.alert.w{--c:var(--album-warning)}.alert.d{--c:var(--album-danger)}
+.badge{display:inline-flex;align-items:center;gap:.25rem;padding:.1875rem .625rem;border-radius:var(--radius-full);font-size:.75rem;font-weight:600;background:var(--album-surface-soft);color:var(--album-text);border:1px solid var(--album-border)}
+.b-p{background:var(--album-primary);color:var(--album-primary-content);border-color:transparent}
+.b-a{background:var(--album-accent);color:var(--album-accent-content);border-color:transparent}
+.b-s{background:var(--album-success);color:var(--album-success-content);border-color:transparent}
+.b-w{background:var(--album-warning);color:var(--album-warning-content);border-color:transparent}
+.b-d{background:var(--album-danger);color:var(--album-danger-content);border-color:transparent}
+.bar{height:.625rem;border-radius:var(--radius-full);background:var(--album-surface-soft);border:1px solid var(--album-border);overflow:hidden}
+.bar>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--album-primary),var(--album-accent));transition:width var(--motion-normal) var(--motion-ease)}
+.bar.ok>span{background:var(--album-success)}
+.barh{display:flex;justify-content:space-between;font-size:.8125rem;font-weight:600;margin-bottom:.375rem}
+.two{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.stats{display:flex;gap:1.5rem;flex-wrap:wrap;margin:1rem 0}
+.stats b{display:block;font-family:var(--font-display);font-size:1.5rem;line-height:1.1}
+.stats span{font-size:.75rem;color:var(--album-text-muted)}
+.head{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.ring{position:relative;width:64px;height:64px;flex:none}
+.ring svg{width:64px;height:64px;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:7}
+.ring .tr{stroke:var(--album-surface-soft)}
+.ring .fg{stroke:var(--album-primary);stroke-linecap:round;stroke-dasharray:163.4;transition:stroke-dashoffset var(--motion-normal) var(--motion-ease)}
+.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.8125rem}
+.slots{display:grid;gap:.625rem;grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}
+.slot{position:relative;overflow:hidden;appearance:none;aspect-ratio:3/4;border-radius:var(--radius-sticker);font-family:var(--font-display);font-size:1.125rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;border:2px dashed var(--album-input-border);background:var(--album-surface-soft);color:var(--album-text-muted);transition:transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease)}
+.slot:hover{transform:translateY(-2px)}
+.slot[hidden]{display:none}
+.slot.on{border:2px solid transparent;background:linear-gradient(150deg,var(--album-primary),color-mix(in srgb,var(--album-primary) 55%,#000));color:var(--album-primary-content);box-shadow:var(--shadow-md);animation:pop var(--motion-normal) var(--motion-ease)}
+.slot.foil{border-color:var(--album-accent)}
+.slot.foil.on{background:linear-gradient(150deg,var(--album-accent),color-mix(in srgb,var(--album-accent) 60%,#7a1d00));color:var(--album-accent-content)}
+.slot.foil.on::after{content:"";position:absolute;left:0;bottom:0;width:34%;aspect-ratio:1;background:linear-gradient(45deg,rgba(255,255,255,.75) 50%,transparent 50%);clip-path:polygon(0 0,100% 100%,0 100%);opacity:.9}
+.slot .x{position:absolute;top:.3rem;right:.3rem;min-width:1.375rem;height:1.375rem;padding:0 .3rem;border-radius:var(--radius-full);background:var(--album-surface);color:var(--album-text);font-size:.6875rem;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm)}
+@keyframes pop{0%{transform:scale(.92)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+.alb{display:flex;gap:1rem;align-items:center}
+.alb+.alb{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--album-border)}
+.alb>div{flex:1}
+.empty{border:2px dashed var(--album-border);border-radius:var(--radius-card);padding:2.5rem 1.5rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.75rem}
+.empty svg{width:56px;height:56px}
+.nav{max-width:360px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:var(--album-surface);border:1px solid var(--album-border);border-radius:1.5rem;padding:.5rem;box-shadow:var(--shadow-lg)}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:.125rem;padding:.5rem 0;border-radius:var(--radius-control);font-size:.6875rem;font-weight:600;color:var(--album-text-muted);text-decoration:none;min-height:48px}
+.nav a[aria-current]{background:var(--album-surface-soft);color:var(--album-primary)}
+.nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+ul.m{margin:0;padding-left:1.25rem;line-height:1.7;font-size:.9375rem}
+@media(max-width:640px){.wrap{padding:1.5rem 1rem 3rem}.t-display{font-size:1.625rem}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a1fb8"/><stop offset="1" stop-color="#2a1285"/></linearGradient>
+<linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a2b"/><stop offset="1" stop-color="#ff4d12"/></linearGradient>
+<linearGradient id="g3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4a1fb8"/><stop offset=".55" stop-color="#6b2fc9"/><stop offset="1" stop-color="#f0583a"/></linearGradient>
+</defs>
+<symbol id="mark" viewBox="0 0 200 200"><rect x="10" y="10" width="180" height="180" rx="52" fill="url(#g1)"/><rect x="40" y="40" width="120" height="120" rx="24" fill="#190c58" stroke="#5b34e0" stroke-width="10"/><path d="M64 45H136Q155 45 155 64V136Q155 155 136 155H81L45 119V64Q45 45 64 45Z" fill="url(#g2)"/><rect x="65" y="59" width="70" height="56" rx="14" fill="url(#g3)"/><path d="M45 119L81 155L81 119Z" fill="#ffc48f" stroke="#ffc48f" stroke-width="3" stroke-linejoin="round"/></symbol>
+<symbol id="ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 2.5l10 18H2z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5M12 17.2v.1" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="err" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
+
+<div class="wrap">
+<div class="top">
+<div class="brand">
+<svg role="img" aria-label="Logo MiColección"><use href="#mark"/></svg>
+<div>
+<h1 class="t-display">App Álbum — Propuesta de diseño</h1>
+<p class="t-sub" style="margin:.25rem 0 0">Paleta alineada al logo, tipografía real, componentes de láminas y accesibilidad AA.</p>
+</div>
+</div>
+<div class="seg" role="group" aria-label="Tema">
+<button type="button" data-t="light" aria-pressed="true">Claro</button>
+<button type="button" data-t="dark" aria-pressed="false">Oscuro</button>
+</div>
+</div>
+
+<section>
+<h2>Qué cambia respecto a la referencia</h2>
+<div class="card" style="margin-top:.75rem">
+<ul class="m">
+<li><b>Identidad:</b> el naranja y cian genéricos pasan a violeta de marca + naranja sticker, igual que el logo.</li>
+<li><b>Accesibilidad:</b> los textos blancos sobre verde y el verde sobre blanco no llegaban a 4.5:1; ahora todo par de color se verifica abajo.</li>
+<li><b>Tipografía:</b> la escala usaba clases de Tailwind que no existen en la página portable, así que todo se veía igual; ahora está definida.</li>
+<li><b>Táctil:</b> botones y campos de 44 px mínimo; antes eran de unos 38 px.</li>
+<li><b>Forma:</b> radios más amables (12 y 20 px) que acompañan al ícono redondeado.</li>
+<li><b>Producto:</b> componentes propios de un álbum: lámina, estados, progreso, filtros y navegación móvil.</li>
+<li><b>Errores corregidos:</b> la escala de espaciado mostraba valores como "0.1rem" y "0.1.5rem".</li>
+</ul>
+</div>
+</section>
+
+<section>
+<h2>Paleta</h2>
+<p class="hint"><span class="chg">NUEVO</span> Se lee en vivo desde los tokens; cambia con el tema.</p>
+<div class="grid" id="sw"></div>
+<h3 class="t-label" style="margin:1.5rem 0 .5rem">Verificación de contraste (mínimo AA: 4.5:1 en texto)</h3>
+<div class="ct" id="ct"></div>
+</section>
+
+<section>
+<h2>Tipografía</h2>
+<p class="hint"><span class="chg">NUEVO</span> Poppins para títulos (misma familia del logo) y fuente del sistema para texto corrido.</p>
+<div class="card">
+<div class="trow"><div class="l">display</div><div class="t-display">Tu colección, completa.</div></div>
+<div class="trow"><div class="l">título</div><div class="t-title">Mundial 2026 · 12 páginas</div></div>
+<div class="trow"><div class="l">subtítulo</div><div class="t-sub">Marca las láminas que ya pegaste.</div></div>
+<div class="trow"><div class="l">cuerpo</div><div class="t-body">Toca una lámina para cambiar su estado entre falta, pegada y repetida.</div></div>
+<div class="trow"><div class="l">etiqueta</div><div class="t-label">Número de lámina</div></div>
+<div class="trow"><div class="l">leyenda</div><div class="t-cap">Actualizado hace 2 minutos</div></div>
+</div>
+</section>
+
+<section>
+<h2>Radios y sombras</h2>
+<p class="hint"><span class="chg">AJUSTADO</span> Control 12 px, tarjeta 20 px, lámina 14 px y píldora para badges y filtros.</p>
+<div class="card row" style="gap:1.25rem">
+<div class="box" style="border-radius:var(--radius-control)">control</div>
+<div class="box" style="border-radius:var(--radius-card)">tarjeta</div>
+<div class="box" style="border-radius:var(--radius-sticker)">lámina</div>
+<div class="box" style="border-radius:var(--radius-full)">píldora</div>
+<div class="box" style="background:var(--album-surface);color:var(--album-text);border-radius:var(--radius-control);box-shadow:var(--shadow-sm)">sm</div>
+<div class="box" style="background:var(--album-surface);color:var(--album-text);border-radius:var(--radius-control);box-shadow:var(--shadow-md)">md</div>
+<div class="box" style="background:var(--album-surface);color:var(--album-text);border-radius:var(--radius-control);box-shadow:var(--shadow-lg)">lg</div>
+</div>
+</section>
+
+<section>
+<h2>Botones y campos</h2>
+<p class="hint"><span class="chg">AJUSTADO</span> Altura táctil de 44 px, estados deshabilitado y cargando, foco con anillo visible y botón de acento para la acción principal del álbum.</p>
+<div class="card" style="display:flex;flex-direction:column;gap:1.25rem">
+<div class="row">
+<button class="btn btn-primary">Agregar lámina</button>
+<button class="btn btn-accent">Intercambiar</button>
+<button class="btn btn-secondary">Secundario</button>
+<button class="btn btn-ghost">Ghost</button>
+<button class="btn btn-danger">Eliminar</button>
+<button class="btn btn-primary" disabled>Deshabilitado</button>
+<button class="btn btn-primary spin">Guardando</button>
+<button class="btn btn-secondary btn-sm">Compacto</button>
+</div>
+<div class="row" style="align-items:flex-start">
+<div class="field"><label for="a">Nombre del álbum</label><input id="a" placeholder="Ej. Mundial 2026"><span class="help">Puedes cambiarlo después.</span></div>
+<div class="field"><label for="b">Tipo</label><select id="b"><option>Fútbol</option><option>Animales</option></select></div>
+<div class="field bad"><label for="c">Total de láminas</label><input id="c" value="abc" aria-invalid="true"><span class="err">Ingresa un número.</span></div>
+</div>
+</div>
+</section>
+
+<section>
+<h2>Mensajes y badges</h2>
+<p class="hint"><span class="chg">AJUSTADO</span> Los mensajes llevan ícono y fondo suave, así el significado no depende solo del color. Los badges pasan a píldora con colores que cumplen AA.</p>
+<div class="two">
+<div class="card" style="display:flex;flex-direction:column;gap:.625rem">
+<div class="alert"><svg><use href="#ok"/></svg><span>Lámina 14 agregada al álbum.</span></div>
+<div class="alert w"><svg><use href="#warn"/></svg><span>Tienes 6 láminas repetidas sin ofrecer.</span></div>
+<div class="alert d"><svg><use href="#err"/></svg><span>No se pudo guardar el cambio.</span></div>
+</div>
+<div class="card row">
+<span class="badge">neutral</span><span class="badge b-p">activo</span><span class="badge b-a">especial</span><span class="badge b-s">completo</span><span class="badge b-w">pendiente</span><span class="badge b-d">error</span>
+</div>
+</div>
+</section>
+
+<section>
+<h2>Componentes del álbum</h2>
+<p class="hint"><span class="chg">NUEVO</span> Prueba la lámina: toca una para pasar de "me falta" a "pegada" y luego a "repetida". Las especiales (naranja) llevan el pliegue del logo.</p>
+<div class="two" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+<div class="card">
+<div class="head">
+<div style="display:flex;gap:1rem;align-items:center">
+<div class="ring"><svg viewBox="0 0 64 64"><circle class="tr" cx="32" cy="32" r="26"/><circle class="fg" id="fg" cx="32" cy="32" r="26"/></svg><b id="pc">0%</b></div>
+<div><h3 class="t-title">Mundial 2026</h3><div class="t-cap">Página 1 · 24 láminas</div></div>
+</div>
+</div>
+<div class="stats"><div><b id="n1">0</b><span>Pegadas</span></div><div><b id="n2">0</b><span>Me faltan</span></div><div><b id="n3">0</b><span>Repetidas</span></div></div>
+<div class="seg" role="group" aria-label="Filtro" id="flt" style="margin-bottom:1rem">
+<button type="button" data-f="all" aria-pressed="true">Todas</button>
+<button type="button" data-f="miss" aria-pressed="false">Me faltan</button>
+<button type="button" data-f="rep" aria-pressed="false">Repetidas</button>
+</div>
+<div class="slots" id="slots"></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:1rem">
+<div class="card">
+<div class="t-label" style="margin-bottom:.75rem">Mis álbumes</div>
+<div class="alb"><div class="ring" style="width:48px;height:48px"><svg viewBox="0 0 64 64" style="width:48px;height:48px"><circle class="tr" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26" style="stroke-dashoffset:61"/></svg><b style="font-size:.6875rem">63%</b></div><div><div class="t-label">Mundial 2026</div><div class="t-cap">151 de 240 láminas</div></div><span class="badge b-p">activo</span></div>
+<div class="alb"><div class="ring" style="width:48px;height:48px"><svg viewBox="0 0 64 64" style="width:48px;height:48px"><circle class="tr" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26" style="stroke-dashoffset:114"/></svg><b style="font-size:.6875rem">30%</b></div><div><div class="t-label">Maravillas</div><div class="t-cap">36 de 120 láminas</div></div><span class="badge">borrador</span></div>
+<div class="alb"><div class="ring" style="width:48px;height:48px"><svg viewBox="0 0 64 64" style="width:48px;height:48px"><circle class="tr" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26" style="stroke-dashoffset:0;stroke:var(--album-success)"/></svg><b style="font-size:.6875rem">100%</b></div><div><div class="t-label">Cocina local</div><div class="t-cap">72 de 72 láminas</div></div><span class="badge b-s">completo</span></div>
+</div>
+<div class="card">
+<div class="barh"><span>Progreso del álbum</span><span>62%</span></div>
+<div class="bar" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso"><span style="width:62%"></span></div>
+<div class="barh" style="margin-top:.875rem"><span>Completo</span><span>100%</span></div>
+<div class="bar ok" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Completo"><span style="width:100%"></span></div>
+</div>
+</div>
+</div>
+</section>
+
+<section>
+<h2>Estado vacío y navegación móvil</h2>
+<p class="hint"><span class="chg">NUEVO</span> El estado vacío usa el ícono de marca y una acción clara. La barra inferior reemplaza a las tablas en el celular.</p>
+<div class="two">
+<div class="empty">
+<svg aria-hidden="true"><use href="#mark"/></svg>
+<h3 class="t-title">Aún no tienes láminas</h3>
+<p class="muted" style="margin:0;max-width:30ch">Crea tu primer álbum y empieza a marcar las que ya pegaste.</p>
+<button class="btn btn-primary">Crear álbum</button>
+</div>
+<div style="display:flex;align-items:center">
+<nav class="nav" aria-label="Navegación principal" style="width:100%">
+<a href="#" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M13 4h4a3 3 0 013 3v4"/></svg>Álbum</a>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>Me faltan</a>
+<a href="#"><svg viewBox="0 0 24 24"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg>Cambios</a>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Perfil</a>
+</nav>
+</div>
+</div>
+</section>
+
+<section>
+<h2>Movimiento</h2>
+<div class="card">
+<ul class="m">
+<li>Color y borde: 150 ms con curva estándar; progreso y lámina pegada: 200 ms.</li>
+<li>Al pegar una lámina hay un pequeño rebote; los botones se hunden un poco al presionarse.</li>
+<li>Con "reducir movimiento" activado, todo se neutraliza.</li>
+<li>Los tokens de movimiento se unifican: hoy existen dos juegos de nombres para lo mismo.</li>
+</ul>
+</div>
+</section>
+</div>
+
+<script>
+(function(){
+var root=document.documentElement;
+function cv(n){return getComputedStyle(root).getPropertyValue('--album-'+n).trim()}
+function lum(h){h=h.replace('#','');if(h.length==3)h=h.replace(/./g,'$&$&');var c=[0,2,4].map(function(i){var v=parseInt(h.substr(i,2),16)/255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function ratio(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+function paint(){
+var names=['background','surface','surface-soft','border','text','text-muted','primary','accent','success','warning','danger','focus'];
+document.getElementById('sw').innerHTML=names.map(function(n){return '<div class="sw"><i style="background:var(--album-'+n+')"></i><b>'+n+'</b><span>'+cv(n)+'</span></div>'}).join('');
+var pairs=[['text','background'],['text-muted','surface-soft'],['primary-content','primary'],['accent-content','accent'],['success-content','success'],['warning-content','warning'],['danger-content','danger'],['primary','background']];
+document.getElementById('ct').innerHTML=pairs.map(function(p){var r=ratio(cv(p[0]),cv(p[1])),ok=r>=4.5;return '<div style="background:var(--album-'+p[1]+');color:var(--album-'+p[0]+');border:1px solid var(--album-border)"><span>'+p[0]+' sobre '+p[1]+'</span><em>'+r.toFixed(1)+':1 '+(ok?'✓ AA':'✗')+'</em></div>'}).join('');
+}
+function setTheme(t){
+root.setAttribute('data-theme',t);
+document.querySelectorAll('[data-t]').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-t')===t?'true':'false')});
+try{localStorage.setItem('aa-theme',t)}catch(e){}
+paint();
+}
+var t=null;try{t=localStorage.getItem('aa-theme')}catch(e){}
+if(t!=='light'&&t!=='dark')t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+document.querySelectorAll('[data-t]').forEach(function(b){b.addEventListener('click',function(){setTheme(b.getAttribute('data-t'))})});
+setTheme(t);
+
+var N=24,foil=[1,8,16,24],st=[];
+var init={1:1,2:1,3:2,4:1,5:0,6:1,7:2,8:1,9:0,10:1,11:1,12:0,13:1,14:0,15:1,16:0,17:1,18:2,19:0,20:1,21:1,22:0,23:1,24:0};
+var box=document.getElementById('slots'),flt='all';
+for(var i=1;i<=N;i++){st[i]=init[i]||0;var b=document.createElement('button');b.type='button';b.className='slot'+(foil.indexOf(i)>-1?' foil':'');b.dataset.i=i;box.appendChild(b)}
+var names=['me falta','pegada','repetida'];
+function draw(){
+var o=0,m=0,r=0;
+box.querySelectorAll('.slot').forEach(function(b){
+var i=+b.dataset.i,s=st[i];
+b.classList.toggle('on',s>0);
+b.innerHTML=i+(s==2?'<span class="x">×2</span>':'');
+b.setAttribute('aria-label','Lámina '+i+(foil.indexOf(i)>-1?' especial':'')+', '+names[s]);
+b.hidden=(flt=='miss'&&s!=0)||(flt=='rep'&&s!=2);
+if(s>0)o++;else m++;if(s==2)r++;
+});
+var p=Math.round(o/N*100);
+document.getElementById('n1').textContent=o;document.getElementById('n2').textContent=m;document.getElementById('n3').textContent=r;
+document.getElementById('pc').textContent=p+'%';
+document.getElementById('fg').style.strokeDashoffset=163.4*(1-o/N);
+}
+box.addEventListener('click',function(e){var b=e.target.closest('.slot');if(!b)return;var i=+b.dataset.i;st[i]=(st[i]+1)%3;draw()});
+document.getElementById('flt').addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(!b)return;flt=b.dataset.f;this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});draw()});
+draw();
+})();
+</script>
+</body>
+</html>
