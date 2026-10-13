@@ -20,6 +20,15 @@ const KEY_FILES = [
   "src/components/ui/logo-placeholder.tsx",
   "scripts/build-ui-reference.ts",
   "scripts/build-ui-tokens-css.ts",
+  // UI-05B: productive album library surfaces.
+  "src/components/albums/album-cover.tsx",
+  "src/components/albums/album-progress.tsx",
+  "src/components/albums/album-card.tsx",
+  "src/components/albums/empty-library.tsx",
+  "src/app/app/page.tsx",
+  "src/app/app/albums/page.tsx",
+  "src/app/app/albums/add-button.tsx",
+  "src/app/app/progress.tsx",
 ];
 
 // Concrete CSS colours belong to ui-tokens.ts. Patterns deliberately ignore
@@ -92,5 +101,18 @@ describe("UI-04A.3 token centralization", () => {
     expect(semanticColorKeys.join(" ")).not.toMatch(
       /violet|purple|orange|cyan|red|green|logo/i,
     );
+  });
+
+  // UI-05B: the productive AlbumCover is a token-driven placeholder.
+  // It must never embed an inline SVG, a CSS gradient string or a
+  // hard-coded data: URL — it is composed entirely from `--album-*`
+  // tokens and Tailwind utilities. The wrapper accepts a dynamic
+  // `coverUrl` (a runtime value), so the assertion targets the
+  // static source code only.
+  it("AlbumCover stays free of inline SVG, gradients and data URLs", () => {
+    const source = read("src/components/albums/album-cover.tsx");
+    expect(source).not.toMatch(/<svg\b/i);
+    expect(source).not.toMatch(/linearGradient/i);
+    expect(source).not.toMatch(/data:image\//i);
   });
 });
