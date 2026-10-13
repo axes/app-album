@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "admin:bootstrap": "node scripts/bootstrap-admin.mjs"
+    "admin:bootstrap": "node scripts/bootstrap-admin.mjs",
+    "ui:export": "node --experimental-strip-types scripts/build-ui-reference.ts"
   },
   "dependencies": {
     "@neon/config": "^1.8.2",

@@ -1,0 +1,105 @@
+/*
+ * Generated from scripts/ui-tokens.ts via scripts/build-ui-tokens-css.ts.
+ * Do not maintain a palette here: change `productive*` exports in
+ * `scripts/ui-tokens.ts` and re-run `npm run ui:export` to refresh this
+ * file. The byte-for-byte equality is enforced by
+ * `scripts/build-ui-tokens-css.test.ts`.
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --album-background: #f7f5ff;
+  --album-surface: #ffffff;
+  --album-surface-soft: #efebfb;
+  --album-border: #ddd6f3;
+  --album-input: #ffffff;
+  --album-input-border: #8e81c2;
+  --album-text: #170b4a;
+  --album-text-muted: #5b5280;
+  --album-primary: #4a1fb8;
+  --album-primary-content: #ffffff;
+  --album-secondary: #5b5280;
+  --album-secondary-content: #ffffff;
+  --album-accent: #d93a00;
+  --album-accent-content: #ffffff;
+  --album-success: #0f7a4f;
+  --album-success-content: #ffffff;
+  --album-warning: #9a5200;
+  --album-warning-content: #ffffff;
+  --album-danger: #b3261e;
+  --album-danger-content: #ffffff;
+  --album-focus: #6d43e8;
+  --album-sticker-owned: #4a1fb8;
+  --album-sticker-owned-end: #2a1285;
+  --album-sticker-missing: #8e81c2;
+  --album-sticker-duplicate: #4a1fb8;
+  --album-sticker-special: #d93a00;
+  --album-sticker-special-end: #7a1d00;
+  --album-sticker-fold: #ffffff;
+  --album-overlay: #1d0f4a;
+  --shadow-sm: 0 1px 2px rgb(23 11 74 / 0.06);
+  --shadow-md: 0 6px 14px -4px rgb(23 11 74 / 0.14);
+  --shadow-lg: 0 18px 30px -10px rgb(23 11 74 / 0.24);
+  --radius-control: 0.75rem;
+  --radius-card: 1.25rem;
+  --radius-sticker: 0.875rem;
+  --radius-pill: 9999px;
+  --motion-fast: 150ms;
+  --motion-normal: 200ms;
+  --motion-spin: 800ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --transition-fast: 150ms;
+  --transition-normal: 200ms;
+  --font-display: "Poppins", ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+[data-theme="dark"],
+.dark {
+  color-scheme: dark;
+  --album-background: #120b2e;
+  --album-surface: #1d1347;
+  --album-surface-soft: #160e3a;
+  --album-border: #36286e;
+  --album-input: #1d1347;
+  --album-input-border: #7a6cba;
+  --album-text: #f4f1ff;
+  --album-text-muted: #b0a6da;
+  --album-primary: #a78bfa;
+  --album-primary-content: #120b2e;
+  --album-secondary: #b0a6da;
+  --album-secondary-content: #120b2e;
+  --album-accent: #ff7a3d;
+  --album-accent-content: #120b2e;
+  --album-success: #4ade80;
+  --album-success-content: #062b17;
+  --album-warning: #fbbf24;
+  --album-warning-content: #2b1a00;
+  --album-danger: #ff8a80;
+  --album-danger-content: #3a0906;
+  --album-focus: #c4b5fd;
+  --album-sticker-owned: #a78bfa;
+  --album-sticker-owned-end: #6d43e8;
+  --album-sticker-missing: #7a6cba;
+  --album-sticker-duplicate: #a78bfa;
+  --album-sticker-special: #ff7a3d;
+  --album-sticker-special-end: #d93a00;
+  --album-sticker-fold: #f4f1ff;
+  --album-overlay: #06031a;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 6px 14px -4px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 18px 30px -10px rgb(0 0 0 / 0.55);
+  --radius-control: 0.75rem;
+  --radius-card: 1.25rem;
+  --radius-sticker: 0.875rem;
+  --radius-pill: 9999px;
+  --motion-fast: 150ms;
+  --motion-normal: 200ms;
+  --motion-spin: 800ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --transition-fast: 150ms;
+  --transition-normal: 200ms;
+  --font-display: "Poppins", ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+}

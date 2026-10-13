@@ -40,6 +40,9 @@ scratch/
 # typescript
 *.tsbuildinfo
 
+# generated design handoff (UI-04A.1)
+/artifacts/
+
 # agent task metadata
 .nanobot-task/
 .nanobot/

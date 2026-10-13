@@ -19,10 +19,12 @@ const mocks = vi.hoisted(() => ({
     throw new Error("NEXT_NOT_FOUND");
   }),
   getPublicAlbumByToken: vi.fn(),
+  pathname: "/share/aaaa",
 }));
 
 vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
+  usePathname: () => mocks.pathname,
 }));
 
 // AppShell renders the public navigation in this route, but imports the logout

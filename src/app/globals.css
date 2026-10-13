@@ -1,25 +1,33 @@
 /*
- * App Álbum — global stylesheet (UI-02: Tailwind CSS 4 + daisyUI 5 foundation)
+ * App Álbum — global stylesheet (UI-02 → UI-05A).
  *
  * Single source of truth per theme:
  *   1. Tailwind 4 import (CSS-first configuration, no tailwind.config.ts).
- *   2. daisyUI 5 plugin + two custom themes named exactly `light` and `dark`,
+ *   2. Productive token sheet generated from `scripts/ui-tokens.ts`:
+ *      `src/styles/tokens.css` declares every `--album-*`, shadow, radius,
+ *      motion and typography variable exactly once per theme. No palette is
+ *      maintained by hand in this file.
+ *   3. daisyUI 5 plugin + two custom themes named exactly `light` and `dark`,
  *      so the existing `data-theme` contract keeps working untouched. Their
- *      `--color-*` tokens reference the canonical `--album-*` tokens instead of
- *      repeating hex values.
- *   3. Canonical App Álbum palette (`--album-*`) declared once per theme
- *      selector, plus the legacy `--*` aliases (real CSS variables) that point
- *      at them. `[data-theme=…]` and `.dark` are kept in sync because the
- *      anti-flash script and ThemeToggle apply both.
- *   4. `@theme static` compatibility aliases: the legacy Tailwind color names
+ *      `--color-*` tokens reference the canonical `--album-*` tokens instead
+ *      of repeating hex values.
+ *   4. `@theme static` compatibility aliases: the legacy Tailwind colour names
  *      used by the current components keep resolving to the App Álbum tokens.
- *   5. Base element styles and the reduced-motion policy.
- *
- * No component was migrated to daisyUI classes in this phase.
+ *   5. Base element styles, the focus-visible policy, the reduced-motion
+ *      neutraliser and the `animate-enter` utility.
  */
 
 @import "tailwindcss" source(none);
 @source "../**/*.{ts,tsx}";
+
+/* ---------------------------------------------------------------------------
+ * Productive tokens
+ * Imported first so every following block can reference `var(--album-*)`,
+ * `var(--radius-control)` and friends without declaring a parallel palette.
+ * The file is generated; change `productive*` exports in
+ * `scripts/ui-tokens.ts` and re-run `npm run ui:export` to refresh it.
+ * ------------------------------------------------------------------------- */
+@import "../styles/tokens.css";
 
 /* ---------------------------------------------------------------------------
  * daisyUI 5
@@ -28,7 +36,7 @@
  * anti-flash script and ThemeToggle already set on <html>.
  *
  * Every product colour references the canonical `--album-*` token, so the
- * palette is declared exactly once (see the theme blocks further down).
+ * palette is declared exactly once (see the generated `tokens.css`).
  * ------------------------------------------------------------------------- */
 @plugin "daisyui" {
   themes: light --default, dark;
@@ -61,9 +69,9 @@
   --color-neutral-content: #ffffff;
   --color-info: #0369a1;
   --color-info-content: #ffffff;
-  --color-success-content: #0f172a;
-  --color-warning-content: #ffffff;
-  --color-error-content: #ffffff;
+  --color-success-content: var(--album-success-content);
+  --color-warning-content: var(--album-warning-content);
+  --color-error-content: var(--album-danger-content);
 
   --radius-selector: var(--radius-control);
   --radius-field: var(--radius-control);
@@ -102,9 +110,9 @@
   --color-neutral-content: #f8fafc;
   --color-info: #38bdf8;
   --color-info-content: #0f172a;
-  --color-success-content: #0f172a;
-  --color-warning-content: #0f172a;
-  --color-error-content: #0f172a;
+  --color-success-content: var(--album-success-content);
+  --color-warning-content: var(--album-warning-content);
+  --color-error-content: var(--album-danger-content);
 
   --radius-selector: var(--radius-control);
   --radius-field: var(--radius-control);
@@ -149,12 +157,8 @@
   --color-sticker-missing: var(--sticker-missing);
   --color-sticker-duplicate: var(--sticker-duplicate);
 
-  /* Radii scale: control vs. container. */
-  --radius-control: 0.375rem;
-  --radius-card: 0.5rem;
-
   /* Standard easing curve. */
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-standard: var(--motion-ease);
 
   /* UI-03B entrance utility: opacity + 5px translateY over 200ms with the
    * shared easing. Consumed as `animate-enter` by PageHeader and the public
@@ -174,131 +178,18 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Canonical App Álbum palette + legacy aliases — light
- *
- * The palette is declared exactly once per theme. The legacy `--*` names are
- * real CSS variables that point at the canonical `--album-*` tokens, so any
- * hand-written CSS or third-party snippet that still reads `var(--surface)`
- * keeps working.
- *
- * `:root` and `[data-theme="light"]` are listed together: the anti-flash script
- * sets `data-theme` on <html>, while `:root` also covers the pre-script paint.
- *
- * NOTE: `--border` used to be aliased here to `var(--album-border)` (a colour),
- * which collided with daisyUI's `--border` border-width token: daisyUI
- * components read `border-width: var(--border)`. UI-03A removed that alias so
- * daisyUI keeps `--border: 1px`; `border-border` still resolves through
- * `--color-border: var(--album-border)` in `@theme static`.
- * ------------------------------------------------------------------------- */
-:root,
-[data-theme="light"] {
-  color-scheme: light;
-
-  /* UI-03B: darkened from #ea580c so white text reaches AA (≈5.18:1). */
-  --album-primary: #c2410c;
-  --album-primary-content: #ffffff;
-  --album-secondary: #475569;
-  --album-secondary-content: #ffffff;
-  --album-accent: #0e7490;
-  --album-accent-content: #ffffff;
-
-  --album-background: #f8fafc;
-  --album-surface: #ffffff;
-  --album-surface-soft: #f1f5f9;
-  --album-border: #e2e8f0;
-  --album-input: #ffffff;
-  --album-input-border: #cbd5e1;
-
-  --album-text: #0f172a;
-  --album-text-muted: #64748b;
-  --album-focus: #0891b2;
-
-  --album-success: #10b981;
-  --album-warning: #b45309;
-  /* UI-03B: darkened from #ef4444 so white text reaches AA (≈6.47:1). */
-  --album-danger: #b91c1c;
-
-  /* Legacy aliases (real CSS variables) → canonical tokens. */
-  --background: var(--album-background);
-  --surface: var(--album-surface);
-  --surface-muted: var(--album-surface-soft);
-  --text: var(--album-text);
-  --muted: var(--album-text-muted);
-  --input: var(--album-input);
-  --input-border: var(--album-input-border);
-  --primary: var(--album-primary);
-  --primary-text: var(--album-primary-content);
-  --focus: var(--album-focus);
-  --success: var(--album-success);
-  --danger: var(--album-danger);
-}
-
-/* ---------------------------------------------------------------------------
- * Canonical App Álbum palette + legacy aliases — dark
- *
- * `[data-theme="dark"]` and `.dark` are both listed: the anti-flash script and
- * ThemeToggle apply both, so either selector alone resolves the dark palette.
- * The `.dark` class is part of the tested contract.
- * ------------------------------------------------------------------------- */
-[data-theme="dark"],
-.dark {
-  color-scheme: dark;
-
-  --album-primary: #f97316;
-  /* UI-03B: dark foreground on the orange primary reaches AA (≈6.37:1);
-   * white would only reach ≈2.80:1. */
-  --album-primary-content: #0f172a;
-  --album-secondary: #94a3b8;
-  --album-secondary-content: #0f172a;
-  --album-accent: #22d3ee;
-  --album-accent-content: #0f172a;
-
-  --album-background: #0f172a;
-  --album-surface: #1e293b;
-  --album-surface-soft: #0b1120;
-  --album-border: #334155;
-  --album-input: #1e293b;
-  --album-input-border: #475569;
-
-  --album-text: #f8fafc;
-  --album-text-muted: #94a3b8;
-  --album-focus: #06b6d4;
-
-  --album-success: #34d399;
-  --album-warning: #fbbf24;
-  --album-danger: #f87171;
-
-  /* Legacy aliases (real CSS variables) → canonical tokens. */
-  --background: var(--album-background);
-  --surface: var(--album-surface);
-  --surface-muted: var(--album-surface-soft);
-  --text: var(--album-text);
-  --muted: var(--album-text-muted);
-  --input: var(--album-input);
-  --input-border: var(--album-input-border);
-  --primary: var(--album-primary);
-  --primary-text: var(--album-primary-content);
-  --focus: var(--album-focus);
-  --success: var(--album-success);
-  --danger: var(--album-danger);
-}
-
-/* ---------------------------------------------------------------------------
  * Theme-independent tokens (resolved lazily against the active theme).
  * ------------------------------------------------------------------------- */
 :root {
   --sticker-owned: var(--album-success);
   --sticker-missing: var(--album-text-muted);
   --sticker-duplicate: var(--album-primary);
-
-  --transition-fast: 150ms;
-  --transition-normal: 200ms;
 }
 
 @layer base {
   body {
     margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-body);
     background-color: var(--album-background);
     color: var(--album-text);
   }
@@ -343,4 +234,91 @@
   .animate-enter {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * UI-05A shell — AppShell, NavLink, MobileNav, LogoPlaceholder
+ *
+ * Every value below resolves to a `--album-*` token or to the corresponding
+ * motion variable already declared in `src/styles/tokens.css`. No colour,
+ * radius, shadow or motion value is hard-coded in this block. The dock
+ * geometry is sized from the runtime item count via the inline style emitted
+ * by `MobileNav`, so it stays stable when more real destinations are added.
+ * ------------------------------------------------------------------------- */
+.app-shell-header-inner {
+  min-height: 4rem;
+}
+
+.app-shell-link.is-current,
+.app-shell-link[data-current="true"] {
+  background-color: var(--album-surface-soft);
+  color: var(--album-primary);
+}
+
+.app-shell-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  box-shadow: var(--shadow-lg);
+}
+
+.mobile-nav {
+  display: block;
+}
+
+.mobile-nav-grid {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem max(env(safe-area-inset-left), 0.75rem) max(env(safe-area-inset-bottom), 0.5rem) max(env(safe-area-inset-right), 0.75rem);
+  margin: 0;
+  list-style: none;
+}
+
+.mobile-nav-slot {
+  display: flex;
+}
+
+.mobile-nav-link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  min-height: 3rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--radius-control);
+  color: var(--album-text-muted);
+  text-decoration: none;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  transition: color var(--transition-fast) var(--motion-ease),
+    background-color var(--transition-fast) var(--motion-ease);
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link:focus-visible {
+  color: var(--album-primary);
+}
+
+.mobile-nav-link.is-current,
+.mobile-nav-link[data-current="true"] {
+  color: var(--album-primary);
+  background-color: var(--album-surface-soft);
+}
+
+.mobile-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav-label {
+  line-height: 1.1;
+}
+
+.logo-placeholder {
+  flex: none;
 }
