@@ -199,6 +199,63 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * UI-05C.3 — sticker interaction feedback (decorative layer)
+ *
+ * Only `transform` and `opacity` are animated. The burst offsets arrive as
+ * `--burst-x` / `--burst-y` custom properties computed once at render time, so
+ * no per-frame JavaScript and no layout property is involved. Every node is
+ * `aria-hidden` and `pointer-events-none`; the parent unmounts the whole layer
+ * when the animation window closes.
+ * ------------------------------------------------------------------------- */
+.sticker-burst-particle {
+  animation: album-burst 400ms var(--motion-ease) both;
+}
+
+@keyframes album-burst {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--burst-x)), calc(-50% + var(--burst-y))) scale(0.4);
+  }
+}
+
+.sticker-ghost-in {
+  animation: album-ghost-in 380ms var(--motion-ease) both;
+}
+
+@keyframes album-ghost-in {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  40% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(8px, -6px) rotate(-3deg);
+  }
+}
+
+.sticker-ghost-out {
+  animation: album-ghost-out 240ms var(--motion-ease) both;
+}
+
+@keyframes album-ghost-out {
+  from {
+    opacity: 0.45;
+    transform: translate(8px, -6px) rotate(-3deg);
+  }
+  to {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * Theme-independent tokens (resolved lazily against the active theme).
  * ------------------------------------------------------------------------- */
 :root {
@@ -254,6 +311,14 @@
    * entirely (not merely shortened) under reduced motion. */
   .animate-enter {
     animation: none;
+  }
+
+  /* UI-05C.3: defence in depth. The card already refuses to mount the
+   * decorative layer when reduced motion is on, so these rules only matter if
+   * the preference flips mid-animation. */
+  .sticker-burst,
+  .sticker-ghost {
+    display: none;
   }
 }
 

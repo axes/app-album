@@ -1,9 +1,21 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { animate } from "motion/react";
 import type { UserAlbumDetail } from "@/lib/collection/service";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { adjustQuantityAction } from "../actions";
 import { QuantityButton } from "../quantity-button";
+import { StickerMotionLayer } from "./sticker-motion-layer";
+import {
+  CLEAR_MS,
+  DURATION_S,
+  MOTION_EASE,
+  OPTIMISTIC_TIMEOUT_MS,
+  intentFor,
+  isCelebration,
+  type Intent,
+} from "./sticker-interaction";
 
 type Sticker = UserAlbumDetail["unassigned"][number];
 
@@ -61,27 +73,63 @@ function QuantityFields({ userAlbumId, stickerId, change }: { userAlbumId: strin
  * `stretch` is the mosaic layout: the two 44 px targets share the card width
  * and the count lives in the state label, so the row never overflows a
  * ~112 px track. The list layout keeps the explicit counter between them.
+ *
+ * UI-05C.3 — `onIntent` runs on the form's `click`, which bubbles from the
+ * submit button and fires before the form is submitted. The payload is
+ * untouched: the handler never builds `FormData` and never calls the action.
  */
-function QuantityControls({ sticker, userAlbumId, stretch = false }: { sticker: Sticker; userAlbumId: string; stretch?: boolean }) {
+function QuantityControls({
+  sticker,
+  userAlbumId,
+  displayed,
+  stretch = false,
+  onIntent,
+}: {
+  sticker: Sticker;
+  userAlbumId: string;
+  displayed: number;
+  stretch?: boolean;
+  onIntent: (change: "increment" | "decrement") => void;
+}) {
   return (
     <div className={`flex items-center ${stretch ? "gap-1" : "gap-2"}`}>
-      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
+      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined} onClick={() => onIntent("decrement")}>
         <QuantityFields change="decrement" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={sticker.quantity === 0} label={`Quitar copia de lámina ${sticker.code}`} stretch={stretch}>−</QuantityButton>
+        <QuantityButton disabled={displayed === 0} label={`Quitar copia de lámina ${sticker.code}`} stretch={stretch}>−</QuantityButton>
       </form>
       {stretch ? null : (
-        <span aria-label={`${sticker.quantity} copias`} className="min-w-7 text-center font-semibold tabular-nums">{sticker.quantity}</span>
+        <span aria-label={`${displayed} copias`} className="min-w-7 text-center font-semibold tabular-nums">{displayed}</span>
       )}
-      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
+      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined} onClick={() => onIntent("increment")}>
         <QuantityFields change="increment" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={sticker.quantity >= 1000} label={`Añadir copia de lámina ${sticker.code}`} stretch={stretch}>+</QuantityButton>
+        <QuantityButton disabled={displayed >= 1000} label={`Añadir copia de lámina ${sticker.code}`} stretch={stretch}>+</QuantityButton>
       </form>
     </div>
   );
 }
 
 export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; userAlbumId: string; view: "grid" | "list" }) {
-  const state = stickerState(sticker.quantity);
+  const cardRef = useRef<HTMLLIElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const reduced = useReducedMotion();
+
+  /**
+   * Optimistic overlay. `null` means "no overlay, the server value wins".
+   * It is cleared during render whenever the `quantity` prop changes, which
+   * is React's recommended pattern for adjusting state on a prop change and
+   * avoids the extra commit a `useEffect` would cost.
+   */
+  const [optimistic, setOptimistic] = useState<number | null>(null);
+  const [serverQuantity, setServerQuantity] = useState(sticker.quantity);
+  const [animation, setAnimation] = useState<{ id: number; intent: Intent } | null>(null);
+
+  if (serverQuantity !== sticker.quantity) {
+    setServerQuantity(sticker.quantity);
+    setOptimistic(null);
+  }
+
+  const displayed = optimistic ?? sticker.quantity;
+  const state = stickerState(displayed);
   const tinted = state.surfaceMix > 0;
   const tint: CSSProperties | undefined = tinted
     ? {
@@ -90,31 +138,95 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
       }
     : undefined;
 
+  /**
+   * The animation is driven by the click, never by the `quantity` prop. This
+   * effect only reacts to `animation`, which is set exclusively inside
+   * `handleIntent`, so an incoming RSC, a refresh, a view toggle or a
+   * navigation can never trigger a celebration.
+   */
+  useEffect(() => {
+    if (!animation) return;
+    const { intent } = animation;
+    const controls: Array<{ stop: () => void }> = [];
+
+    if (!reduced) {
+      const card = cardRef.current;
+      const label = labelRef.current;
+      if (intent === "obtained" && card) {
+        controls.push(animate(card, { scale: [1, 1.07, 1] }, { duration: DURATION_S.obtained, ease: MOTION_EASE }));
+        if (label) controls.push(animate(label, { scale: [0.9, 1] }, { duration: 0.2, ease: MOTION_EASE }));
+      } else if (intent === "duplicate" && card) {
+        controls.push(animate(card, { scale: [1, 1.04, 1] }, { duration: DURATION_S.duplicate, ease: MOTION_EASE }));
+      } else if (intent === "increment" && label) {
+        controls.push(animate(label, { scale: [1, 1.12, 1] }, { duration: DURATION_S.increment, ease: MOTION_EASE }));
+      } else if (intent === "decrement" && label) {
+        controls.push(animate(label, { scale: [1, 0.94, 1] }, { duration: DURATION_S.decrement, ease: MOTION_EASE }));
+      } else if (intent === "lost" && card) {
+        controls.push(animate(card, { opacity: [1, 0.85, 1], scale: [1, 0.98, 1] }, { duration: DURATION_S.lost, ease: MOTION_EASE }));
+      }
+    }
+
+    const timer = setTimeout(() => setAnimation(null), CLEAR_MS[intent]);
+    return () => {
+      for (const control of controls) control.stop();
+      clearTimeout(timer);
+    };
+  }, [animation, reduced]);
+
+  /**
+   * Safety net only. If the Server Action never produces a new `quantity`
+   * prop, the overlay is dropped so the card cannot stay stuck on a value the
+   * server never confirmed.
+   */
+  useEffect(() => {
+    if (optimistic === null) return;
+    const timer = setTimeout(() => setOptimistic(null), OPTIMISTIC_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [optimistic]);
+
+  function handleIntent(change: "increment" | "decrement") {
+    const from = displayed;
+    const to = change === "increment" ? from + 1 : from - 1;
+    setOptimistic(to);
+    setAnimation((previous) => ({ id: (previous?.id ?? 0) + 1, intent: intentFor(from, to) }));
+  }
+
   const identity = <div className="min-w-0">
     <code className="block truncate text-base font-bold leading-tight" title={sticker.code}>{sticker.code}</code>
     {sticker.name ? <p className="truncate text-xs text-muted" title={sticker.name}>{sticker.name}</p> : null}
   </div>;
-  const status = <span className={`block leading-snug ${state.textClass}`}>{state.label}</span>;
+  const status = <span ref={labelRef} className={`block leading-snug ${state.textClass}`}>{state.label}</span>;
+
+  /**
+   * UI-05C.3 — celebrations are mosaic-only. The list view stays a stable,
+   * management-oriented surface: it keeps the optimistic update, the label,
+   * the counter and the state colour, but never mounts the decorative layer
+   * and never plays a card pop or bounce.
+   */
+  const celebrating = view === "grid" && !reduced && animation !== null && isCelebration(animation.intent);
+  const layer = celebrating ? <StickerMotionLayer intent={animation.intent} /> : null;
 
   if (view === "list") return (
     <li className="relative flex min-w-0 flex-col gap-3 overflow-hidden px-3 py-3 sm:flex-row sm:items-center">
       <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: state.token }} />
       <div className="sm:flex-1">{identity}</div>
       {status}
-      <QuantityControls sticker={sticker} userAlbumId={userAlbumId} />
+      <QuantityControls sticker={sticker} userAlbumId={userAlbumId} displayed={displayed} onIntent={handleIntent} />
     </li>
   );
 
   return (
     <li
+      ref={cardRef}
       className={`relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-sticker border p-2.5 ${tinted ? "border-border bg-surface" : "border-dashed border-border bg-surface-muted"}`}
       style={tint}
     >
+      {layer}
       {tinted ? <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: state.token }} /> : null}
       {identity}
       <div className="mt-auto flex flex-col gap-2">
         {status}
-        <QuantityControls sticker={sticker} userAlbumId={userAlbumId} stretch />
+        <QuantityControls sticker={sticker} userAlbumId={userAlbumId} displayed={displayed} stretch onIntent={handleIntent} />
       </div>
     </li>
   );
