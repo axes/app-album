@@ -21,11 +21,11 @@ export function StickerCollection({ groups, userAlbumId }: { groups: StickerGrou
       </div>
       {groups.length === 0 ? (
         <EmptyState description="Este álbum todavía no tiene láminas disponibles." title="No hay láminas" />
-      ) : groups.map((group) => {
+      ) : groups.map((group, index) => {
         const owned = group.stickers.filter((sticker) => sticker.quantity > 0).length;
         return (
-          <StickerSection key={group.id} name={group.name} owned={owned} total={group.stickers.length}>
-            <ul className={view === "grid" ? "grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" : "divide-y divide-border"}>
+          <StickerSection key={group.id} name={group.name} owned={owned} total={group.stickers.length} defaultOpen={index === 0}>
+            <ul className={view === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-3 p-3" : "divide-y divide-border"}>
               {group.stickers.map((sticker) => (
                 <StickerCard key={sticker.id} sticker={sticker} userAlbumId={userAlbumId} view={view} />
               ))}

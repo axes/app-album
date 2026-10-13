@@ -8,11 +8,17 @@
  * This generator reads exclusively from the `productive*` exports and produces
  * the `src/styles/tokens.css` artefact. The output is intentionally compatible
  * with the existing `@theme static` aliases and daisyUI theme blocks: every
- * `var(--album-*)` and the non-color tokens (`--radius-control`,
- * `--radius-card`, `--transition-fast`, `--transition-normal`, `--ease-standard`,
- * shadow, motion and typography variables) are declared once per theme. No
- * other file in the productive app should keep a second copy of any of these
- * values.
+ * `var(--album-*)` and the non-color tokens (`--album-radius-control`,
+ * `--album-radius-card`, `--transition-fast`, `--transition-normal`,
+ * `--ease-standard`, shadow, motion and typography variables) are declared once
+ * per theme. No other file in the productive app should keep a second copy of
+ * any of these values.
+ *
+ * The radius scale is emitted under the `--album-radius-*` prefix on purpose.
+ * Tailwind's own `--radius-*` namespace owns the `rounded-*` utilities, so a
+ * bare `--radius-control` here would collide with the `@theme static` mapping
+ * in `globals.css` and leave the utilities ungenerated. The theme block points
+ * at these productive names instead of repeating the values.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -51,10 +57,10 @@ function shadowDeclarations(theme: ThemeName): string {
 
 function radiusDeclarations(): string {
   return [
-    `  --radius-control: ${productiveRadiusTokens.radiusControl};`,
-    `  --radius-card: ${productiveRadiusTokens.radiusCard};`,
-    `  --radius-sticker: ${productiveRadiusTokens.radiusSticker};`,
-    `  --radius-pill: ${productiveRadiusTokens.radiusPill};`,
+    `  --album-radius-control: ${productiveRadiusTokens.radiusControl};`,
+    `  --album-radius-card: ${productiveRadiusTokens.radiusCard};`,
+    `  --album-radius-sticker: ${productiveRadiusTokens.radiusSticker};`,
+    `  --album-radius-pill: ${productiveRadiusTokens.radiusPill};`,
   ].join("\n");
 }
 

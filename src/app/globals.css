@@ -12,7 +12,11 @@
  *      `--color-*` tokens reference the canonical `--album-*` tokens instead
  *      of repeating hex values.
  *   4. `@theme static` compatibility aliases: the legacy Tailwind colour names
- *      used by the current components keep resolving to the App Álbum tokens.
+ *      used by the current components keep resolving to the App Álbum tokens,
+ *      and the radius scale is mapped into Tailwind's `--radius-*` namespace so
+ *      `rounded-control`, `rounded-card`, `rounded-sticker` and `rounded-pill`
+ *      are actually generated. Both blocks reference the generated
+ *      `--album-*` tokens; neither repeats a value.
  *   5. Base element styles, the focus-visible policy, the reduced-motion
  *      neutraliser and the `animate-enter` utility.
  */
@@ -20,10 +24,17 @@
 @import "tailwindcss" source(none);
 @source "../**/*.{ts,tsx}";
 
+/* The radius scale is part of the public design system, so all four utilities
+ * must exist in the compiled CSS even before a component consumes them.
+ * `rounded-pill` has no consumer yet, and Tailwind only emits utilities it
+ * finds in the scanned sources, so the whole scale is pinned here. */
+@source inline("rounded-control rounded-card rounded-sticker rounded-pill");
+
 /* ---------------------------------------------------------------------------
  * Productive tokens
  * Imported first so every following block can reference `var(--album-*)`,
- * `var(--radius-control)` and friends without declaring a parallel palette.
+ * `var(--album-radius-control)` and friends without declaring a parallel
+ * palette.
  * The file is generated; change `productive*` exports in
  * `scripts/ui-tokens.ts` and re-run `npm run ui:export` to refresh it.
  * ------------------------------------------------------------------------- */
@@ -73,9 +84,9 @@
   --color-warning-content: var(--album-warning-content);
   --color-error-content: var(--album-danger-content);
 
-  --radius-selector: var(--radius-control);
-  --radius-field: var(--radius-control);
-  --radius-box: var(--radius-card);
+  --radius-selector: var(--album-radius-control);
+  --radius-field: var(--album-radius-control);
+  --radius-box: var(--album-radius-card);
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -114,9 +125,9 @@
   --color-warning-content: var(--album-warning-content);
   --color-error-content: var(--album-danger-content);
 
-  --radius-selector: var(--radius-control);
-  --radius-field: var(--radius-control);
-  --radius-box: var(--radius-card);
+  --radius-selector: var(--album-radius-control);
+  --radius-field: var(--album-radius-control);
+  --radius-box: var(--album-radius-card);
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -156,6 +167,16 @@
   --color-sticker-owned: var(--sticker-owned);
   --color-sticker-missing: var(--sticker-missing);
   --color-sticker-duplicate: var(--sticker-duplicate);
+
+  /* Radius scale. Tailwind's `--radius-*` namespace is what generates the
+   * `rounded-control` / `rounded-card` / `rounded-sticker` / `rounded-pill`
+   * utilities, so the scale has to be registered here. The values stay in the
+   * generated `--album-radius-*` tokens: these entries are references, never a
+   * second copy of the numbers. */
+  --radius-control: var(--album-radius-control);
+  --radius-card: var(--album-radius-card);
+  --radius-sticker: var(--album-radius-sticker);
+  --radius-pill: var(--album-radius-pill);
 
   /* Standard easing curve. */
   --ease-standard: var(--motion-ease);
@@ -289,7 +310,7 @@
   gap: 0.125rem;
   min-height: 3rem;
   padding: 0.5rem 0.25rem;
-  border-radius: var(--radius-control);
+  border-radius: var(--album-radius-control);
   color: var(--album-text-muted);
   text-decoration: none;
   font-size: 0.6875rem;

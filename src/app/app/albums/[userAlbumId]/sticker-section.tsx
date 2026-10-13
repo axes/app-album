@@ -2,12 +2,12 @@
 
 import { useState, type ReactNode } from "react";
 
-export function StickerSection({ name, owned, total, children }: { name: string; owned: number; total: number; children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+export function StickerSection({ name, owned, total, defaultOpen = false, children }: { name: string; owned: number; total: number; defaultOpen?: boolean; children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <details
-      className={`overflow-hidden rounded-card border border-border ${isOpen ? "bg-surface-soft" : "bg-surface"}`}
+      className={`overflow-hidden rounded-card border border-border ${isOpen ? "bg-surface-muted" : "bg-surface"}`}
       onToggle={(event) => setIsOpen(event.currentTarget.open)}
       open={isOpen}
     >
