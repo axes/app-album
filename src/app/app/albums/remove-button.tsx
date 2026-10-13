@@ -140,7 +140,7 @@ export function RemoveAlbumButton({ userAlbumId }: { userAlbumId: string }) {
           "w-[calc(100%-2rem)] max-w-md p-0 m-auto",
           "rounded-card border border-border bg-surface text-content",
           "shadow-lg",
-          "backdrop:bg-[color:color-mix(in_oklab,var(--album-text)_55%,transparent)]",
+          "backdrop:bg-[color:color-mix(in_oklab,var(--album-overlay)_60%,transparent)]",
           "backdrop:backdrop-blur-sm",
         ].join(" ")}
       >

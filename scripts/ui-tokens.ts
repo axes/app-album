@@ -38,6 +38,7 @@ export const semanticColorKeys = [
   "stickerSpecial",
   "stickerSpecialEnd",
   "stickerFold",
+  "overlay",
 ] as const;
 
 export type SemanticColorKey = (typeof semanticColorKeys)[number];
@@ -72,6 +73,7 @@ export const cssNameByColorToken: Readonly<Record<SemanticColorKey, string>> = {
   stickerSpecial: "sticker-special",
   stickerSpecialEnd: "sticker-special-end",
   stickerFold: "sticker-fold",
+  overlay: "overlay",
 };
 
 export const colorTokens: SemanticColorTokens = {
@@ -103,6 +105,7 @@ export const colorTokens: SemanticColorTokens = {
   stickerSpecial: { light: "#0e7490", dark: "#22d3ee" },
   stickerSpecialEnd: { light: "#155e75", dark: "#0e7490" },
   stickerFold: { light: "#ffffff", dark: "#f8fafc" },
+  overlay: { light: "#1f2448", dark: "#0b0820" },
 };
 
 export const proposalColorTokens: SemanticColorTokens = {
@@ -134,6 +137,7 @@ export const proposalColorTokens: SemanticColorTokens = {
   stickerSpecial: { light: "#d93a00", dark: "#ff7a3d" },
   stickerSpecialEnd: { light: "#7a1d00", dark: "#d93a00" },
   stickerFold: { light: "#ffffff", dark: "#f4f1ff" },
+  overlay: { light: "#1d0f4a", dark: "#06031a" },
 };
 
 export const radiusTokens = {

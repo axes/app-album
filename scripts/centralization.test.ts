@@ -65,6 +65,21 @@ describe("UI-04A.3 token centralization", () => {
     expect(read("scripts/build-ui-reference.ts")).toContain("var(--album-sticker-special-end)");
   });
 
+  it("centralizes the overlay colour and consumes it via --album-overlay", () => {
+    expect(semanticColorKeys).toContain("overlay");
+    expect(colorTokens.overlay.light).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(colorTokens.overlay.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(proposalColorTokens.overlay.light).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(proposalColorTokens.overlay.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+
+    const css = read("src/styles/tokens.css");
+    expect(css).toMatch(/--album-overlay:\s*#[0-9a-fA-F]+/);
+
+    const overlay = read("src/app/app/albums/remove-button.tsx");
+    expect(overlay).toContain("var(--album-overlay)");
+    expect(overlay).not.toMatch(/var\(--album-text\)[^)]*backdrop/);
+  });
+
   it("uses only a token-driven identity placeholder", () => {
     const page = read("src/app/dev/ui/page.tsx");
     const portable = read("scripts/build-ui-reference.ts");
