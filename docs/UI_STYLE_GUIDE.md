@@ -649,3 +649,14 @@ Casos visuales a validar manualmente:
 
 - Estado final del task: `READY_FOR_UI_05B_ALBUM_LIBRARY_REVIEW`.
 - Sin `git add`, `commit`, `push`, `PR`, `merge` ni `deploy`.
+
+
+## UI-05C — Detalle de colección y mosaico de láminas
+
+La ruta `/app/albums/[userAlbumId]` usa una composición editorial abierta: portada 3:4 contenida, identidad y acciones separadas por ritmo y bordes, sin una card envolvente. `CollectionSummary`, mediante `AlbumProgress detailed`, es la única fuente visible de `X / Y`, porcentaje, faltantes y repetidas. Sharing se integra como zona secundaria sin panel anidado y el modal existente de quitar álbum permanece intacto.
+
+El selector Mosaico/Lista es un control segmentado con `aria-pressed`, foco visible y targets mínimos de 44 px. Las secciones exponen nombre, `X / Y`, affordance y `aria-expanded`; empiezan colapsadas. El mosaico usa 2 columnas en móvil, 3 desde `sm` y 4/5 en desktop; la lista se apila en móvil.
+
+Los estados de lámina se derivan exclusivamente de `quantity`: `0` es **Faltante** con `--album-sticker-missing`, `1` es **Obtenida** con `--album-sticker-owned`, y `>1` es **Repetida** con `--album-sticker-duplicate` y cantidad `×N` prominente. No existe estado Especial en producto. Los controles conservan formularios separados, límites 0/1000, payloads existentes y labels `Añadir copia de lámina {code}` / `Quitar copia de lámina {code}`; todos miden al menos 44 px.
+
+No se usan HEX/RGB ni modificadores de opacidad Tailwind sobre colores variables. La QA visual pendiente cubre 375 px, 768 px y desktop en light/dark, incluido el espacio protegido por el dock móvil.

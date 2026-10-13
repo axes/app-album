@@ -45,6 +45,9 @@ describe("ShareControls", () => {
 
     expect(screen.getByText("Compartir colección")).toBeTruthy();
     expect(screen.queryByLabelText("Enlace público")).toBeNull();
+    const region = screen.getByRole("region", { name: "Compartir colección" });
+    expect(region.className).not.toContain("rounded");
+    expect(screen.getByRole("button", { name: "Activar enlace público" }).className).toContain("min-h-11");
 
     await user.click(screen.getByRole("button", { name: "Activar enlace público" }));
     await waitFor(() => expect(mocks.enableSharingAction).toHaveBeenCalledTimes(1));

@@ -40,7 +40,7 @@ export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; s
   }
 
   return (
-    <section aria-label="Compartir colección" className="rounded border border-border bg-surface-muted p-3">
+    <section aria-label="Compartir colección" className="border-t border-border pt-4">
       <h2 className="text-sm font-semibold">Compartir colección</h2>
       {sharing.enabled && path ? (
         <div className="mt-2 flex flex-col gap-2">
@@ -48,13 +48,13 @@ export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; s
           <div className="flex flex-wrap items-center gap-2">
             <input
               aria-label="Enlace público"
-              className="min-w-0 flex-1 rounded border border-input-border bg-input px-2 py-1 text-sm text-content"
+              className="min-h-11 min-w-0 flex-1 rounded-control border border-input-border bg-input px-3 py-2 text-sm text-content focus-visible:outline focus-visible:outline-2"
               readOnly
               ref={input}
               value={path}
             />
             <button
-              className="rounded border border-border bg-surface px-3 py-2 text-sm text-content hover:bg-surface-muted"
+              className="min-h-11 rounded-control border border-border bg-surface px-3 py-2 text-sm text-content hover:bg-surface-muted focus-visible:outline focus-visible:outline-2"
               onClick={copy}
               type="button"
             >
@@ -63,7 +63,7 @@ export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; s
             <form action={disableSharingAction}>
               <input name="userAlbumId" type="hidden" value={userAlbumId} />
               <SubmitButton
-                className="rounded border border-danger px-3 py-2 text-sm text-danger disabled:cursor-not-allowed"
+                className="min-h-11 rounded-control border border-danger px-3 py-2 text-sm text-danger focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:text-muted"
                 label="Desactivar enlace"
                 pendingLabel="Desactivando…"
               />
@@ -76,7 +76,7 @@ export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; s
           <form action={enableSharingAction}>
             <input name="userAlbumId" type="hidden" value={userAlbumId} />
             <SubmitButton
-              className="rounded bg-primary px-3 py-2 text-sm text-primary-text disabled:opacity-50"
+              className="min-h-11 rounded-control bg-primary px-3 py-2 text-sm text-primary-text focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-surface-soft disabled:text-muted"
               label="Activar enlace público"
               pendingLabel="Activando…"
             />
