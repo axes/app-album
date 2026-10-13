@@ -36,12 +36,12 @@ export function deriveProgressState(progress: Progress): ProgressState {
 export function AlbumProgress({ progress, detailed = false }: AlbumProgressProps) {
   const label = `${progress.percentage}% completado`;
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="font-medium tabular-nums text-content">
+        <span className="text-xs tabular-nums text-content">
           {progress.owned} / {progress.total} láminas
         </span>
-        <span className="text-xs tabular-nums text-muted">{progress.percentage}%</span>
+        <span className="text-xs font-medium tabular-nums text-muted">{progress.percentage}%</span>
       </div>
       <UiProgress value={progress.percentage} label={label} variant="primary" />
       {detailed ? (

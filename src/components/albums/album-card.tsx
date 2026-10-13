@@ -37,9 +37,19 @@ const STATE_LABELS: Record<ProgressState, string> = {
   complete: "Completo",
 };
 
+/**
+ * Badge variants for the progress state.
+ *
+ * The productive violet `primary` is reserved for the progress bar and the
+ * main CTA, so the in-progress badge switches to the orange `accent` token
+ * to give that hue real presence on the card. `Bajo` uses `secondary` so
+ * the muted state does not compete with the bar. `Completo` keeps
+ * `success` — green is reserved for completed-state semantics and
+ * "En mi colección".
+ */
 const STATE_VARIANT: Record<ProgressState, BadgeVariant> = {
-  low: "info",
-  in_progress: "primary",
+  low: "secondary",
+  in_progress: "accent",
   complete: "success",
 };
 
@@ -79,15 +89,20 @@ export function AlbumCard({
       data-testid="album-card"
       data-action-kind={action.kind}
       className={joinClasses(
-        "group flex h-full flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-none",
+        // Compact, collection-friendly card. The max-w keeps a single album
+        // from stretching across the whole grid; the parent <li> still
+        // flexes to the cell, so the card never overflows its column.
+        "group flex h-full max-w-xs flex-col gap-2 rounded-card border border-border bg-surface p-3 shadow-none",
         "transition-shadow duration-[var(--transition-normal)] ease-[var(--ease-standard)]",
         "hover:shadow-md focus-within:shadow-md",
         className,
       )}
     >
-      <AlbumCover coverUrl={coverUrl} title={title} />
+      <div className="mx-auto w-full max-w-[10rem]">
+        <AlbumCover coverUrl={coverUrl} title={title} />
+      </div>
       <div className="flex flex-col gap-1">
-        <h2 id={titleId} className="line-clamp-2 text-base font-semibold leading-snug text-content">
+        <h2 id={titleId} className="line-clamp-2 text-sm font-semibold leading-snug text-content">
           {title}
         </h2>
         <p className="line-clamp-1 text-xs text-muted">
@@ -98,16 +113,20 @@ export function AlbumCard({
         <Badge variant={STATE_VARIANT[state]}>{STATE_LABELS[state]}</Badge>
       </div>
       <AlbumProgress progress={progress} />
-      <div className="mt-auto pt-2">
+      <div className="pt-1">
         {action.kind === "open" ? (
-          <Button asChild className="w-full">
+          // min-h-11 enforces the 44 px touch target on mobile even when
+          // the compact `size="md"` Button (h-10) would otherwise feel
+          // cramped; the visual height stays md, the hit area grows only
+          // on touch.
+          <Button asChild className="w-full min-h-11" size="md">
             <Link href={action.href}>{action.label ?? "Abrir álbum"}</Link>
           </Button>
         ) : null}
         {action.kind === "in-collection" ? (
           <div className="flex flex-col items-stretch gap-2">
             <Badge variant="success">En mi colección</Badge>
-            <Button asChild variant="secondary" className="w-full">
+            <Button asChild variant="secondary" className="w-full min-h-11" size="md">
               <Link href={action.href}>Abrir álbum</Link>
             </Button>
           </div>
