@@ -493,3 +493,159 @@ navegador:
   `git diff --check` pasan en local.
 - Estado final del task: `READY_FOR_UI_05A_APPSHELL_NAVIGATION_REVIEW`.
 - Sin `git add`, `commit`, `push`, `PR`, `merge` ni `deploy`.
+
+## UI-05B — Biblioteca de álbumes y AlbumCard
+
+> **Promoción productiva de la familia `AlbumCard`.** `AlbumCover`,
+> `AlbumProgress`, `AlbumCard` y `EmptyLibrary` viven ahora en
+> `src/components/albums/` y son los componentes oficiales del dominio.
+> Las páginas `/app` y `/app/albums` se recompusieron alrededor de ellos
+> sin tocar la lógica de `CollectionService`, `getCurrentUser`, ni
+> ninguna ruta de detalle, admin o sharing.
+
+### 1. `AlbumCard` y su contrato de `action`
+
+`AlbumCard` es un Server Component que recibe un `action`
+discriminado por tipo:
+
+| `kind` | Datos adicionales | Render |
+| --- | --- | --- |
+| `open` | `href`, `label?` | `<Button asChild>` apuntando a `href` (default "Abrir álbum"). |
+| `in-collection` | `href` | `<Badge variant="success">En mi colección</Badge>` + `<Button asChild variant="secondary">` al detalle. |
+| `add` | `albumId` | `<AddAlbumButton albumId={albumId} />` (Server Action intacta). |
+
+El wrapper es `<article aria-labelledby="...">` con un `<h2>` interno
+(`id={titleId}` estable, derivado del slug del título). El motivo de
+la unión discriminada es semántico: un link y un form con Server
+Action son cosas distintas; una `mode: "owned" | "explore"` obligaría
+a derivar `userAlbumId` en el sitio de uso, mientras que la prop
+`action` permite pasar el nodo ya listo.
+
+### 2. `AlbumCover` (placeholder token-driven 3:4)
+
+Server Component sin `"use client"`; consume `coverUrl: string | null`.
+
+- Wrapper: `relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-soft`.
+- Cuando `coverUrl` es `null`: composición CSS-only con un banda
+  diagonal `linear-gradient(135deg, var(--album-primary), transparent)`
+  (sin `<svg>` y sin `linearGradient` literal en CSS), un sello
+  circular en `bg-accent`, y las iniciales del título centradas en
+  `text-muted`. La cubierta decorativa lleva `aria-hidden`; el texto
+  accesible vive en un `<span class="sr-only">`.
+- Cuando `coverUrl` existe: renderiza `<img>` nativo con
+  `alt={`Portada de ${title}`}` y `object-cover`. **No** usa
+  `onError` para no requerir `"use client"`.
+- La guard de centralización (`scripts/centralization.test.ts`)
+  bloquea el alta de `<svg`, `linearGradient` o `data:image/` en el
+  archivo fuente.
+
+### 3. `AlbumProgress` y la barra productiva
+
+- Server Component que envuelve al primitive `<Progress>`.
+- Mantiene la API pública `{ progress, detailed? }` y delega la
+  curva violeta (track `bg-primary`) al primitive. Verde (`success`)
+  queda reservado para los badges de completado y otros finales
+  productivos; el productive bar ya no usa `bg-success` directo.
+- Exporta el helper puro `deriveProgressState(progress: Progress): ProgressState`
+  para que las pruebas unitarias y el badge de estado compartan
+  exactamente la misma regla:
+
+  | Estado | Regla |
+  | --- | --- |
+  | `low` | `percentage < 25` |
+  | `in_progress` | `25 <= percentage < 100` |
+  | `complete` | `owned >= total` (con `total > 0`) o `percentage >= 100` |
+
+### 4. `EmptyLibrary`
+
+Server Component que consume `EmptyState`, `LogoPlaceholder` y un
+`<Button asChild>` hacia `/app/albums`. El `username` se usa sólo si
+está disponible para personalizar la descripción ("Hola, {user}.
+Empieza explorando el catálogo.").
+
+### 5. Migraciones de componentes productivos
+
+- `src/app/app/progress.tsx` reescrito por dentro para delegar en
+  `AlbumProgress`. La firma `{ progress, detailed }` y el comportamiento
+  del Server Component se conservan, así que `ProgressSummary` sigue
+  importándose igual.
+- `src/app/app/albums/add-button.tsx` migrado a `<Button>` +
+  `<InlineMessage variant="error">`. La Server Action `addAlbumAction`
+  y el contrato `CollectionActionState` permanecen bit-a-bit. El
+  botón envía con `type="submit"` y `disabled={pending}`; el error
+  se renderiza como `InlineMessage` con `role="alert"`.
+
+### 6. Páginas `/app` y `/app/albums`
+
+Ambas usan `<PageHeader>` + `<ul role="list" aria-label="..." class="grid animate-enter grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">`.
+Cada `<li>` envuelve un `<AlbumCard className="w-full">` y delega en
+la prop `action`:
+
+- `/app`: siempre `action.kind === "open"` apuntando a
+  `/app/albums/{entry.id}`. Cuando la lista está vacía, se monta
+  `<EmptyLibrary>`.
+- `/app/albums`: `action.kind` alterna entre `"in-collection"` (si
+  `userAlbumId !== null`) y `"add"`. `meta` se deriva a
+  `"{stickerCount} láminas"`. Cuando la lista está vacía, se monta
+  un `<EmptyState>` simple sin acción.
+
+### 7. Responsive
+
+- `< sm` (375 px): `grid-cols-1`.
+- `sm` (≥ 640 px): `grid-cols-2`.
+- `lg` (≥ 1024 px): `grid-cols-3`.
+- El dock móvil (`<md`) ya reserva `pb-24 md:pb-6` para que el
+  último `Abrir álbum` no quede tapado al hacer scroll al fondo.
+
+### 8. Estados de progreso y variantes de badge
+
+| Estado | Texto | Variante de `Badge` |
+| --- | --- | --- |
+| `low` | "Bajo" | `info` |
+| `in_progress` | "En progreso" | `primary` |
+| `complete` | "Completo" | `success` |
+
+Los badges no dependen sólo del color: el texto va siempre explícito.
+
+### 9. Accesibilidad
+
+- `<h1>` en `PageHeader`, `<h2>` por `AlbumCard` con id estable.
+- `aria-label` en el `<ul>` describe la colección ("Mis álbumes" /
+  "Álbumes disponibles").
+- El placeholder es decorativo (`aria-hidden` + `sr-only`); la
+  portada real lleva `alt={`Portada de ${title}`}`.
+- `--album-focus` sigue activo por defecto para todos los enlaces y
+  botones de la card.
+
+### 10. Reglas de guard
+
+- `scripts/centralization.test.ts` extiende `KEY_FILES` con los
+  nuevos archivos productivos. La guard `<svg|linearGradient|data:image/`
+  protege específicamente a `album-cover.tsx`.
+- Los gates `npm run lint`, `npm run test`, `npm run build` y
+  `git diff --check` deben pasar en local.
+
+### 11. QA visual pendiente
+
+Sin navegador en este entorno, la QA visual a 375 px / 768 px /
+desktop × light/dark queda pendiente y se documenta en
+`FINAL_REPORT.md`. La verificación contractual se realiza con
+Vitest + los gates mencionados.
+
+Casos visuales a validar manualmente:
+
+- grid responsive de `/app` y `/app/albums` en 375 / 768 / desktop;
+- placeholder de `AlbumCover` con iniciales correctas y sin contraste roto;
+- portada real con `alt` descriptivo y `object-cover`;
+- hover / focus sobre la card: sombra cambia y vuelve al salir;
+- badge `Bajo` / `En progreso` / `Completo` por porcentaje;
+- agregar álbum desde `/app/albums`: botón pasa a "Añadiendo…" y el
+  error se muestra como `InlineMessage` si lo hay;
+- quitar álbum desde la card de detalle: modal UI-05A intacto;
+- dock móvil no tapa el último `Abrir álbum` al scrollear al fondo;
+- lector de pantalla anuncia `<h2>` por card y `aria-label` por `<ul>`.
+
+### 12. Estado y gates
+
+- Estado final del task: `READY_FOR_UI_05B_ALBUM_LIBRARY_REVIEW`.
+- Sin `git add`, `commit`, `push`, `PR`, `merge` ni `deploy`.
