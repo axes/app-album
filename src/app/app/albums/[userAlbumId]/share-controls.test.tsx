@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const mocks = vi.hoisted(() => ({
@@ -38,6 +38,18 @@ afterEach(() => {
 
 const TOKEN = "a".repeat(43);
 
+/**
+ * Drains the microtask queue so the async `copy()` handler settles while fake
+ * timers are installed. `waitFor` cannot be used there: it polls with
+ * `setInterval`, which fake timers freeze.
+ */
+async function flushMicrotasks() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+
 describe("ShareControls", () => {
   it("offers activation when sharing is disabled", async () => {
     const user = userEvent.setup();
@@ -67,7 +79,65 @@ describe("ShareControls", () => {
 
     await user.click(screen.getByRole("button", { name: "Copiar enlace" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/share/${TOKEN}`));
-    expect(screen.getByRole("button", { name: "Copiado" })).toBeTruthy();
+
+    // The trigger keeps a stable label, so the target never moves or resizes.
+    expect(screen.getByRole("button", { name: "Copiar enlace" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+    // The outcome is announced through a polite live region instead.
+    expect(screen.getByRole("status").textContent).toBe("Enlace copiado");
+  });
+
+  it("auto-hides the copy confirmation after the feedback window", async () => {
+    vi.useFakeTimers();
+    try {
+      const writeText = vi.fn(async () => undefined);
+      mockClipboard(writeText);
+      render(<ShareControls sharing={{ enabled: true, token: TOKEN }} userAlbumId="collection-1" />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Copiar enlace" }));
+      await flushMicrotasks();
+
+      expect(screen.getByRole("status").textContent).toBe("Enlace copiado");
+
+      // Still on screen one second in…
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(screen.getByRole("status")).toBeTruthy();
+
+      // …and gone well before three seconds, without touching the trigger.
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(screen.getByRole("button", { name: "Copiar enlace" })).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("clears the pending feedback timer when the panel unmounts", async () => {
+    vi.useFakeTimers();
+    try {
+      const writeText = vi.fn(async () => undefined);
+      mockClipboard(writeText);
+      const { unmount } = render(
+        <ShareControls sharing={{ enabled: true, token: TOKEN }} userAlbumId="collection-1" />,
+      );
+
+      const before = vi.getTimerCount();
+      fireEvent.click(screen.getByRole("button", { name: "Copiar enlace" }));
+      await flushMicrotasks();
+
+      // The auto-hide timer is the only one this component owns.
+      expect(vi.getTimerCount()).toBe(before + 1);
+
+      unmount();
+
+      expect(vi.getTimerCount()).toBe(before);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps the readonly input selected as a fallback when the clipboard rejects", async () => {
@@ -87,6 +157,8 @@ describe("ShareControls", () => {
     await waitFor(() => expect(input.selectionStart).toBe(0));
     expect(input.selectionEnd).toBe(input.value.length);
     expect(screen.getByRole("button", { name: "Copiar enlace" })).toBeTruthy();
+    // A rejected write must not claim success.
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("falls back to the selected input when the Clipboard API is unavailable", async () => {

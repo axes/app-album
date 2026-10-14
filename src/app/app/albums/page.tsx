@@ -29,7 +29,7 @@ export default async function AlbumsPage() {
         description="Álbumes publicados disponibles para tu colección."
       />
       {albums.length === 0 ? (
-        <EmptyState title="No hay álbumes publicados disponibles." />
+        <EmptyState title="No hay álbumes disponibles" />
       ) : (
         <ul
           aria-label="Álbumes disponibles"

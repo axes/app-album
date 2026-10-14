@@ -13,6 +13,12 @@ describe("EmptyState", () => {
     expect(screen.getByText("Sin álbumes")).toBeTruthy();
   });
 
+  it("renders the title as a semantic heading", () => {
+    render(<EmptyState title="Sin álbumes" />);
+
+    expect(screen.getByRole("heading", { level: 2, name: "Sin álbumes" })).toBeTruthy();
+  });
+
   it("renders the optional description, action and icon", () => {
     render(
       <EmptyState

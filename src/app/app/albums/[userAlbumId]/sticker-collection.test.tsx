@@ -154,4 +154,19 @@ describe("StickerCollection", () => {
     render(<StickerCollection groups={[]} userAlbumId="collection-1" />);
     expect(screen.getByText("No hay láminas")).toBeTruthy();
   });
+
+  it("adds no redundant feedback to the quantity controls", async () => {
+    const user = userEvent.setup();
+    renderCollection();
+
+    await user.click(screen.getByRole("button", { name: "Añadir copia de lámina 004" }));
+    await waitFor(() => expect(mocks.adjustQuantityAction).toHaveBeenCalledTimes(1));
+
+    // The optimistic count, the state label and the colour tint are the whole
+    // feedback contract for quantity changes: no toast, no alert, no live
+    // region, and no copy-style confirmation text.
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByText(/copiado/i)).toBeNull();
+  });
 });

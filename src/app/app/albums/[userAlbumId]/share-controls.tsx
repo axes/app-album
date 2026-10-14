@@ -1,9 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { ShareState } from "@/lib/collection/service";
+import { InlineMessage } from "@/components/ui/inline-message";
 import { disableSharingAction, enableSharingAction } from "../actions";
+
+/**
+ * How long the "Enlace copiado" confirmation stays on screen. Writing to the
+ * clipboard produces no visible result of its own, so the panel confirms it
+ * explicitly and then returns to its resting state.
+ */
+const COPY_FEEDBACK_MS = 2500;
 
 function SubmitButton({ label, pendingLabel, className }: { label: string; pendingLabel: string; className: string }) {
   const { pending } = useFormStatus();
@@ -19,11 +27,24 @@ function SubmitButton({ label, pendingLabel, className }: { label: string; pendi
  * relative path so the server never needs to know the public origin; the copy
  * button resolves it against `window.location.origin` and the readonly input
  * remains as a manual fallback when the Clipboard API is unavailable.
+ *
+ * The copy trigger keeps a stable label so the target never moves or resizes;
+ * the outcome is announced through an `InlineMessage` (`role="status"`, which
+ * implies `aria-live="polite"`) that auto-hides after `COPY_FEEDBACK_MS`.
  */
 export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; sharing: ShareState }) {
   const input = useRef<HTMLInputElement>(null);
   const [copied, setCopied] = useState(false);
   const path = sharing.token ? `/share/${sharing.token}` : null;
+
+  // Auto-hide the confirmation. The cleanup clears the pending timer on
+  // unmount and whenever the window restarts, so no stale timeout can flip
+  // the state after the panel is gone.
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   async function copy() {
     if (!path) return;
@@ -58,7 +79,7 @@ export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; s
               onClick={copy}
               type="button"
             >
-              {copied ? "Copiado" : "Copiar enlace"}
+              Copiar enlace
             </button>
             <form action={disableSharingAction}>
               <input name="userAlbumId" type="hidden" value={userAlbumId} />
@@ -69,6 +90,9 @@ export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; s
               />
             </form>
           </div>
+          {copied ? (
+            <InlineMessage variant="success">Enlace copiado</InlineMessage>
+          ) : null}
         </div>
       ) : (
         <div className="mt-2 flex flex-wrap items-center gap-2">

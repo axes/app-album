@@ -75,8 +75,11 @@ describe("/app/albums Server Component", () => {
     const text = renderToStaticMarkup(await AlbumsPage());
 
     expect(text).toContain("Explorar álbumes");
-    expect(text).toContain("No hay álbumes publicados disponibles.");
+    expect(text).toContain("No hay álbumes disponibles");
     expect(text).not.toContain("aria-label=\"Álbumes disponibles\"");
+    // The empty state offers no action: there is nothing useful to do when
+    // nothing is published, so "Explorar álbumes" stays as the page title only.
+    expect(text.match(/Explorar álbumes/g)).toHaveLength(1);
   });
 
   it("renders the in-collection variant with badge and link when userAlbumId is set", async () => {
