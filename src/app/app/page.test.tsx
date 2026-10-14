@@ -89,7 +89,8 @@ describe("/app Server Component", () => {
     expect(mocks.redirect).not.toHaveBeenCalled();
     expect(text).toContain("Mis álbumes");
     expect(text).toContain("Colección de erin");
-    expect(text).toContain("Todavía no tienes álbumes en tu colección.");
+    expect(text).toContain("Tu colección está vacía");
+    expect(text).toContain("Hola, erin. Añade tu primer álbum para empezar a registrar tus láminas.");
     expect(text).toContain("Explorar álbumes");
     expect(text).toContain('href="/app/albums"');
   });

@@ -18,11 +18,11 @@ export type EmptyLibraryProps = {
 export function EmptyLibrary({ username }: EmptyLibraryProps) {
   return (
     <EmptyState
-      title="Todavía no tienes álbumes en tu colección."
+      title="Tu colección está vacía"
       description={
         username
-          ? `Hola, ${username}. Empieza explorando el catálogo.`
-          : "Empieza explorando el catálogo."
+          ? `Hola, ${username}. Añade tu primer álbum para empezar a registrar tus láminas.`
+          : "Añade tu primer álbum para empezar a registrar tus láminas."
       }
       icon={<LogoPlaceholder className="size-16" />}
       action={

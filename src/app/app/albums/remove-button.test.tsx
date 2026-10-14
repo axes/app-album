@@ -44,6 +44,13 @@ describe("RemoveAlbumButton", () => {
     removeAlbumActionMock.mockResolvedValue(undefined);
   });
 
+  it("uses a valid responsive calc width", () => {
+    render(<RemoveAlbumButton userAlbumId={userAlbumId} />);
+    const dialog = screen.getByTestId("remove-album-confirm");
+    expect(dialog.className).toContain("w-[calc(100%_-_2rem)]");
+    expect(dialog.className).not.toContain("w-[calc(100%-2rem)]");
+  });
+
   it("does not call the Server Action on the first click", () => {
     render(<RemoveAlbumButton userAlbumId={userAlbumId} />);
 

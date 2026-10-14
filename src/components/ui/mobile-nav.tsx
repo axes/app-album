@@ -62,7 +62,14 @@ export const MOBILE_NAV_ITEMS: readonly MobileNavItem[] = [
   { href: "/app/albums", label: "Explorar", icon: exploreIcon() },
 ] as const;
 
-export function MobileNav() {
+export const ADMIN_MOBILE_NAV_ITEMS: readonly MobileNavItem[] = [
+  ...MOBILE_NAV_ITEMS,
+  { href: "/admin/albums", label: "Álbumes", icon: homeIcon() },
+  { href: "/admin/users", label: "Usuarios", icon: exploreIcon() },
+] as const;
+
+export function MobileNav({ role = "user" }: { role?: "user" | "admin" }) {
+  const items = role === "admin" ? ADMIN_MOBILE_NAV_ITEMS : MOBILE_NAV_ITEMS;
   return (
     <nav
       aria-label="Navegación inferior"
@@ -72,10 +79,10 @@ export function MobileNav() {
       <ul
         className="mobile-nav-grid"
         style={{
-          gridTemplateColumns: `repeat(${MOBILE_NAV_ITEMS.length}, minmax(0, 1fr))`,
+          gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
         }}
       >
-        {MOBILE_NAV_ITEMS.map((item) => (
+        {items.map((item) => (
           <li key={item.href} className="mobile-nav-slot">
             <NavLink
               href={item.href}

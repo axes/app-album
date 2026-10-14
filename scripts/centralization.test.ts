@@ -29,6 +29,16 @@ const KEY_FILES = [
   "src/app/app/albums/page.tsx",
   "src/app/app/albums/add-button.tsx",
   "src/app/app/progress.tsx",
+  // UI-05C: collection detail and sticker consumers.
+  "src/app/app/albums/[userAlbumId]/page.tsx",
+  "src/app/app/albums/[userAlbumId]/album-detail-hero.tsx",
+  "src/components/albums/collection-summary.tsx",
+  "src/app/app/albums/[userAlbumId]/view-toggle.tsx",
+  "src/app/app/albums/[userAlbumId]/sticker-section.tsx",
+  "src/app/app/albums/[userAlbumId]/sticker-card.tsx",
+  "src/app/app/albums/[userAlbumId]/sticker-collection.tsx",
+  "src/app/app/albums/[userAlbumId]/share-controls.tsx",
+  "src/app/app/albums/quantity-button.tsx",
 ];
 
 // Concrete CSS colours belong to ui-tokens.ts. Patterns deliberately ignore
@@ -114,5 +124,13 @@ describe("UI-04A.3 token centralization", () => {
     expect(source).not.toMatch(/<svg\b/i);
     expect(source).not.toMatch(/linearGradient/i);
     expect(source).not.toMatch(/data:image\//i);
+  });
+
+  it("keeps sticker state colours token-driven and never invents special state", () => {
+    const source = read("src/app/app/albums/[userAlbumId]/sticker-card.tsx");
+    expect(source).toContain("var(--album-sticker-missing)");
+    expect(source).toContain("var(--album-sticker-owned)");
+    expect(source).toContain("var(--album-sticker-duplicate)");
+    expect(source).not.toMatch(/album-sticker-special|<svg\b|data:image\//i);
   });
 });

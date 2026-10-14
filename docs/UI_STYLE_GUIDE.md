@@ -277,6 +277,15 @@ Forma y motion se centralizan como `radiusControl` (12 px), `radiusCard`
 (20 px), `radiusSticker` (14 px), `radiusPill`, `shadowSm/Md/Lg`,
 `motionFast` (150 ms), `motionNormal` (200 ms) y `motionSpin` (800 ms).
 
+La escala de radios se emite como `--album-radius-control`,
+`--album-radius-card`, `--album-radius-sticker` y `--album-radius-pill`, y
+`@theme static` la mapea a Tailwind (`--radius-control: var(--album-radius-control)`,
+…). El prefijo `--album-` es obligatorio: el namespace `--radius-*` de Tailwind
+es el que genera las utilidades `rounded-control`, `rounded-card`,
+`rounded-sticker` y `rounded-pill`, así que declarar un `--radius-control`
+literal en `tokens.css` colisionaría con ese mapeo y dejaría las utilidades sin
+generar. Los valores siguen viviendo una sola vez en `scripts/ui-tokens.ts`.
+
 ### Lenguaje visual cubierto
 
 - cabecera editorial compacta y placeholder cuadrado token-driven, reutilizado
@@ -338,8 +347,8 @@ ve afectado.
 `:root,[data-theme="light"] { ... }` y
 `[data-theme="dark"],.dark { ... }` leyendo exclusivamente de los
 exports `productive*`. Declara los `--album-*` y los `--color-*`
-(Tailwind) y los `--radius-control`, `--radius-card`,
-`--radius-sticker`, `--radius-pill`, `--shadow-sm`, `--shadow-md`,
+(Tailwind) y los `--album-radius-control`, `--album-radius-card`,
+`--album-radius-sticker`, `--album-radius-pill`, `--shadow-sm`, `--shadow-md`,
 `--shadow-lg` y `--motion-*`.
 
 `npm run ui:export` se extiende con un sub-paso que escribe
@@ -649,3 +658,24 @@ Casos visuales a validar manualmente:
 
 - Estado final del task: `READY_FOR_UI_05B_ALBUM_LIBRARY_REVIEW`.
 - Sin `git add`, `commit`, `push`, `PR`, `merge` ni `deploy`.
+
+
+## UI-05C — Detalle de colección y mosaico de láminas
+
+La ruta `/app/albums/[userAlbumId]` usa una composición editorial abierta: portada 3:4 contenida, identidad y acciones separadas por ritmo y bordes, sin una card envolvente. `CollectionSummary`, mediante `AlbumProgress detailed`, es la única fuente visible de `X / Y`, porcentaje, faltantes y repetidas. Sharing se integra como zona secundaria sin panel anidado y el modal existente de quitar álbum permanece intacto.
+
+El selector Mosaico/Lista es un control segmentado con `aria-pressed`, foco visible y targets mínimos de 44 px. Las secciones exponen nombre, `X / Y`, affordance y `aria-expanded`; la primera empieza abierta y el resto colapsadas, conservando el control manual.
+
+El mosaico usa un grid automático `repeat(auto-fill, minmax(7rem, 1fr))` con `gap-3 p-3`: las columnas se derivan del ancho real (2 en móvil, 6 en tablet y 7–8 en desktop) y las cards quedan entre ~114 y ~155 px, sin estirarse para llenar la fila. La lista se apila en móvil.
+
+Los estados de lámina se derivan exclusivamente de `quantity` y cada uno define su propio tratamiento visual, siempre a partir de su token:
+
+| `quantity` | Estado | Superficie y borde | Etiqueta |
+| --- | --- | --- | --- |
+| `0` | **Faltante** | `bg-surface-muted` con `border-dashed`, sin franja | `Faltante` en `text-muted` |
+| `1` | **Obtenida** | `color-mix()` 10 % de `--album-sticker-owned` sobre la superficie y 40 % sobre el borde, franja superior | `Obtenida` en `text-success` |
+| `>1` | **Repetida** | `color-mix()` 18 % de `--album-sticker-duplicate` sobre la superficie y 65 % sobre el borde, franja superior | `Repetida · {quantity} copias` en `text-accent`, el estado más llamativo |
+
+No existe estado Especial en producto. La card prioriza número, estado, cantidad y controles, sin `min-height` fijo. En el mosaico los dos controles comparten el ancho de la card (`flex-1` + `w-full`) y la cantidad vive en la etiqueta de estado; en la lista se conserva el contador explícito entre ambos. Los controles mantienen formularios separados, límites 0/1000, payloads existentes y labels `Añadir copia de lámina {code}` / `Quitar copia de lámina {code}`; el área táctil real nunca baja de 44 px.
+
+No se usan HEX/RGB ni modificadores de opacidad Tailwind sobre colores variables. La QA visual pendiente cubre 375 px, 768 px y desktop en light/dark, incluido el espacio protegido por el dock móvil.

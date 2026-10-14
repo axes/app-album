@@ -30,8 +30,18 @@ describe("build-ui-tokens-css UI-05A productive tokens", () => {
       expect(css).toContain(productiveColorTokens[key].light);
       expect(css).toContain(productiveColorTokens[key].dark);
     }
-    expect(css).toContain(`--radius-control: ${productiveRadiusTokens.radiusControl}`);
-    expect(css).toContain(`--radius-card: ${productiveRadiusTokens.radiusCard}`);
+    expect(css).toContain(
+      `--album-radius-control: ${productiveRadiusTokens.radiusControl}`,
+    );
+    expect(css).toContain(
+      `--album-radius-card: ${productiveRadiusTokens.radiusCard}`,
+    );
+    expect(css).toContain(
+      `--album-radius-sticker: ${productiveRadiusTokens.radiusSticker}`,
+    );
+    expect(css).toContain(
+      `--album-radius-pill: ${productiveRadiusTokens.radiusPill}`,
+    );
     expect(css).toContain(
       `--shadow-sm: ${productiveShadowTokens.shadowSm.light}`,
     );
@@ -44,6 +54,14 @@ describe("build-ui-tokens-css UI-05A productive tokens", () => {
     expect(css).toContain(
       `--font-display: ${productiveTypographyTokens.fontDisplay}`,
     );
+  });
+
+  it("keeps the radius scale out of Tailwind's own --radius-* namespace", () => {
+    const css = buildProductiveTokensCss();
+    // Tailwind's `--radius-*` namespace owns the `rounded-*` utilities. A bare
+    // `--radius-control` in this sheet would collide with the `@theme static`
+    // mapping in `globals.css` and silently leave the utilities ungenerated.
+    expect(css).not.toMatch(/^\s*--radius-(control|card|sticker|pill):/m);
   });
 
   it("matches the versioned src/styles/tokens.css byte-for-byte", () => {

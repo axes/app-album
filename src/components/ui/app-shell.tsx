@@ -3,7 +3,11 @@ import { logoutAction } from "@/app/logout/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./button";
 import { LogoPlaceholder } from "./logo-placeholder";
-import { MobileNav, MOBILE_NAV_ITEMS } from "./mobile-nav";
+import {
+  ADMIN_MOBILE_NAV_ITEMS,
+  MobileNav,
+  MOBILE_NAV_ITEMS,
+} from "./mobile-nav";
 import { NavLink } from "./nav-link";
 
 /**
@@ -51,6 +55,12 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
         .filter(Boolean)
         .join(" ")}
     >
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-control bg-surface px-4 py-3 text-content shadow-lg focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Saltar al contenido
+      </a>
       <header className="app-shell-header border-b border-border bg-surface">
         <div className="app-shell-header-inner mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-3">
           <NavLink
@@ -118,17 +128,23 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
         </div>
       </header>
 
-      <main className="app-shell-main mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 pb-24 md:pb-6">
+      <main id="main-content" className="app-shell-main mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 pb-24 md:pb-6">
         {children}
       </main>
 
-      <div
-        className="app-shell-dock md:hidden"
-        data-component="app-shell-dock"
-        data-item-count={MOBILE_NAV_ITEMS.length}
-      >
-        <MobileNav />
-      </div>
+      {user ? (
+        <div
+          className="app-shell-dock md:hidden"
+          data-component="app-shell-dock"
+          data-item-count={
+            user.role === "admin"
+              ? ADMIN_MOBILE_NAV_ITEMS.length
+              : MOBILE_NAV_ITEMS.length
+          }
+        >
+          <MobileNav role={user.role} />
+        </div>
+      ) : null}
     </div>
   );
 }

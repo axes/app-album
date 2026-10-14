@@ -4,12 +4,14 @@ import {
   useActionState,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
   useTransition,
 } from "react";
 import type { Sticker } from "@/lib/catalog/service";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 import {
   bulkAssignStickerSectionAction,
   bulkDeleteStickersAction,
@@ -78,18 +80,20 @@ function DeleteButton({ albumId, sticker }: { albumId: string; sticker: Sticker 
   );
   const label = `Eliminar lámina ${sticker.code}`;
   return (
-    <form
-      action={formAction}
-      className="inline"
-      onSubmit={(event) => {
-        if (!window.confirm(`¿Eliminar la lámina ${sticker.code}?`)) event.preventDefault();
-      }}
-    >
+    <form action={formAction} className="inline">
       <input type="hidden" name="albumId" value={albumId} />
       <input type="hidden" name="stickerId" value={sticker.id} />
-      <button className={dangerButton} disabled={pending} aria-label={label} title={label}>
-        Eliminar
-      </button>
+      <ConfirmAction
+        title={`¿Eliminar la lámina ${sticker.code}?`}
+        description="Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        pendingLabel="Eliminando…"
+        triggerLabel="Eliminar"
+        triggerAriaLabel={label}
+        triggerTitle={label}
+        triggerClassName={dangerButton}
+        pending={pending}
+      />
       {state.error ? <span className="sr-only">{state.error}</span> : null}
     </form>
   );
@@ -130,6 +134,7 @@ export function StickerTable({
   const [rangeError, setRangeError] = useState<string>();
   const [destination, setDestination] = useState<string>("");
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const deleteFormId = useId();
   const pageName = new Map(pages.map((page) => [page.id, page.name]));
 
   // Sort by visible position so the range picker matches what the user sees.
@@ -367,43 +372,31 @@ export function StickerTable({
             <button className={primaryButton} disabled={bulkPending}>
               Asignar
             </button>
-            <button
-              type="button"
-              className={dangerButton}
+            <ConfirmAction
+              title={
+                selected.size === 1
+                  ? "¿Eliminar la 1 lámina seleccionada?"
+                  : `¿Eliminar las ${selected.size} láminas seleccionadas?`
+              }
+              description="Esta acción no se puede deshacer."
+              confirmLabel="Eliminar seleccionadas"
+              pendingLabel="Eliminando…"
+              triggerLabel="Eliminar seleccionadas"
+              triggerClassName={dangerButton}
               disabled={bulkPending}
-              onClick={(event) => {
-                const form = (event.currentTarget.closest("form")?.parentElement)
-                  ?.querySelector("form[data-bulk-delete]") as HTMLFormElement | null;
-                const message =
-                  selected.size === 1
-                    ? "¿Eliminar la 1 lámina seleccionada?"
-                    : `¿Eliminar las ${selected.size} láminas seleccionadas?`;
-                if (!window.confirm(message)) event.preventDefault();
-                if (form) form.submit();
-              }}
-            >
-              Eliminar seleccionadas
-            </button>
+              pending={deletePending}
+              formId={deleteFormId}
+            />
           </div>
           {bulkError ? <span className="w-full text-xs text-danger">{bulkError}</span> : null}
-          {bulkSuccess ? <span className="w-full text-xs text-success">{assignState.success ?? deleteState.success}</span> : null}
+          {bulkSuccess ? <span className="w-full text-xs text-success" role="status">{assignState.success ?? deleteState.success}</span> : null}
         </form>
       ) : null}
 
       <form
+        id={deleteFormId}
         action={deleteAction}
         data-bulk-delete
-        onSubmit={(event) => {
-          if (selected.size === 0) {
-            event.preventDefault();
-            return;
-          }
-          const message =
-            selected.size === 1
-              ? "¿Eliminar la 1 lámina seleccionada?"
-              : `¿Eliminar las ${selected.size} láminas seleccionadas?`;
-          if (!window.confirm(message)) event.preventDefault();
-        }}
         className="hidden"
       >
         <input type="hidden" name="albumId" value={albumId} />
