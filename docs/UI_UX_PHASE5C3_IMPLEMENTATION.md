@@ -78,16 +78,18 @@ page.tsx                    RSC  ← intacto
        └─ StickerSection    client (ya existía)
             └─ StickerCard  client (ya existía) ← dueño del estado optimista
                  ├─ StickerMotionLayer  client (NUEVO, hoja decorativa)
-                 └─ QuantityControls → form ×2 → QuantityButton (intacto)
+                 └─ QuantityControls → form ×2 → QuantityButton (intent explícito)
 ```
 
 El estado optimista vive en `StickerCard` y no en un hijo porque el `<li>` que lleva el
 tinte de superficie es el nodo raíz de la card: si el estado viviera más abajo, el `<li>`
 seguiría pintando el color viejo hasta que llegara el RSC.
 
-`QuantityButton` no se modifica. El disparador es el `onClick` del `<form>`, que recibe
-el evento burbujeado desde el botón submit y corre antes del envío. El payload no cambia:
-el handler nunca construye `FormData` ni llama a la acción.
+`QuantityButton` expone un callback opcional `onIntent` y lo ejecuta sólo desde el click
+real del botón submit cuando no está deshabilitado ni pendiente. Los `<form>` no tienen
+`onClick`: hacer click en la card o en el espacio del formulario no cambia la cantidad.
+El formulario conserva la propiedad exclusiva de la Server Action; el payload no cambia
+y el cliente nunca llama manualmente a la acción.
 
 ---
 
@@ -303,11 +305,10 @@ a mitad de animación.
 1. **`animation.id` se escribe pero nunca se lee** (`sticker-card.tsx:191`). Se incrementa
    para forzar una nueva identidad de objeto, pero `setAnimation` ya crea un objeto nuevo
    en cada llamada, así que el efecto se re-ejecuta igual. Campo muerto, inofensivo.
-2. **El intent se dispara desde el `onClick` del `<form>`**, no del botón submit. En ambos
-   layouts la caja del form se ajusta al botón (ítem flex), así que no hay área vacía
-   práctica; unos pocos px de holgura de línea podrían disparar un intent sin envío, que
-   la red de seguridad de 5 s revertiría. Impacto bajo. Corregirlo exigiría tocar
-   `QuantityButton`, fuera de alcance.
+2. **Corregido tras el blocker de Preview:** el intent ya no se dispara desde el
+   `onClick` del `<form>`. Vive en el botón submit y sólo se ejecuta si el botón está
+   disponible (`!disabled && !pending`). Pruebas de regresión cubren clicks en card/form,
+   hover, focus, botón disabled, estado pending, render/RSC y cambio Mosaico/Lista.
 3. **`overflow-visible` en el contenedor del burst es inerte** porque el `<li>` padre tiene
    `overflow-hidden`. Con la geometría actual (máx. ±28 px horizontal y ±24 px vertical
    desde el centro, card ≥ ~112 px de ancho) las partículas quedan dentro. Clase muerta
@@ -348,14 +349,15 @@ ghost, ausencia de `aria-live`, y desmontaje de la capa decorativa.
 | `src/app/app/albums/[userAlbumId]/sticker-interaction.ts` | nuevo |
 | `src/app/app/albums/[userAlbumId]/sticker-motion-layer.tsx` | nuevo |
 | `src/app/app/albums/[userAlbumId]/sticker-card.tsx` | modificado |
+| `src/app/app/albums/quantity-button.tsx` | callback explícito para intent válido |
 | `src/app/globals.css` | keyframes + guardas de reduced motion |
 | `src/app/app/albums/[userAlbumId]/sticker-interaction.test.ts` | nuevo |
 | `src/app/app/albums/[userAlbumId]/sticker-motion.test.tsx` | nuevo |
 | `src/test/stubs/match-media.ts` | nuevo |
 | `docs/UI_UX_PHASE5C3_IMPLEMENTATION.md` | nuevo |
 
-No se tocaron: `actions.ts`, `quantity-button.tsx`, `sticker-collection.tsx`,
-`sticker-section.tsx`, `view-toggle.tsx`, `page.tsx`, `album-detail-hero.tsx`,
+No se tocaron: `actions.ts`, `sticker-collection.tsx`, `sticker-section.tsx`,
+`view-toggle.tsx`, `page.tsx`, `album-detail-hero.tsx`,
 `remove-button.tsx`, `share-controls.tsx`, `scripts/ui-tokens.ts`,
 `src/styles/tokens.css`, `src/components/ui/**`, DB, Drizzle, repositorios,
 `CollectionService` ni las reglas de cantidad.

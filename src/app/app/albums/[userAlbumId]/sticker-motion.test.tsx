@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const mocks = vi.hoisted(() => {
@@ -34,6 +34,7 @@ import { CLEAR_MS, OPTIMISTIC_TIMEOUT_MS } from "./sticker-interaction";
 
 beforeEach(() => {
   stubMatchMedia(false);
+  mocks.adjustQuantityAction.mockImplementation(async () => undefined);
 });
 
 afterEach(() => {
@@ -69,6 +70,129 @@ const ghosts = () => document.querySelectorAll(".sticker-ghost").length;
 function click(element: HTMLElement) {
   fireEvent.click(element);
 }
+
+describe("StickerCard valid intent source", () => {
+  it("stays missing after rendering and waiting", async () => {
+    renderCard(0);
+
+    await waitFor(() => expect(screen.getByText("Faltante")).toBeTruthy());
+
+    expect(screen.queryByText("Obtenida")).toBeNull();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("does not change when the card is clicked outside its controls", () => {
+    renderCard(0);
+    const card = screen.getByText("Faltante").closest("li");
+    expect(card).not.toBeNull();
+
+    fireEvent.click(card!);
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("does not change when the form itself is clicked outside the button", () => {
+    renderCard(0);
+    const form = addButton().closest("form");
+    expect(form).not.toBeNull();
+
+    fireEvent.click(form!);
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("does not change when the add button receives focus", () => {
+    renderCard(0);
+
+    addButton().focus();
+
+    expect(document.activeElement).toBe(addButton());
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("does not change on card or button hover", async () => {
+    const user = userEvent.setup();
+    renderCard(0);
+    const card = screen.getByText("Faltante").closest("li");
+    expect(card).not.toBeNull();
+
+    await user.hover(card!);
+    await user.hover(addButton());
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("changes from missing to obtained only after a valid add click", async () => {
+    const user = userEvent.setup();
+    renderCard(0);
+
+    await user.click(addButton());
+
+    expect(screen.getByText("Obtenida")).toBeTruthy();
+  });
+
+  it("ignores a click on the disabled decrement button", async () => {
+    const user = userEvent.setup();
+    renderCard(0);
+
+    expect((removeButton() as HTMLButtonElement).disabled).toBe(true);
+    await user.click(removeButton());
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("does not increment optimistically again while the form is pending", async () => {
+    mocks.adjustQuantityAction.mockImplementation(() => new Promise<void>(() => {}));
+    const user = userEvent.setup();
+    renderCard(0);
+
+    await user.click(addButton());
+    expect(screen.getByText("Obtenida")).toBeTruthy();
+    await waitFor(() => expect((addButton() as HTMLButtonElement).disabled).toBe(true));
+
+    await user.click(addButton());
+
+    expect(screen.getByText("Obtenida")).toBeTruthy();
+    expect(screen.queryByText("Repetida · 2 copias")).toBeNull();
+  });
+
+  it("does not change on initial render or rerender with the same prop", () => {
+    const { rerender } = renderCard(0);
+
+    rerenderCard(rerender, 0);
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("does not create optimistic state when a section is opened or closed", () => {
+    const { unmount } = renderCard(0);
+
+    // Closing a section unmounts the card; opening it mounts the same server
+    // value again. Neither lifecycle step is a quantity intent.
+    unmount();
+    renderCard(0);
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+
+  it("does not create optimistic state when switching between grid and list", () => {
+    const { rerender } = renderCard(0, "grid");
+
+    rerenderCard(rerender, 0, "list");
+    expect(screen.getByText("Faltante")).toBeTruthy();
+
+    rerenderCard(rerender, 0, "grid");
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(mocks.animate).not.toHaveBeenCalled();
+  });
+});
 
 describe("StickerCard interaction feedback", () => {
   it("celebrates the first copy with a burst and a card pop", async () => {
@@ -148,47 +272,23 @@ describe("StickerCard interaction feedback", () => {
     expect(screen.getByText("Obtenida")).toBeTruthy();
   });
 
-  it("does not accumulate animations across rapid clicks", async () => {
+  it("does not accumulate intent or animation from repeated clicks while pending", async () => {
+    mocks.adjustQuantityAction.mockImplementation(() => new Promise<void>(() => {}));
     const user = userEvent.setup();
     renderCard(0);
 
     await user.click(addButton());
-    expect(particles()).toBe(6);
-
-    await user.click(addButton());
-    expect(particles()).toBe(0);
-    expect(ghosts()).toBe(1);
-
-    await user.click(addButton());
-    expect(particles()).toBe(0);
-    expect(ghosts()).toBe(0);
-
-    const stopped = mocks.stops.filter((stop) => stop.mock.calls.length > 0).length;
-    expect(stopped).toBeGreaterThanOrEqual(2);
-    // The real invariant: at most one animation is ever in flight.
-    expect(mocks.stops.filter((stop) => stop.mock.calls.length === 0).length).toBeLessThanOrEqual(1);
-  });
-
-  it("handles alternating increment and decrement without accumulating", async () => {
-    const user = userEvent.setup();
-    renderCard(1);
-
-    // `+` and `−` live in separate forms, so each has its own pending state and
-    // both stay clickable while the other is in flight. This is the realistic
-    // rapid-click path.
-    await user.click(addButton());
-    expect(screen.getByText("Repetida · 2 copias")).toBeTruthy();
-
-    await user.click(removeButton());
     expect(screen.getByText("Obtenida")).toBeTruthy();
+    expect(particles()).toBe(6);
+    await waitFor(() => expect((addButton() as HTMLButtonElement).disabled).toBe(true));
 
     await user.click(addButton());
-    expect(screen.getByText("Repetida · 2 copias")).toBeTruthy();
+    await user.click(addButton());
 
-    expect(particles()).toBe(0);
-    expect(ghosts()).toBe(1);
-    // At most one animation in flight, even when `+` and `−` interleave.
-    expect(mocks.stops.filter((stop) => stop.mock.calls.length === 0).length).toBeLessThanOrEqual(1);
+    expect(screen.getByText("Obtenida")).toBeTruthy();
+    expect(screen.queryByText("Repetida · 2 copias")).toBeNull();
+    expect(mocks.animate).toHaveBeenCalledTimes(2);
+    expect(particles()).toBe(6);
   });
 
   it("skips every decorative effect under reduced motion", async () => {
@@ -263,45 +363,44 @@ describe("StickerCard optimistic overlay", () => {
     click(addButton());
     expect(screen.getByText("Obtenida")).toBeTruthy();
 
-    await vi.advanceTimersByTimeAsync(OPTIMISTIC_TIMEOUT_MS);
+    await act(() => vi.advanceTimersByTimeAsync(OPTIMISTIC_TIMEOUT_MS));
 
     expect(screen.getByText("Faltante")).toBeTruthy();
     expect(screen.queryByText("Obtenida")).toBeNull();
   });
 
-  it("clears the safety timer so a stale rollback cannot clobber a newer value", async () => {
+  it("clears the safety timer so a stale rollback cannot clobber the server value", async () => {
     vi.useFakeTimers();
     const { rerender } = renderCard(0);
 
     click(addButton());
-    await vi.advanceTimersByTimeAsync(4000);
+    await act(() => vi.advanceTimersByTimeAsync(4000));
 
-    // The server confirms: the pending rollback for the first click must die.
+    // The server confirms: the pending rollback for the click must die.
     rerenderCard(rerender, 1);
     expect(screen.getByText("Obtenida")).toBeTruthy();
 
-    click(addButton());
-    expect(screen.getByText("Repetida · 2 copias")).toBeTruthy();
-
-    // 6000 ms since the first click. A surviving timer would have fired at
-    // 5000 ms and reverted the card to a single copy.
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(screen.getByText("Repetida · 2 copias")).toBeTruthy();
+    // 6000 ms since the click. A surviving timer would have fired at 5000 ms.
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(screen.getByText("Obtenida")).toBeTruthy();
   });
 
-  it("restarts the safety window on every click", async () => {
+  it("does not restart the safety window from a blocked pending click", async () => {
     vi.useFakeTimers();
+    mocks.adjustQuantityAction.mockImplementation(() => new Promise<void>(() => {}));
     renderCard(0);
 
     click(addButton());
-    await vi.advanceTimersByTimeAsync(OPTIMISTIC_TIMEOUT_MS - 100);
+    expect(screen.getByText("Obtenida")).toBeTruthy();
+    expect((addButton() as HTMLButtonElement).disabled).toBe(true);
+
+    await act(() => vi.advanceTimersByTimeAsync(OPTIMISTIC_TIMEOUT_MS - 100));
     click(addButton());
+    expect(screen.queryByText("Repetida · 2 copias")).toBeNull();
 
-    // The second click restarted the window, so the first one cannot expire yet.
-    await vi.advanceTimersByTimeAsync(200);
-    expect(screen.getByText("Repetida · 2 copias")).toBeTruthy();
-
-    await vi.advanceTimersByTimeAsync(OPTIMISTIC_TIMEOUT_MS);
+    // The blocked click cannot restart the timeout. The original optimistic
+    // value therefore rolls back at its original deadline.
+    await act(() => vi.advanceTimersByTimeAsync(200));
     expect(screen.getByText("Faltante")).toBeTruthy();
   });
 
@@ -370,7 +469,7 @@ describe("StickerCard decorative layer accessibility", () => {
     click(addButton());
     expect(particles()).toBe(6);
 
-    await vi.advanceTimersByTimeAsync(CLEAR_MS.obtained);
+    await act(() => vi.advanceTimersByTimeAsync(CLEAR_MS.obtained));
 
     expect(particles()).toBe(0);
     expect(ghosts()).toBe(0);

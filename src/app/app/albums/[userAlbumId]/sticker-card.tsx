@@ -74,9 +74,10 @@ function QuantityFields({ userAlbumId, stickerId, change }: { userAlbumId: strin
  * and the count lives in the state label, so the row never overflows a
  * ~112 px track. The list layout keeps the explicit counter between them.
  *
- * UI-05C.3 — `onIntent` runs on the form's `click`, which bubbles from the
- * submit button and fires before the form is submitted. The payload is
- * untouched: the handler never builds `FormData` and never calls the action.
+ * UI-05C.3 — `onIntent` belongs to the real submit button, not to the form.
+ * It therefore runs only for an explicit valid `+` or `−` click and never for
+ * clicks on the card or form spacing. The form remains the sole owner of the
+ * Server Action; the payload and submission path are untouched.
  */
 function QuantityControls({
   sticker,
@@ -93,16 +94,16 @@ function QuantityControls({
 }) {
   return (
     <div className={`flex items-center ${stretch ? "gap-1" : "gap-2"}`}>
-      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined} onClick={() => onIntent("decrement")}>
+      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
         <QuantityFields change="decrement" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={displayed === 0} label={`Quitar copia de lámina ${sticker.code}`} stretch={stretch}>−</QuantityButton>
+        <QuantityButton disabled={displayed === 0} label={`Quitar copia de lámina ${sticker.code}`} onIntent={() => onIntent("decrement")} stretch={stretch}>−</QuantityButton>
       </form>
       {stretch ? null : (
         <span aria-label={`${displayed} copias`} className="min-w-7 text-center font-semibold tabular-nums">{displayed}</span>
       )}
-      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined} onClick={() => onIntent("increment")}>
+      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
         <QuantityFields change="increment" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={displayed >= 1000} label={`Añadir copia de lámina ${sticker.code}`} stretch={stretch}>+</QuantityButton>
+        <QuantityButton disabled={displayed >= 1000} label={`Añadir copia de lámina ${sticker.code}`} onIntent={() => onIntent("increment")} stretch={stretch}>+</QuantityButton>
       </form>
     </div>
   );
