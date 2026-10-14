@@ -77,17 +77,26 @@ function QuantityFields({ userAlbumId, stickerId, change }: { userAlbumId: strin
  * It therefore runs only for an explicit valid `+` or `−` click and never for
  * clicks on the card or form spacing. The form remains the sole owner of the
  * Server Action; the payload and submission path are untouched.
+ *
+ * `disabled` is derived from the authoritative server quantity, never from the
+ * optimistic `displayed` value. If the button flipped to `disabled` while the
+ * optimistic update was being committed, the browser would cancel the pending
+ * form submission and the Server Action would never run — which is exactly how
+ * a `1 → 0` decrement used to be lost. The optimistic value still drives the
+ * label and the counter, so the feedback stays immediate.
  */
 function QuantityControls({
   sticker,
   userAlbumId,
   displayed,
+  serverQuantity,
   stretch = false,
   onIntent,
 }: {
   sticker: Sticker;
   userAlbumId: string;
   displayed: number;
+  serverQuantity: number;
   stretch?: boolean;
   onIntent: (change: "increment" | "decrement") => void;
 }) {
@@ -95,14 +104,14 @@ function QuantityControls({
     <div className={`flex items-center ${stretch ? "gap-1" : "gap-2"}`}>
       <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
         <QuantityFields change="decrement" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={displayed === 0} label={`Quitar copia de lámina ${sticker.code}`} onIntent={() => onIntent("decrement")} stretch={stretch}>−</QuantityButton>
+        <QuantityButton disabled={serverQuantity === 0} label={`Quitar copia de lámina ${sticker.code}`} onIntent={() => onIntent("decrement")} stretch={stretch}>−</QuantityButton>
       </form>
       {stretch ? null : (
         <span aria-label={`${displayed} copias`} className="min-w-7 text-center font-semibold tabular-nums">{displayed}</span>
       )}
       <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
         <QuantityFields change="increment" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={displayed >= 1000} label={`Añadir copia de lámina ${sticker.code}`} onIntent={() => onIntent("increment")} stretch={stretch}>+</QuantityButton>
+        <QuantityButton disabled={serverQuantity >= 1000} label={`Añadir copia de lámina ${sticker.code}`} onIntent={() => onIntent("increment")} stretch={stretch}>+</QuantityButton>
       </form>
     </div>
   );
@@ -176,7 +185,9 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
   function handleIntent(change: "increment" | "decrement") {
     const from = displayed;
     const to = change === "increment" ? from + 1 : from - 1;
-    setOptimistic(to);
+    // The overlay is clamped at zero so a repeated decrement can never render a
+    // negative quantity. The server remains the authority on the real value.
+    setOptimistic(Math.max(0, to));
     setAnimation((previous) => ({ id: (previous?.id ?? 0) + 1, intent: intentFor(from, to) }));
   }
 
@@ -200,7 +211,7 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
       <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: state.token }} />
       <div className="sm:flex-1">{identity}</div>
       {status}
-      <QuantityControls sticker={sticker} userAlbumId={userAlbumId} displayed={displayed} onIntent={handleIntent} />
+      <QuantityControls sticker={sticker} userAlbumId={userAlbumId} displayed={displayed} serverQuantity={sticker.quantity} onIntent={handleIntent} />
     </li>
   );
 
@@ -215,7 +226,7 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
       {identity}
       <div className="mt-auto flex flex-col gap-2">
         {status}
-        <QuantityControls sticker={sticker} userAlbumId={userAlbumId} displayed={displayed} stretch onIntent={handleIntent} />
+        <QuantityControls sticker={sticker} userAlbumId={userAlbumId} displayed={displayed} serverQuantity={sticker.quantity} stretch onIntent={handleIntent} />
       </div>
     </li>
   );

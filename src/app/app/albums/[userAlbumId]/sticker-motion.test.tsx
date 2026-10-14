@@ -6,8 +6,10 @@ import userEvent from "@testing-library/user-event";
 
 const mocks = vi.hoisted(() => {
   const stops: Array<ReturnType<typeof vi.fn>> = [];
+  const deferred: Array<() => void> = [];
   return {
     stops,
+    deferred,
     adjustQuantityAction: vi.fn(async () => undefined),
     animate: vi.fn(() => {
       const stop = vi.fn();
@@ -38,11 +40,25 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // A submission that never settles keeps React's form transition pending, and
+  // that pending state leaks into every later test in this file. Releasing the
+  // resolvers here keeps the suite order-independent.
+  for (const resolve of mocks.deferred.splice(0)) resolve();
   cleanup();
   vi.clearAllMocks();
   vi.useRealTimers();
   mocks.stops.length = 0;
 });
+
+/**
+ * Blocks the Server Action so the form stays pending for the whole test. The
+ * resolver is released in `afterEach`.
+ */
+function blockSubmission() {
+  mocks.adjustQuantityAction.mockImplementation(
+    () => new Promise<void>((resolve) => { mocks.deferred.push(resolve); }),
+  );
+}
 
 function sticker(quantity: number, id = "sticker-1", code = "004") {
   return { id, code, name: "Creeper", position: 1, quantity };
@@ -147,7 +163,7 @@ describe("StickerCard valid intent source", () => {
   });
 
   it("does not increment optimistically again while the form is pending", async () => {
-    mocks.adjustQuantityAction.mockImplementation(() => new Promise<void>(() => {}));
+    blockSubmission();
     const user = userEvent.setup();
     renderCard(0);
 
@@ -273,7 +289,7 @@ describe("StickerCard interaction feedback", () => {
   });
 
   it("does not accumulate intent or animation from repeated clicks while pending", async () => {
-    mocks.adjustQuantityAction.mockImplementation(() => new Promise<void>(() => {}));
+    blockSubmission();
     const user = userEvent.setup();
     renderCard(0);
 
@@ -414,6 +430,57 @@ describe("StickerCard optimistic overlay", () => {
 
     expect(screen.getAllByText("Faltante")).toHaveLength(3);
     expect(screen.queryByText("Obtenida")).toBeNull();
+  });
+});
+
+/**
+ * Focused regression for the decrement submission path. The `disabled` state
+ * must never flip between the click and the form submission, otherwise the
+ * browser cancels the submit and the Server Action never runs.
+ */
+describe("StickerCard decrement submission", () => {
+  it("submits the decrement action when the optimistic value reaches zero", async () => {
+    renderCard(1);
+
+    click(removeButton());
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    await waitFor(() => expect(mocks.adjustQuantityAction).toHaveBeenCalledTimes(1));
+    const formData = mocks.adjustQuantityAction.mock.calls[0][0] as FormData;
+    expect(Object.fromEntries(formData)).toEqual({
+      userAlbumId: "collection-1",
+      stickerId: "sticker-1",
+      change: "decrement",
+    });
+  });
+
+  it("derives the decrement disabled state from the server quantity, not the optimistic value", async () => {
+    renderCard(1);
+
+    click(removeButton());
+    expect(screen.getByText("Faltante")).toBeTruthy();
+
+    // Once the submission settles, the overlay is still 0 while the server prop
+    // is still 1. The control must remain available: an optimistic value may
+    // never disable the button that is submitting, or the browser cancels the
+    // pending form submission and the Server Action never runs.
+    await waitFor(() => expect((removeButton() as HTMLButtonElement).disabled).toBe(false));
+  });
+
+  it("disables the decrement button only when the server quantity is zero", () => {
+    renderCard(0);
+
+    expect((removeButton() as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("never renders a negative quantity after repeated decrements", () => {
+    renderCard(1);
+
+    click(removeButton());
+    click(removeButton());
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect(screen.queryByText(/copias/)).toBeNull();
   });
 });
 
