@@ -36,9 +36,9 @@ export function AlbumForm({ album }: { album?: AlbumSummary }) {
         <input className={fieldClass} name="coverUrl" type="url" maxLength={2048} defaultValue={album?.coverUrl ?? ""} />
       </label>
       {state.error ? <p className="text-sm text-danger" role="alert">{state.error}</p> : null}
-      {state.success ? <p className="text-sm text-success">{state.success}</p> : null}
+      {state.success ? <p className="text-sm text-success" role="status">{state.success}</p> : null}
       <button
-        className="rounded bg-primary px-4 py-2 text-primary-text disabled:opacity-50"
+        className="min-h-11 rounded bg-primary px-4 py-2 text-primary-text disabled:opacity-50"
         disabled={pending}
       >
         {album ? "Guardar información" : "Crear álbum"}

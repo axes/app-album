@@ -10,8 +10,9 @@ import {
  *
  * It is a plain function component with no hooks, so it can be rendered from
  * both Server and Client Components. It only centralises the App Álbum button
- * look: compact heights (32 px / 40 px), a small closed set of variants and
- * transitions limited to specific properties using the shared tokens.
+ * look: compact visual sizes with a 44 px minimum touch target, a small closed
+ * set of variants and transitions limited to specific properties using the
+ * shared tokens.
  *
  * Native `<button>` props (`type`, `name`, `value`, `disabled`, `form`,
  * `onClick`, `aria-*`, …) are forwarded untouched.
@@ -30,7 +31,7 @@ export type ButtonVariant =
 export type ButtonSize = "sm" | "md";
 
 const baseClasses = [
-  "btn min-h-0 rounded-control border-0 font-medium shadow-none",
+  "btn min-h-11 rounded-control border-0 font-medium shadow-none",
   "transition-[color,background-color,border-color,opacity] duration-[var(--transition-fast)] ease-[var(--ease-standard)]",
   "disabled:cursor-not-allowed disabled:opacity-50",
 ].join(" ");

@@ -31,8 +31,8 @@ export function ActionForm({
           {state.error}
         </p>
       ) : null}
-      {state.success ? <p className="text-xs text-success">{state.success}</p> : null}
-      {pending ? <p className="text-xs text-muted">Procesando…</p> : null}
+      {state.success ? <p className="text-xs text-success" role="status">{state.success}</p> : null}
+      {pending ? <p className="text-xs text-muted" role="status">Procesando…</p> : null}
     </form>
   );
 }
@@ -52,7 +52,7 @@ export function Collapsible({
 }) {
   return (
     <details className="rounded border border-border bg-surface">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm">
         <span className="font-medium">{title}</span>
         {hint ? <span className="text-xs text-muted">{hint}</span> : null}
       </summary>
@@ -76,7 +76,7 @@ export function Card({
 }) {
   return (
     <details className="group rounded border border-border bg-surface" open={defaultOpen || undefined}>
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:content-none">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:content-none">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold">{title}</h2>
           {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}

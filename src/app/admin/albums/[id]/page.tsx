@@ -25,11 +25,11 @@ import {
 const field =
   "w-full min-w-0 rounded border border-input-border bg-input px-2 py-1 text-sm text-content";
 const iconButton =
-  "rounded border border-border bg-surface px-2 py-1 text-sm text-content hover:bg-surface-muted";
+  "min-h-11 min-w-11 rounded border border-border bg-surface px-2 py-1 text-sm text-content hover:bg-surface-muted";
 // Creation CTAs use the primary palette; secondary actions keep the neutral
 // surface style and destructive actions keep `danger`.
 const primaryButton =
-  "rounded bg-primary px-2 py-1 text-sm text-primary-text hover:underline disabled:opacity-50";
+  "min-h-11 rounded bg-primary px-2 py-1 text-sm text-primary-text hover:underline disabled:opacity-50";
 
 function StatusBadge({ status }: { status: "draft" | "published" }) {
   const published = status === "published";
@@ -151,13 +151,16 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           <Collapsible title="Crear una página">
             <ActionForm action={createSectionAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
-              <input
-                className={field}
-                name="name"
-                required
-                maxLength={160}
-                placeholder="Nombre de la página"
-              />
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Nombre de la página</span>
+                <input
+                  className={field}
+                  name="name"
+                  required
+                  maxLength={160}
+                  placeholder="Nombre de la página"
+                />
+              </label>
               <button className={primaryButton}>Crear página</button>
             </ActionForm>
           </Collapsible>
@@ -167,13 +170,16 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           <Collapsible title="Crear páginas por rango">
             <ActionForm action={createSectionRangeAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
-              <input
-                className={field}
-                name="base"
-                required
-                maxLength={150}
-                placeholder="Nombre base (ej. Página)"
-              />
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Nombre base</span>
+                <input
+                  className={field}
+                  name="base"
+                  required
+                  maxLength={150}
+                  placeholder="Nombre base (ej. Página)"
+                />
+              </label>
               <div className="flex gap-2">
                 <input
                   className={field}
@@ -281,14 +287,20 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           <Collapsible title="Crear una lámina">
             <ActionForm action={createStickerAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
-              <input
-                className={field}
-                name="code"
-                required
-                maxLength={64}
-                placeholder="Código (ej. A1 o ESP-01)"
-              />
-              <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Código</span>
+                <input
+                  className={field}
+                  name="code"
+                  required
+                  maxLength={64}
+                  placeholder="Código (ej. A1 o ESP-01)"
+                />
+              </label>
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Nombre opcional</span>
+                <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
+              </label>
               <PageSelect pages={pages} label="Página destino" />
               <button className={primaryButton}>Crear lámina</button>
             </ActionForm>
@@ -320,13 +332,19 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                   aria-label="Fin"
                 />
               </div>
-              <input
-                className={field}
-                name="prefix"
-                maxLength={32}
-                placeholder="Prefijo opcional (ej. A)"
-              />
-              <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Prefijo opcional</span>
+                <input
+                  className={field}
+                  name="prefix"
+                  maxLength={32}
+                  placeholder="Prefijo opcional (ej. A)"
+                />
+              </label>
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Nombre opcional</span>
+                <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
+              </label>
               <button className={primaryButton}>Crear rango</button>
             </ActionForm>
           </Collapsible>
@@ -337,14 +355,20 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
             <ActionForm action={createStickerListAction} className="grid gap-2">
               <input type="hidden" name="albumId" value={album.id} />
               <PageSelect pages={pages} label="Página destino" />
-              <textarea
-                className={field}
-                name="codes"
-                rows={5}
-                required
-                placeholder={"A1\nA2\nESP-01\nLOGO"}
-              />
-              <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Lista de códigos</span>
+                <textarea
+                  className={field}
+                  name="codes"
+                  rows={5}
+                  required
+                  placeholder={"A1\nA2\nESP-01\nLOGO"}
+                />
+              </label>
+              <label className="grid gap-1 text-xs text-muted">
+                <span>Nombre opcional</span>
+                <input className={field} name="name" maxLength={160} placeholder="Nombre opcional" />
+              </label>
               <button className={primaryButton}>Crear lista</button>
             </ActionForm>
           </Collapsible>

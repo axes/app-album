@@ -48,7 +48,7 @@ export function ThemeToggle() {
       aria-label={label}
       aria-pressed={theme === "dark"}
       title={label}
-      className="rounded border border-border bg-surface px-3 py-1 text-sm text-content hover:bg-surface-muted"
+      className="min-h-11 rounded border border-border bg-surface px-3 py-1 text-sm text-content hover:bg-surface-muted"
     >
       <span aria-hidden="true">{ready && theme === "dark" ? "☀️" : "🌙"}</span>
       <span className="ml-2">{theme === "dark" ? "Claro" : "Oscuro"}</span>

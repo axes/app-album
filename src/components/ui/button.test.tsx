@@ -30,6 +30,7 @@ describe("Button", () => {
     expect(className).toContain("btn");
     expect(className).toContain("btn-primary");
     expect(className).toContain("h-10");
+    expect(className).toContain("min-h-11");
   });
 
   it.each(variantExpectations)("applies the %s variant", (variant, expected) => {
@@ -40,16 +41,16 @@ describe("Button", () => {
     );
   });
 
-  it("uses compact heights for the sm and md sizes", () => {
+  it("keeps compact size styles with a 44px minimum touch target", () => {
     const { rerender } = render(<Button size="sm">Acción</Button>);
-    expect(screen.getByRole("button", { name: "Acción" }).className).toContain(
-      "h-8",
-    );
+    let className = screen.getByRole("button", { name: "Acción" }).className;
+    expect(className).toContain("h-8");
+    expect(className).toContain("min-h-11");
 
     rerender(<Button size="md">Acción</Button>);
-    expect(screen.getByRole("button", { name: "Acción" }).className).toContain(
-      "h-10",
-    );
+    className = screen.getByRole("button", { name: "Acción" }).className;
+    expect(className).toContain("h-10");
+    expect(className).toContain("min-h-11");
   });
 
   it("forwards native button props untouched", () => {
