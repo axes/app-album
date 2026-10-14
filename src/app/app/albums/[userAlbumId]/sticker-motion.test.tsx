@@ -30,7 +30,7 @@ vi.mock("motion/react", () => ({
 
 import { stubMatchMedia } from "@/test/stubs/match-media";
 import { StickerCard } from "./sticker-card";
-import { CLEAR_MS, OPTIMISTIC_TIMEOUT_MS } from "./sticker-interaction";
+import { CLEAR_MS } from "./sticker-interaction";
 
 beforeEach(() => {
   stubMatchMedia(false);
@@ -44,8 +44,8 @@ afterEach(() => {
   mocks.stops.length = 0;
 });
 
-function sticker(quantity: number) {
-  return { id: "sticker-1", code: "004", name: "Creeper", position: 1, quantity };
+function sticker(quantity: number, id = "sticker-1", code = "004") {
+  return { id, code, name: "Creeper", position: 1, quantity };
 }
 
 function renderCard(quantity: number, view: "grid" | "list" = "grid") {
@@ -352,66 +352,68 @@ describe("StickerCard interaction feedback", () => {
 });
 
 /**
- * Focused review of the optimistic overlay. The overlay must never outlive the
- * server's answer, and the safety timer must never survive a reconciliation.
+ * Focused review of the optimistic overlay. Elapsed time is never an
+ * authoritative signal: only a newly delivered server prop may reconcile it.
  */
 describe("StickerCard optimistic overlay", () => {
-  it("rolls back when the server never confirms the change", async () => {
+  it("keeps 1 → 0 missing after 1, 5 and 10 seconds without a new server prop", async () => {
     vi.useFakeTimers();
-    renderCard(0);
+    renderCard(1);
 
-    click(addButton());
-    expect(screen.getByText("Obtenida")).toBeTruthy();
-
-    await act(() => vi.advanceTimersByTimeAsync(OPTIMISTIC_TIMEOUT_MS));
-
+    click(removeButton());
     expect(screen.getByText("Faltante")).toBeTruthy();
-    expect(screen.queryByText("Obtenida")).toBeNull();
+
+    for (const elapsed of [1000, 4000, 5000]) {
+      await act(() => vi.advanceTimersByTimeAsync(elapsed));
+      expect(screen.getByText("Faltante")).toBeTruthy();
+      expect(screen.queryByText("Obtenida")).toBeNull();
+    }
   });
 
-  it("clears the safety timer so a stale rollback cannot clobber the server value", async () => {
-    vi.useFakeTimers();
-    const { rerender } = renderCard(0);
+  it("reconciles 1 → optimistic 0 with a new authoritative quantity 0", () => {
+    const { rerender } = renderCard(1);
 
-    click(addButton());
-    await act(() => vi.advanceTimersByTimeAsync(4000));
+    click(removeButton());
+    expect(screen.getByText("Faltante")).toBeTruthy();
 
-    // The server confirms: the pending rollback for the click must die.
+    rerenderCard(rerender, 0);
+
+    expect(screen.getByText("Faltante")).toBeTruthy();
+    expect((removeButton() as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("lets a new authoritative quantity 1 roll back 1 → optimistic 0", () => {
+    const { rerender } = renderCard(1);
+
+    click(removeButton());
+    expect(screen.getByText("Faltante")).toBeTruthy();
+
     rerenderCard(rerender, 1);
-    expect(screen.getByText("Obtenida")).toBeTruthy();
 
-    // 6000 ms since the click. A surviving timer would have fired at 5000 ms.
-    await act(() => vi.advanceTimersByTimeAsync(2000));
     expect(screen.getByText("Obtenida")).toBeTruthy();
+    expect(screen.queryByText("Faltante")).toBeNull();
   });
 
-  it("does not restart the safety window from a blocked pending click", async () => {
+  it("does not restore three cards decremented at staggered times", async () => {
     vi.useFakeTimers();
-    mocks.adjustQuantityAction.mockImplementation(() => new Promise<void>(() => {}));
-    renderCard(0);
+    render(
+      <>
+        <StickerCard sticker={sticker(1, "sticker-a", "A")} userAlbumId="collection-1" view="grid" />
+        <StickerCard sticker={sticker(1, "sticker-b", "B")} userAlbumId="collection-1" view="grid" />
+        <StickerCard sticker={sticker(1, "sticker-c", "C")} userAlbumId="collection-1" view="grid" />
+      </>,
+    );
 
-    click(addButton());
-    expect(screen.getByText("Obtenida")).toBeTruthy();
-    expect((addButton() as HTMLButtonElement).disabled).toBe(true);
+    click(screen.getByRole("button", { name: "Quitar copia de lámina A" }));
+    await act(() => vi.advanceTimersByTimeAsync(500));
+    click(screen.getByRole("button", { name: "Quitar copia de lámina B" }));
+    await act(() => vi.advanceTimersByTimeAsync(500));
+    click(screen.getByRole("button", { name: "Quitar copia de lámina C" }));
 
-    await act(() => vi.advanceTimersByTimeAsync(OPTIMISTIC_TIMEOUT_MS - 100));
-    click(addButton());
-    expect(screen.queryByText("Repetida · 2 copias")).toBeNull();
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
 
-    // The blocked click cannot restart the timeout. The original optimistic
-    // value therefore rolls back at its original deadline.
-    await act(() => vi.advanceTimersByTimeAsync(200));
-    expect(screen.getByText("Faltante")).toBeTruthy();
-  });
-
-  it("leaves no pending timer behind after unmount", () => {
-    vi.useFakeTimers();
-    const { unmount } = renderCard(0);
-
-    click(addButton());
-    unmount();
-
-    expect(vi.getTimerCount()).toBe(0);
+    expect(screen.getAllByText("Faltante")).toHaveLength(3);
+    expect(screen.queryByText("Obtenida")).toBeNull();
   });
 });
 

@@ -118,11 +118,11 @@ refresh, un cambio de vista o una navegación no pueden animar nada.
 
 ```ts
 const [optimistic, setOptimistic] = useState<number | null>(null);
-const [serverQuantity, setServerQuantity] = useState(sticker.quantity);
+const [serverSticker, setServerSticker] = useState(sticker);
 
-if (serverQuantity !== sticker.quantity) {
-  setServerQuantity(sticker.quantity);
-  setOptimistic(null);          // el servidor habló: gana él
+if (serverSticker !== sticker) {
+  setServerSticker(sticker);
+  setOptimistic(null);          // llegó una nueva prop autoritativa: gana el servidor
 }
 
 const displayed = optimistic ?? sticker.quantity;
@@ -138,16 +138,24 @@ el patrón recomendado por React y evita el commit extra de un `useEffect`.
 ## 6. Reconciliación con el servidor
 
 El overlay optimista **nunca se mergea** con el valor del servidor: o se muestra el
-overlay, o se muestra la prop. Cualquier cambio de prop descarta el overlay. No hay
+overlay, o se muestra la prop. Una nueva entrega autoritativa de `sticker` descarta el
+overlay, incluso si su cantidad coincide con la prop anterior; esto permite que una
+respuesta nueva del servidor confirme el cambio o lo revierta explícitamente. No hay
 aritmética acumulada sobre el valor del servidor, así que no puede haber drift.
+
+El tiempo transcurrido **nunca** es evidencia de fallo ni una señal de reconciliación.
+No existe timeout para limpiar el overlay: si aún no llega una prop nueva, el estado
+optimista permanece visible.
 
 | Caso | Comportamiento |
 |---|---|
-| RSC normal | La prop cambia → el overlay se limpia → manda el servidor |
-| Valor inesperado (clamp, otra pestaña) | La prop cambia a un valor ≠ overlay → se limpia y se muestra el real |
+| RSC normal | Llega una nueva prop autoritativa → el overlay se limpia → manda el servidor |
+| Confirmación esperada | `1 → optimista 0 → prop 0`: permanece Faltante con el overlay ya reconciliado |
+| Rollback explícito | `1 → optimista 0 → nueva prop 1`: el servidor gana y vuelve a Obtenida |
+| Valor inesperado (clamp, otra pestaña) | La nueva prop descarta el overlay y muestra el valor real |
 | `throw` en la acción | Error boundary → desmontaje. Sin estado residual |
 | `redirect("/app")` | Desmontaje. Sin estado residual |
-| Acción que nunca responde | Timeout de seguridad de 5 s que limpia el overlay |
+| Acción que no entrega una prop nueva | El overlay permanece; nunca se revierte por tiempo transcurrido |
 
 ---
 
@@ -260,9 +268,9 @@ Revisión del diff sobre los cinco ejes solicitados. **Sin findings bloqueantes.
 | Propiedad | Estado | Evidencia |
 |---|---|---|
 | No persiste si la Server Action falla | ✅ | `adjustQuantityAction` **lanza** (`actions.ts:61`) o hace `redirect("/app")` (`:59`). Ambos desmontan el subárbol, así que el estado optimista se destruye. No hay `error.tsx` en `src/app`, por lo que aplica el error boundary por defecto de Next.js. |
-| La prop del servidor siempre gana | ✅ | Guarda de render: cualquier cambio de `sticker.quantity` limpia el overlay. Test: `reconciles the optimistic value with the server value`. |
-| El timeout de seguridad se limpia | ✅ | `clearTimeout` en el cleanup del efecto. Test: `clears the safety timer so a stale rollback cannot clobber a newer value` — un timer superviviente habría revertido la card a 1 copia a los 5000 ms. |
-| Clicks múltiples sin timers huérfanos | ✅ | El efecto depende de `optimistic`, así que cada click reinicia la ventana. Test: `restarts the safety window on every click`. Tras el desmontaje, `vi.getTimerCount() === 0`. |
+| Una nueva prop autoritativa siempre gana | ✅ | Guarda de render por identidad de `sticker`: confirma `1 → 0` y permite rollback explícito `1 → 1`. |
+| El tiempo nunca revierte el overlay | ✅ | `OPTIMISTIC_TIMEOUT_MS` y el efecto asociado fueron eliminados. Pruebas mantienen Faltante tras 1, 5 y 10 segundos sin prop nueva. |
+| Varias cards no reaparecen en secuencia | ✅ | Tres cards decrementadas con 500 ms de desfase permanecen Faltante después de avanzar 10 segundos. |
 
 ### 12.2 Cleanup de Motion
 
@@ -271,7 +279,7 @@ Revisión del diff sobre los cinco ejes solicitados. **Sin findings bloqueantes.
 | Cada `animate()` en vuelo tiene cleanup | ✅ | Todo resultado se empuja a `controls` y se detiene en el cleanup del efecto. |
 | No se acumulan controls | ✅ | El efecto depende de `animation`; un click nuevo dispara el cleanup anterior. Invariante testeado: **como máximo una animación en vuelo**. |
 | Los elementos temporales se desmontan | ✅ | `animation` vuelve a `null` tras `CLEAR_MS[intent]` y la capa decorativa desaparece. Test: `unmounts the decorative layer once the animation window closes`. |
-| Sin memory leaks | ✅ | Único listener (`matchMedia`) con cleanup; timers con `clearTimeout`; `controls.stop()` en desmontaje. |
+| Sin memory leaks | ✅ | Único listener (`matchMedia`) con cleanup; el timer exclusivamente decorativo se limpia; `controls.stop()` corre en desmontaje. No existe timer del estado optimista. |
 
 ### 12.3 Accesibilidad
 
@@ -320,10 +328,12 @@ a mitad de animación.
 
 ### 12.7 Tests añadidos durante la revisión
 
-8 tests nuevos, **sin cambio de comportamiento visual**: rollback por timeout, timer
-obsoleto que no puede pisar un valor más nuevo, reinicio de la ventana por click, cero
-timers tras desmontaje, `aria-hidden`/`pointer-events-none`/sin focusables en burst y
-ghost, ausencia de `aria-live`, y desmontaje de la capa decorativa.
+La regresión del blocker de Preview distingue explícitamente estado optimista, prop
+anterior y prop autoritativa nueva: `1 → 0` permanece Faltante tras 1, 5 y 10 segundos;
+una nueva prop `0` confirma el cambio; una nueva prop `1` ejecuta el rollback legítimo;
+y tres cards decrementadas con 500 ms de desfase no reaparecen tras 10 segundos. Se
+mantiene además la cobertura de `aria-hidden`/`pointer-events-none`/sin focusables en
+burst y ghost, ausencia de `aria-live` y desmontaje de la capa decorativa.
 
 ---
 

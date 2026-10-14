@@ -71,10 +71,3 @@ export const DURATION_S: Record<Intent, number> = {
   downgrade: 0.24,
   lost: 0.2,
 };
-
-/**
- * Safety net: if the Server Action never produces a new `quantity` prop
- * (rejected action, dropped connection), the optimistic overlay is dropped
- * after this delay so the card can never stay stuck on an invented value.
- */
-export const OPTIMISTIC_TIMEOUT_MS = 5000;

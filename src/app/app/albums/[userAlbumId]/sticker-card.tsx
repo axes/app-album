@@ -11,7 +11,6 @@ import {
   CLEAR_MS,
   DURATION_S,
   MOTION_EASE,
-  OPTIMISTIC_TIMEOUT_MS,
   intentFor,
   isCelebration,
   type Intent,
@@ -116,16 +115,16 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
 
   /**
    * Optimistic overlay. `null` means "no overlay, the server value wins".
-   * It is cleared during render whenever the `quantity` prop changes, which
-   * is React's recommended pattern for adjusting state on a prop change and
-   * avoids the extra commit a `useEffect` would cost.
+   * It is cleared during render whenever a new authoritative sticker prop
+   * arrives. Tracking the prop object, rather than only its numeric quantity,
+   * also recognizes an explicit server rollback to the previous number.
    */
   const [optimistic, setOptimistic] = useState<number | null>(null);
-  const [serverQuantity, setServerQuantity] = useState(sticker.quantity);
+  const [serverSticker, setServerSticker] = useState(sticker);
   const [animation, setAnimation] = useState<{ id: number; intent: Intent } | null>(null);
 
-  if (serverQuantity !== sticker.quantity) {
-    setServerQuantity(sticker.quantity);
+  if (serverSticker !== sticker) {
+    setServerSticker(sticker);
     setOptimistic(null);
   }
 
@@ -173,17 +172,6 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
       clearTimeout(timer);
     };
   }, [animation, reduced]);
-
-  /**
-   * Safety net only. If the Server Action never produces a new `quantity`
-   * prop, the overlay is dropped so the card cannot stay stuck on a value the
-   * server never confirmed.
-   */
-  useEffect(() => {
-    if (optimistic === null) return;
-    const timer = setTimeout(() => setOptimistic(null), OPTIMISTIC_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [optimistic]);
 
   function handleIntent(change: "increment" | "decrement") {
     const from = displayed;
