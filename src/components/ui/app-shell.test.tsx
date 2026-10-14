@@ -74,6 +74,7 @@ describe("AppShell (UI-05A)", () => {
     expect(html).toContain("contenido");
     expect(html).toContain('data-testid="theme-toggle"');
     expect(html).not.toContain("Cerrar sesión");
+    expect(html).not.toContain('data-component="app-shell-dock"');
   });
 
   it("renders the authenticated navigation for a regular user", () => {
@@ -134,6 +135,26 @@ describe("AppShell (UI-05A)", () => {
     expect(html).toContain('aria-label="Mis álbumes"');
     expect(html).toContain('aria-label="Explorar"');
     expect(html).toContain('data-item-count="2"');
+  });
+
+  it("renders four real mobile destinations for an admin", () => {
+    const html = rendered({
+      user: { username: "root", role: "admin" },
+      children: "x",
+    });
+    expect(html).toContain('data-item-count="4"');
+    expect(html).toContain('href="/admin/albums"');
+    expect(html).toContain('href="/admin/users"');
+  });
+
+  it("renders the skip link first and targets the single main landmark", () => {
+    const { container } = render(<AppShell>contenido</AppShell>);
+    const firstLink = container.querySelector("a");
+    const mains = container.querySelectorAll("main#main-content");
+    expect(firstLink?.textContent).toContain("Saltar al contenido");
+    expect(firstLink?.getAttribute("href")).toBe("#main-content");
+    expect(firstLink?.className).toContain("focus:not-sr-only");
+    expect(mains).toHaveLength(1);
   });
 
   it("flags exactly one aria-current='page' in the header nav on /app", () => {

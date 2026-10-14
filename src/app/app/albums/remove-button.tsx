@@ -137,7 +137,7 @@ export function RemoveAlbumButton({ userAlbumId }: { userAlbumId: string }) {
         onClick={onBackdropClick}
         data-testid="remove-album-confirm"
         className={[
-          "w-[calc(100%-2rem)] max-w-md p-0 m-auto",
+          "w-[calc(100%_-_2rem)] max-w-md p-0 m-auto",
           "rounded-card border border-border bg-surface text-content",
           "shadow-lg",
           "backdrop:bg-[color:color-mix(in_oklab,var(--album-overlay)_60%,transparent)]",

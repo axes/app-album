@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 import {
   changeAlbumStatusAction,
   deleteAlbumAction,
@@ -44,25 +45,24 @@ export function AlbumActions({
           {status === "draft" ? "Publicar" : "Volver a borrador"}
         </button>
       </form>
-      <form
-        action={deleteAction}
-        onSubmit={(event) => {
-          if (!window.confirm("¿Eliminar este álbum? Esta acción no se puede deshacer.")) {
-            event.preventDefault();
-          }
-        }}
-      >
+      <form action={deleteAction}>
         <input type="hidden" name="albumId" value={albumId} />
-        <button className={dangerButton} disabled={deletePending}>
-          Eliminar álbum
-        </button>
+        <ConfirmAction
+          title="¿Eliminar este álbum?"
+          description="Esta acción no se puede deshacer."
+          confirmLabel="Eliminar álbum"
+          pendingLabel="Eliminando…"
+          triggerLabel="Eliminar álbum"
+          triggerClassName={dangerButton}
+          pending={deletePending}
+        />
       </form>
       {state.error ? (
         <p className="w-full text-xs text-danger" role="alert">
           {state.error}
         </p>
       ) : null}
-      {state.success ? <p className="w-full text-xs text-success">{state.success}</p> : null}
+      {state.success ? <p className="w-full text-xs text-success" role="status">{state.success}</p> : null}
     </div>
   );
 }
