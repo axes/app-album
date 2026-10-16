@@ -192,6 +192,106 @@
   --album-special-glow: 0 0 12px color-mix(in srgb, var(--album-special) 55%, transparent), 0 0 28px color-mix(in srgb, var(--album-special) 25%, transparent);
 }
 
+/* ---------------------------------------------------------------------------
+ * DESIGN v2 typography
+ *
+ * These product roles are intentionally unlayered so they take precedence over
+ * transitional Tailwind typography utilities without requiring structural
+ * changes across every screen. The isolated `/dev/ui` laboratory owns its
+ * Manrope/DM Sans rules and is explicitly excluded from this product contract.
+ * ------------------------------------------------------------------------- */
+:where(body) {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+:where(h1:not(#dev-ui h1)) {
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+:where(h2:not(#dev-ui h2)) {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+:where(h3:not(#dev-ui h3)) {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+:where(button:not(#dev-ui button), [role="button"]:not(#dev-ui [role="button"])),
+.type-button {
+  font-family: var(--font-body);
+  font-size: var(--text-button);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.type-button-compact {
+  font-size: 0.8125rem;
+}
+
+:where(label:not(#dev-ui label)) {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.type-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.type-small {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.type-caption {
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 400;
+}
+
+.type-label {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.type-numeric {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.type-sticker-number {
+  font-family: var(--font-display);
+  font-size: var(--text-tile);
+  font-weight: 600;
+}
+
+.type-sticker-number-compact {
+  font-size: var(--text-tile-dense);
+}
+
 @keyframes album-enter {
   from {
     opacity: 0;

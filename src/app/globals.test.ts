@@ -57,4 +57,16 @@ describe("globals.css radius registration (UI-05C.2)", () => {
     // mapping above and leave the utilities ungenerated.
     expect(tokens).not.toMatch(/^\s*--radius-(control|card|sticker|pill):/m);
   });
+
+  it("applies the DESIGN v2 product typography without overriding /dev/ui", () => {
+    expect(globals).toContain(":where(h1:not(#dev-ui h1))");
+    expect(globals).toContain("font-family: var(--font-display)");
+    expect(globals).toContain("font-size: var(--text-h1)");
+    expect(globals).toContain(":where(h2:not(#dev-ui h2))");
+    expect(globals).toContain("font-size: var(--text-h2)");
+    expect(globals).toContain("font-weight: 600");
+    expect(globals).toContain(".type-numeric");
+    expect(globals).toContain("font-variant-numeric: tabular-nums");
+    expect(globals).toContain("text-transform: none");
+  });
 });

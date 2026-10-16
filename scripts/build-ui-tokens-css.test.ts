@@ -60,6 +60,12 @@ describe("build-ui-tokens-css UI-05A productive tokens", () => {
     expect(css).toContain(
       `--font-display: ${productiveTypographyTokens.fontDisplay}`,
     );
+    expect(productiveTypographyTokens.fontDisplay).toBe(
+      'var(--font-poppins), "Poppins", system-ui, sans-serif',
+    );
+    expect(productiveTypographyTokens.fontBody).toBe(
+      'var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif',
+    );
     expect(css).toContain(
       `--glow: ${productiveShadowTokens.shadowGlow.light}`,
     );

@@ -33,11 +33,11 @@ export function PageHeader({
         .join(" ")}
     >
       <div className="flex min-w-0 flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-content">{title}</h1>
+        <h1 className="text-content">{title}</h1>
         {description ? (
-          <p className="text-sm text-muted">{description}</p>
+          <p className="type-small text-muted">{description}</p>
         ) : null}
-        {metadata ? <div className="text-xs text-muted">{metadata}</div> : null}
+        {metadata ? <div className="type-caption text-muted">{metadata}</div> : null}
       </div>
       {actions ? (
         <div className="flex flex-wrap items-center gap-2">{actions}</div>

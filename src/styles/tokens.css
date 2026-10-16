@@ -69,8 +69,8 @@
   --s6: 1.5rem;
   --s8: 2rem;
   --s12: 3rem;
-  --font-display: "Poppins", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-poppins), "Poppins", system-ui, sans-serif;
+  --font-body: var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --text-display: 2.5rem;
   --text-h1: 2rem;
   --text-h2: 1.5rem;
@@ -149,8 +149,8 @@
   --s6: 1.5rem;
   --s8: 2rem;
   --s12: 3rem;
-  --font-display: "Poppins", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-poppins), "Poppins", system-ui, sans-serif;
+  --font-body: var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --text-display: 2.5rem;
   --text-h1: 2rem;
   --text-h2: 1.5rem;

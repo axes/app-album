@@ -212,7 +212,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           <div className="overflow-x-auto rounded border border-border">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
+                <tr className="type-caption border-b border-border bg-surface-muted tracking-wide text-muted">
                   <th className="w-16 px-3 py-2 font-medium">Orden</th>
                   <th className="px-3 py-2 font-medium">Nombre</th>
                   <th className="w-28 px-3 py-2 font-medium">Láminas</th>

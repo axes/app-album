@@ -192,7 +192,7 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
   }
 
   const identity = <div className="min-w-0">
-    <code className="block truncate text-base font-bold leading-tight" title={sticker.code}>{sticker.code}</code>
+    <code className="type-sticker-number block truncate leading-tight" title={sticker.code}>{sticker.code}</code>
     {sticker.name ? <p className="truncate text-xs text-muted" title={sticker.name}>{sticker.name}</p> : null}
   </div>;
   const status = <span ref={labelRef} className={`block leading-snug ${state.textClass}`}>{state.label}</span>;

@@ -213,8 +213,9 @@ export const motionTokens = {
 } as const;
 
 export const typographyTokens = {
-  fontBody: '"Inter", system-ui, -apple-system, "Segoe UI", sans-serif',
-  fontDisplay: '"Poppins", system-ui, sans-serif',
+  fontBody:
+    'var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif',
+  fontDisplay: 'var(--font-poppins), "Poppins", system-ui, sans-serif',
   displaySize: "2.5rem",
   displayMobileSize: "2rem",
   titleSize: "2rem",

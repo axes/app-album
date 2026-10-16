@@ -72,7 +72,7 @@ export function AlbumCover({ coverUrl, title, className }: AlbumCoverProps) {
             aria-hidden="true"
             className="absolute inset-0 flex items-center justify-center pl-2"
           >
-            <span className="select-none text-2xl font-semibold uppercase tracking-wider text-muted">
+            <span className="type-sticker-number select-none tracking-wider text-muted">
               {initialsFor(title)}
             </span>
           </div>

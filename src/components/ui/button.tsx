@@ -31,7 +31,7 @@ export type ButtonVariant =
 export type ButtonSize = "sm" | "md";
 
 const baseClasses = [
-  "btn min-h-11 rounded-control border-0 font-medium shadow-none",
+  "btn type-button min-h-11 rounded-control border-0 normal-case shadow-none",
   "transition-[color,background-color,border-color,opacity] duration-[var(--transition-fast)] ease-[var(--ease-standard)]",
   "disabled:cursor-not-allowed disabled:opacity-50",
 ].join(" ");
@@ -45,8 +45,8 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-10 px-4 text-sm",
+  sm: "type-button-compact h-8 px-3",
+  md: "h-10 px-4",
 };
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
