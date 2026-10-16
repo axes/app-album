@@ -163,6 +163,12 @@
   --color-primary-text: var(--album-on);
   --color-danger: var(--album-danger);
 
+  /* DESIGN v2 §18 aliases actually consumed by the current primitives
+   * (Button variants, SegmentedControl, Badge). Only the ones that are
+   * referenced are added; the remaining §18 entries are deferred until a
+   * consumer needs them. */
+  --color-on: var(--album-on);
+
   /* New semantic aliases (available for the next phases). */
   --color-sticker-owned: var(--sticker-owned);
   --color-sticker-missing: var(--sticker-missing);

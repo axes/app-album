@@ -2,19 +2,20 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { Button, type ButtonVariant } from "./button";
+import { Button, type ButtonSize, type ButtonVariant } from "./button";
 
 afterEach(cleanup);
 
 const variantExpectations: Array<[ButtonVariant, string]> = [
   ["primary", "btn-primary"],
-  ["secondary", "btn-secondary"],
-  ["danger", "btn-error"],
+  ["accent", "btn-accent"],
+  ["secondary", "bg-transparent"],
   ["ghost", "btn-ghost"],
+  ["danger", "btn-error"],
   ["link", "btn-link"],
 ];
 
-describe("Button", () => {
+describe("Button (DESIGN v2 §7)", () => {
   it("renders a native button that defaults to type=button", () => {
     render(<Button>Guardar</Button>);
 
@@ -23,14 +24,18 @@ describe("Button", () => {
     expect(button.getAttribute("type")).toBe("button");
   });
 
-  it("defaults to the primary variant and the md size", () => {
+  it("defaults to the primary variant and the md size (44 px)", () => {
     render(<Button>Guardar</Button>);
 
     const className = screen.getByRole("button", { name: "Guardar" }).className;
     expect(className).toContain("btn");
     expect(className).toContain("btn-primary");
-    expect(className).toContain("h-10");
+    expect(className).toContain("h-11");
     expect(className).toContain("min-h-11");
+    expect(className).toContain("rounded-control");
+    expect(className).toContain("border-[1.5px]");
+    expect(className).toContain("gap-2");
+    expect(className).toContain("duration-[var(--transition-fast)]");
   });
 
   it.each(variantExpectations)("applies the %s variant", (variant, expected) => {
@@ -41,16 +46,169 @@ describe("Button", () => {
     );
   });
 
-  it("keeps compact size styles with a 44px minimum touch target", () => {
-    const { rerender } = render(<Button size="sm">Acción</Button>);
-    let className = screen.getByRole("button", { name: "Acción" }).className;
-    expect(className).toContain("h-8");
-    expect(className).toContain("min-h-11");
+  it("uses text-on as the foreground on filled variants", () => {
+    for (const variant of ["primary", "accent", "danger"] as const) {
+      const { unmount } = render(<Button variant={variant}>X</Button>);
+      expect(screen.getByRole("button", { name: "X" }).className).toContain(
+        "text-on",
+      );
+      unmount();
+    }
+  });
 
-    rerender(<Button size="md">Acción</Button>);
-    className = screen.getByRole("button", { name: "Acción" }).className;
-    expect(className).toContain("h-10");
-    expect(className).toContain("min-h-11");
+  it("switches to 36 px (h-9) for the sm size and keeps the 44 px touch target", () => {
+    const sizeExpectations: Array<[ButtonSize, string]> = [
+      ["sm", "h-9"],
+      ["md", "h-11"],
+    ];
+    for (const [size, expected] of sizeExpectations) {
+      const { unmount } = render(<Button size={size}>Acción</Button>);
+      const className = screen.getByRole("button", { name: "Acción" }).className;
+      expect(className).toContain(expected);
+      expect(className).toContain("min-h-11");
+      if (size === "sm") expect(className).toContain("type-button-compact");
+      unmount();
+    }
+  });
+
+  it("forces aria-label and a 44x44 shape when iconOnly is set", () => {
+    render(
+      <Button
+        aria-label="Cerrar"
+        iconOnly
+        onClick={() => undefined}
+      >
+        <span>x</span>
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: "Cerrar" });
+    expect(button.className).toContain("aspect-square");
+    expect(button.className).toContain("w-11");
+    expect(button.className).toContain("justify-center");
+    expect(button.className).toContain("px-0");
+  });
+
+  it("throws in development when iconOnly is set without an aria-label", () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = "development";
+    try {
+      expect(() =>
+        render(
+          // The eslint rule would catch this in a real file; the cast makes
+          // it explicit that we are testing the runtime guard.
+          <Button iconOnly onClick={() => undefined}>
+            x
+          </Button>,
+        ),
+      ).toThrowError(/aria-label/);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = previous;
+      }
+    }
+  });
+
+  it("logs an error in production when iconOnly is set without an aria-label", () => {
+    const previous = process.env.NODE_ENV;
+    const originalError = console.error;
+    const calls: string[] = [];
+    console.error = (...args: unknown[]) => {
+      calls.push(args.map(String).join(" "));
+    };
+    process.env.NODE_ENV = "production";
+    try {
+      // The error path is a side effect; the render must still succeed.
+      render(
+        <Button iconOnly onClick={() => undefined}>
+          x
+        </Button>,
+      );
+      expect(calls.some((m) => /iconOnly/.test(m))).toBe(true);
+    } finally {
+      process.env.NODE_ENV = previous;
+      console.error = originalError;
+    }
+  });
+
+  it("throws in development when loading is set without a loadingLabel", () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = "development";
+    try {
+      expect(() =>
+        render(
+          <Button onClick={() => undefined} loading>
+            Guardar
+          </Button>,
+        ),
+      ).toThrowError(/loadingLabel/);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = previous;
+      }
+    }
+  });
+
+  it("logs an error in production when loading is set without a loadingLabel", () => {
+    const previous = process.env.NODE_ENV;
+    const originalError = console.error;
+    const calls: string[] = [];
+    console.error = (...args: unknown[]) => {
+      calls.push(args.map(String).join(" "));
+    };
+    process.env.NODE_ENV = "production";
+    try {
+      render(
+        <Button onClick={() => undefined} loading>
+          Guardar
+        </Button>,
+      );
+      expect(calls.some((m) => /loadingLabel/.test(m))).toBe(true);
+    } finally {
+      process.env.NODE_ENV = previous;
+      console.error = originalError;
+    }
+  });
+
+  it("renders the gerund label and spinner in the loading state", () => {
+    render(
+      <Button
+        loading
+        loadingLabel="Guardando…"
+        onClick={() => undefined}
+        icon={<span aria-hidden="true">★</span>}
+      >
+        Guardar
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: /Guardando/ });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button.hasAttribute("disabled")).toBe(true);
+    expect(button.className).toContain("cursor-wait");
+    expect(button.querySelector("svg.animate-spin")).toBeTruthy();
+    expect(button.textContent).toContain("Guardando");
+  });
+
+  it("preserves the caller-provided aria-label while loading", () => {
+    render(
+      <Button
+        loading
+        loadingLabel="Guardando…"
+        aria-label="Guardar cambios"
+        onClick={() => undefined}
+      >
+        Guardar
+      </Button>,
+    );
+
+    // The caller's aria-label wins over the visible gerund label.
+    const button = screen.getByRole("button", { name: "Guardar cambios" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
   });
 
   it("forwards native button props untouched", () => {
@@ -89,7 +247,20 @@ describe("Button", () => {
     const className = screen.getByRole("button", { name: "Guardar" }).className;
     expect(className).toContain("duration-[var(--transition-fast)]");
     expect(className).toContain("ease-[var(--ease-standard)]");
+    expect(className).toContain(
+      "transition-[color,background-color,border-color,opacity,transform]",
+    );
     expect(className).not.toContain("transition-all");
+  });
+
+  it("applies hover brightness, active scale, and disabled opacity tokens", () => {
+    render(<Button>Guardar</Button>);
+
+    const className = screen.getByRole("button", { name: "Guardar" }).className;
+    expect(className).toContain("hover:[filter:brightness(1.1)]");
+    expect(className).toContain("active:scale-[.97]");
+    expect(className).toContain("disabled:opacity-45");
+    expect(className).toContain("disabled:cursor-not-allowed");
   });
 
   it("styles a single child element instead of nesting a button when asChild is set", () => {
