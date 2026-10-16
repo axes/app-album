@@ -1,11 +1,18 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import type { ReactNode } from "react";
+import { Icon } from "@/components/ui/icons";
 
 /**
  * `stretch` fills the parent form so the mosaic can share the card width
  * between the two 44 px targets. The real hit area never shrinks below
  * `min-h-11 min-w-11`; only the surrounding layout changes.
+ *
+ * The pending state renders the DESIGN v2 §6 `loading` glyph instead of a
+ * text ellipsis. The 800 ms spin (`--motion-spin`) is intentionally not
+ * applied here: the animated loading primitive belongs to the base-components
+ * step, and this phase only swaps the glyph.
  */
 export function QuantityButton({
   label,
@@ -15,7 +22,7 @@ export function QuantityButton({
   onIntent,
 }: {
   label: string;
-  children: string;
+  children: ReactNode;
   disabled?: boolean;
   stretch?: boolean;
   onIntent?: () => void;
@@ -33,7 +40,7 @@ export function QuantityButton({
       }}
       type="submit"
     >
-      {pending ? "…" : children}
+      {pending ? <Icon name="loading" size="sm" /> : children}
     </button>
   );
 }

@@ -40,10 +40,10 @@ describe("StickerCollection", () => {
   it("starts in the accessible mosaic view with the first section open", () => {
     renderCollection();
 
-    const mosaic = screen.getByRole("button", { name: "▦ Mosaico" });
+    const mosaic = screen.getByRole("button", { name: "Mosaico" });
     expect(mosaic.getAttribute("aria-pressed")).toBe("true");
     expect(mosaic.className).toContain("min-h-11");
-    expect(screen.getByRole("button", { name: "☷ Lista" }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByRole("button", { name: "Lista" }).getAttribute("aria-pressed")).toBe("false");
     const summary = screen.getByText("Página 1").closest("summary");
     expect(summary?.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByText("3 / 4")).toBeTruthy();
@@ -90,13 +90,13 @@ describe("StickerCollection", () => {
     const user = userEvent.setup();
     renderCollection();
 
-    await user.click(screen.getByRole("button", { name: "☷ Lista" }));
-    expect(screen.getByRole("button", { name: "☷ Lista" }).getAttribute("aria-pressed")).toBe("true");
+    await user.click(screen.getByRole("button", { name: "Lista" }));
+    expect(screen.getByRole("button", { name: "Lista" }).getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByText("ESP-01")).toBeTruthy();
     expect(screen.getByText("Logo")).toBeTruthy();
 
-    await user.click(screen.getByRole("button", { name: "▦ Mosaico" }));
-    expect(screen.getByRole("button", { name: "▦ Mosaico" }).getAttribute("aria-pressed")).toBe("true");
+    await user.click(screen.getByRole("button", { name: "Mosaico" }));
+    expect(screen.getByRole("button", { name: "Mosaico" }).getAttribute("aria-pressed")).toBe("true");
   });
 
   it("preserves increment and decrement payloads with exact accessible labels", async () => {

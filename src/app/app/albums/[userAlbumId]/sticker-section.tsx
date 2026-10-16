@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { Icon } from "@/components/ui/icons";
 
 export function StickerSection({ name, owned, total, defaultOpen = false, children }: { name: string; owned: number; total: number; defaultOpen?: boolean; children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -19,7 +20,7 @@ export function StickerSection({ name, owned, total, defaultOpen = false, childr
         <span className="flex shrink-0 items-center gap-3 text-sm text-muted">
           <span>{owned} / {total}</span>
           <span className="sr-only">{isOpen ? "Expandida" : "Colapsada"}</span>
-          <span aria-hidden="true">{isOpen ? "▴" : "▾"}</span>
+          <Icon name={isOpen ? "chevronUp" : "chevronDown"} size="sm" />
         </span>
       </summary>
       <div className="border-t border-border">{children}</div>

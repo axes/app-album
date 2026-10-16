@@ -12,6 +12,7 @@ import {
 } from "react";
 import type { Sticker } from "@/lib/catalog/service";
 import { ConfirmAction } from "@/components/ui/confirm-action";
+import { Icon } from "@/components/ui/icons";
 import {
   bulkAssignStickerSectionAction,
   bulkDeleteStickersAction,
@@ -35,12 +36,7 @@ type EditableField = "code" | "name" | "page";
 type ActiveCell = { stickerId: string; field: EditableField } | null;
 
 function PencilIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="m4 14.5-.5 2 2-.5L15 6.5 13.5 5 4 14.5Z" />
-      <path d="m12.5 6 1.5 1.5" />
-    </svg>
-  );
+  return <Icon name="pencil" size="sm" />;
 }
 
 function MoveButton({
@@ -66,7 +62,7 @@ function MoveButton({
       <input type="hidden" name="stickerId" value={stickerId} />
       <input type="hidden" name="direction" value={direction} />
       <button className={iconButton} disabled={disabled || pending} aria-label={label} title={label}>
-        {direction === "up" ? "↑" : "↓"}
+        <Icon name={direction === "up" ? "chevronUp" : "chevronDown"} size="sm" />
       </button>
       {state.error ? <span className="sr-only">{state.error}</span> : null}
     </form>

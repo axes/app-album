@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { animate } from "motion/react";
 import type { UserAlbumDetail } from "@/lib/collection/service";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
+import { Icon } from "@/components/ui/icons";
 import { adjustQuantityAction } from "../actions";
 import { QuantityButton } from "../quantity-button";
 import { StickerMotionLayer } from "./sticker-motion-layer";
@@ -104,14 +105,14 @@ function QuantityControls({
     <div className={`flex items-center ${stretch ? "gap-1" : "gap-2"}`}>
       <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
         <QuantityFields change="decrement" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={serverQuantity === 0} label={`Quitar copia de lámina ${sticker.code}`} onIntent={() => onIntent("decrement")} stretch={stretch}>−</QuantityButton>
+        <QuantityButton disabled={serverQuantity === 0} label={`Quitar copia de lámina ${sticker.code}`} onIntent={() => onIntent("decrement")} stretch={stretch}><Icon name="remove" size="sm" /></QuantityButton>
       </form>
       {stretch ? null : (
         <span aria-label={`${displayed} copias`} className="min-w-7 text-center font-semibold tabular-nums">{displayed}</span>
       )}
       <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
         <QuantityFields change="increment" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={serverQuantity >= 1000} label={`Añadir copia de lámina ${sticker.code}`} onIntent={() => onIntent("increment")} stretch={stretch}>+</QuantityButton>
+        <QuantityButton disabled={serverQuantity >= 1000} label={`Añadir copia de lámina ${sticker.code}`} onIntent={() => onIntent("increment")} stretch={stretch}><Icon name="add" size="sm" /></QuantityButton>
       </form>
     </div>
   );

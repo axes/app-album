@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Icon } from "@/components/ui/icons";
 import { DrizzleCatalogRepository } from "@/lib/catalog/drizzle-repository";
 import { CatalogError, CatalogService, type Sticker } from "@/lib/catalog/service";
 import { ActionForm, Card, Collapsible } from "../action-form";
@@ -90,7 +91,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   return (
     <section className="flex flex-col gap-6">
       <nav aria-label="Navegación contextual" className="flex gap-4 text-sm">
-        <Link className="text-primary underline" href="/admin/albums">← Álbumes</Link>
+        <Link className="inline-flex items-center gap-1 text-primary underline" href="/admin/albums">
+          <Icon name="back" size="sm" />
+          Álbumes
+        </Link>
       </nav>
 
       <header className="flex flex-wrap items-center justify-between gap-3">

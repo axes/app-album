@@ -1,4 +1,5 @@
 import { NavLink } from "./nav-link";
+import { Icon } from "./icons";
 import type { ReactNode } from "react";
 
 /**
@@ -14,6 +15,10 @@ import type { ReactNode } from "react";
  * phases add `Me faltan`, `Cambios` and `Perfil` against real routes. No
  * `disabled`, no `data-provisional` and no placeholder labels: the rule is
  * that the dock only mirrors real destinations.
+ *
+ * Icons come from the single DESIGN v2 §6 module (`./icons`). The dock uses
+ * the 24 px size mandated for mobile navigation; the glyphs are decorative
+ * because the label is always rendered next to them.
  */
 export type MobileNavItem = {
   href: string;
@@ -21,51 +26,15 @@ export type MobileNavItem = {
   icon: ReactNode;
 };
 
-function homeIcon(): ReactNode {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="h-6 w-6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="4" y="4" width="16" height="16" rx="4" />
-      <path d="M13 4h4a3 3 0 0 1 3 3v4" />
-    </svg>
-  );
-}
-
-function exploreIcon(): ReactNode {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="h-6 w-6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="6" />
-      <path d="m20 20-4-4" />
-    </svg>
-  );
-}
-
 export const MOBILE_NAV_ITEMS: readonly MobileNavItem[] = [
-  { href: "/app", label: "Mis álbumes", icon: homeIcon() },
-  { href: "/app/albums", label: "Explorar", icon: exploreIcon() },
+  { href: "/app", label: "Mis álbumes", icon: <Icon name="albums" size="lg" /> },
+  { href: "/app/albums", label: "Explorar", icon: <Icon name="explore" size="lg" /> },
 ] as const;
 
 export const ADMIN_MOBILE_NAV_ITEMS: readonly MobileNavItem[] = [
   ...MOBILE_NAV_ITEMS,
-  { href: "/admin/albums", label: "Álbumes", icon: homeIcon() },
-  { href: "/admin/users", label: "Usuarios", icon: exploreIcon() },
+  { href: "/admin/albums", label: "Álbumes", icon: <Icon name="albums" size="lg" /> },
+  { href: "/admin/users", label: "Usuarios", icon: <Icon name="profile" size="lg" /> },
 ] as const;
 
 export function MobileNav({ role = "user" }: { role?: "user" | "admin" }) {
