@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { logoutAction } from "@/app/logout/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./button";
-import { LogoPlaceholder } from "./logo-placeholder";
+import { Logo } from "./logo";
 import {
   ADMIN_MOBILE_NAV_ITEMS,
   MobileNav,
@@ -26,9 +26,14 @@ import { NavLink } from "./nav-link";
  * UI-05A visual updates are token-driven: every colour, radius, shadow and
  * motion variable comes from the same `productive*` exports that feed
  * `/dev/ui`, the portable CSS and the JSON handoff. The header reuses
- * `LogoPlaceholder` (a token-driven square) and `NavLink` (the single source
- * of `aria-current="page"`). The mobile dock publishes only real destinations
+ * `Logo` (the DESIGN v2 §14 mark) and `NavLink` (the single source of
+ * `aria-current="page"`). The mobile dock publishes only real destinations
  * sourced from `MOBILE_NAV_ITEMS`.
+ *
+ * The logo `<symbol>` and its gradients are declared once by `LogoDefs` in
+ * the root layout, not here: the shell is not the only place a logo can be
+ * rendered, and `<use href="#mark"/>` only resolves if the definitions are
+ * present in the same document.
  */
 export type AppShellUser = {
   username: string;
@@ -66,10 +71,10 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
           <NavLink
             href={user ? "/app" : "/"}
             className="app-shell-brand flex items-center gap-2 text-base font-semibold text-content"
-            aria-label="App Álbum — ir al inicio"
+            aria-label="MiColección — ir al inicio"
           >
-            <LogoPlaceholder className="h-9 w-9" label="Logo de App Álbum" />
-            <span>App Álbum</span>
+            <Logo size="sm" label="MiColección" />
+            <span>MiColección</span>
           </NavLink>
 
           <nav

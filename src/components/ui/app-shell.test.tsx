@@ -118,11 +118,15 @@ describe("AppShell (UI-05A)", () => {
     expect(mocks.logoutAction).not.toHaveBeenCalled();
   });
 
-  it("renders the token-driven logo placeholder in the header", () => {
+  it("renders the DESIGN v2 logo and the visible product name in the header", () => {
     const html = rendered({ children: "x" });
-    expect(html).toContain("logo-placeholder");
-    expect(html).toContain('aria-label="Logo de App Álbum"');
-    expect(html).toContain("App Álbum");
+    expect(html).toContain('data-component="logo"');
+    expect(html).toContain('href="#mark"');
+    expect(html).toContain('aria-label="MiColección"');
+    expect(html).toContain("MiColección");
+    // The definitions live in the root layout, not in the shell.
+    expect(html).not.toContain('data-component="logo-defs"');
+    expect(html).not.toContain('id="mark"');
   });
 
   it("renders the mobile dock with the two real destinations on small viewports", () => {

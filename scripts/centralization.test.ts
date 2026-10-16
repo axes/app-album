@@ -19,7 +19,7 @@ const KEY_FILES = [
   "src/components/ui/app-shell.tsx",
   "src/components/ui/mobile-nav.tsx",
   "src/components/ui/nav-link.tsx",
-  "src/components/ui/logo-placeholder.tsx",
+  "src/components/ui/icons.tsx",
   "scripts/build-ui-reference.ts",
   "scripts/build-ui-tokens-css.ts",
   // UI-05B: productive album library surfaces.
@@ -145,6 +145,49 @@ describe("UI-04A.3 token centralization", () => {
     expect(page).toContain("proposal-identity-placeholder");
     expect(portable).toContain("identity-placeholder");
     expect(`${page}\n${portable}`).not.toMatch(/brand-mark|linearGradient|mark-base/i);
+  });
+
+  // DESIGN v2 §14: the logo colours are fixed and must never read a theme
+  // token, so `logo.tsx` and `logo-defs.tsx` are the only two files allowed to
+  // carry hex literals outside `scripts/ui-tokens.ts`. This test pins the
+  // exact palette and proves the exception stays confined to those two files.
+  it("confines the fixed logo palette to the logo components", () => {
+    const LOGO_FILES = [
+      "src/components/ui/logo.tsx",
+      "src/components/ui/logo-defs.tsx",
+    ];
+    const DESIGN_LOGO_HEX = [
+      "#4a1fb8",
+      "#2a1285",
+      "#ff8a2b",
+      "#ff4d12",
+      "#6b2fc9",
+      "#f0583a",
+      "#190c58",
+      "#5b34e0",
+      "#ffc48f",
+    ];
+
+    const defs = read("src/components/ui/logo-defs.tsx");
+    for (const hex of DESIGN_LOGO_HEX) {
+      expect(defs, `logo-defs.tsx must declare ${hex}`).toContain(hex);
+    }
+
+    // The mark itself is declared once; `Logo` only references it. Comments
+    // are stripped first so prose that names the tags does not trip the check.
+    const logo = read("src/components/ui/logo.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(logo).toContain('href="#mark"');
+    expect(logo).not.toMatch(/<symbol\b|<linearGradient\b/);
+    expect(logo).not.toMatch(HEX_LITERAL);
+
+    // No other key file may carry the logo palette.
+    for (const path of KEY_FILES) {
+      if (LOGO_FILES.includes(path)) continue;
+      const source = read(path);
+      for (const hex of DESIGN_LOGO_HEX) {
+        expect(source, `${path} must not embed the logo colour ${hex}`).not.toContain(hex);
+      }
+    }
   });
 
   it("does not introduce colour-coupled token names", () => {
