@@ -199,6 +199,13 @@
  * transitional Tailwind typography utilities without requiring structural
  * changes across every screen. The isolated `/dev/ui` laboratory owns its
  * Manrope/DM Sans rules and is explicitly excluded from this product contract.
+ *
+ * The :where(...):where(:not(...)) shape is the only one that keeps the
+ * whole rule at zero specificity (0,0,0) while still letting us exclude
+ * `#dev-ui` and any other sub-tree. A bare `:not(#dev-ui h1)` or an id
+ * outside `:not()` would push the rule to (0,1,0,0) and let it win over
+ * the Tailwind utilities, which is the bug the specificity test guards
+ * against.
  * ------------------------------------------------------------------------- */
 /* The product typography contract is the single source of truth for fonts,
  * weights and sizes. Every selector sits inside `:where(...)` so the whole
