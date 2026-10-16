@@ -60,6 +60,8 @@ const DESIGN_EXTENSIONS: IconName[] = [
   "pencil",
   "image",
   "back",
+  "logout",
+  "users",
 ];
 
 describe("Icon (DESIGN v2 §6)", () => {
@@ -205,6 +207,7 @@ describe("lucide-react import boundary", () => {
         "List",
         "LoaderCircle",
         "Lock",
+        "LogOut",
         "Menu",
         "Minus",
         "Moon",
@@ -219,6 +222,7 @@ describe("lucide-react import boundary", () => {
         "TriangleAlert",
         "Trophy",
         "User",
+        "Users",
         "X",
       ].sort(),
     );

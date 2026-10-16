@@ -9,11 +9,16 @@ import type { ReactNode } from "react";
  * below the `md` breakpoint. Every item is an `<a>` via `NavLink`, so the
  * active state flows through the single `aria-current` source.
  *
- * Only destinations backed by a real route are published. UI-05A ships with
- * two slots (`Mis álbumes`, `Explorar`) and the grid is sized dynamically
- * from `MOBILE_NAV_ITEMS.length` so the geometry stays stable when future
- * phases add `Me faltan`, `Cambios` and `Perfil` against real routes. No
- * `disabled`, no `data-provisional` and no placeholder labels: the rule is
+ * The dock publishes **only user destinations**, for every role. Admin
+ * destinations are not mixed in here: they live in their own region
+ * (`AdminNav`, rendered as a second header row by the authenticated shell) so
+ * the two contexts stay conceptually separate. This keeps the dock geometry
+ * stable at two slots regardless of the session role.
+ *
+ * Only destinations backed by a real route are published. The grid is sized
+ * dynamically from `MOBILE_NAV_ITEMS.length` so the geometry stays stable when
+ * future phases add `Me faltan`, `Cambios` and `Perfil` against real routes.
+ * No `disabled`, no `data-provisional` and no placeholder labels: the rule is
  * that the dock only mirrors real destinations.
  *
  * Icons come from the single DESIGN v2 §6 module (`./icons`). The dock uses
@@ -31,14 +36,8 @@ export const MOBILE_NAV_ITEMS: readonly MobileNavItem[] = [
   { href: "/app/albums", label: "Explorar", icon: <Icon name="explore" size="lg" /> },
 ] as const;
 
-export const ADMIN_MOBILE_NAV_ITEMS: readonly MobileNavItem[] = [
-  ...MOBILE_NAV_ITEMS,
-  { href: "/admin/albums", label: "Álbumes", icon: <Icon name="albums" size="lg" /> },
-  { href: "/admin/users", label: "Usuarios", icon: <Icon name="profile" size="lg" /> },
-] as const;
-
-export function MobileNav({ role = "user" }: { role?: "user" | "admin" }) {
-  const items = role === "admin" ? ADMIN_MOBILE_NAV_ITEMS : MOBILE_NAV_ITEMS;
+export function MobileNav() {
+  const items = MOBILE_NAV_ITEMS;
   return (
     <nav
       aria-label="Navegación inferior"

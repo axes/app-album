@@ -494,6 +494,19 @@
   color: var(--album-primary);
 }
 
+/* Administrative navigation — second header row, admin only. The row scrolls
+ * horizontally on narrow viewports; the active item reuses the same
+ * surface-soft / primary treatment as the user row. */
+.admin-nav-list {
+  scrollbar-width: thin;
+}
+
+.admin-nav-link.is-current,
+.admin-nav-link[data-current="true"] {
+  background-color: var(--album-surface-soft);
+  color: var(--album-primary);
+}
+
 .app-shell-dock {
   position: fixed;
   left: 0;

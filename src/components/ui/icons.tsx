@@ -13,6 +13,7 @@ import {
   List,
   LoaderCircle,
   Lock,
+  LogOut,
   Menu,
   Minus,
   Moon,
@@ -27,6 +28,7 @@ import {
   TriangleAlert,
   Trophy,
   User,
+  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -81,6 +83,8 @@ export const ICONS = {
   pencil: Pencil, // inline rename affordances in the admin catalog
   image: ImageGlyph, // album cover placeholder
   back: ArrowLeft, // "← Álbumes" contextual back links
+  logout: LogOut, // session logout control in the shell
+  users: Users, // "Administrar usuarios" admin destination
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
