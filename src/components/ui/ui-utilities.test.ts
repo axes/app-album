@@ -148,6 +148,42 @@ describe("Design v2 — every primitive utility class compiles to CSS", () => {
     },
   );
 
+  // QuantityButton — the centred icon utility. The 44 × 44 px hit target
+  // and the 20 px glyph must share the same horizontal / vertical axis.
+  // Each class on the button or its `<Icon>` is asserted to compile.
+  const quantityClasses: Array<[string, string]> = [
+    ["inline-flex", "QuantityButton: flex container"],
+    ["items-center", "QuantityButton: vertical centering"],
+    ["justify-center", "QuantityButton: horizontal centering"],
+    ["block", "Icon: removes inline baseline gap"],
+    ["shrink-0", "Icon: keeps the 20 px size in flex parents"],
+    ["min-h-11", "QuantityButton: 44 px touch target"],
+    ["min-w-11", "QuantityButton: 44 px touch target"],
+    ["rounded-control", "QuantityButton: control radius"],
+    ["border", "QuantityButton: outline border"],
+    ["border-border", "QuantityButton: border colour"],
+    ["bg-surface", "QuantityButton: idle background"],
+    ["text-content", "QuantityButton: idle text colour"],
+    ["hover:bg-surface-muted", "QuantityButton: hover background"],
+    ["focus-visible:outline", "QuantityButton: focus ring"],
+    ["focus-visible:outline-2", "QuantityButton: focus ring width"],
+    ["disabled:cursor-not-allowed", "QuantityButton: disabled cursor"],
+    ["disabled:bg-surface-muted", "QuantityButton: disabled background"],
+    ["disabled:text-muted", "QuantityButton: disabled text colour"],
+  ];
+
+  it.each(quantityClasses)(
+    "QuantityButton class %s (%s) compiles to a CSS rule",
+    async (className) => {
+      const css = await compile([className]);
+      const cssForm = escapeCssSelector(className);
+      expect(
+        css.includes(cssForm),
+        `${cssForm} must exist in the compiled CSS`,
+      ).toBe(true);
+    },
+  );
+
   // SegmentedControl.
   const segmentedClasses: Array<[string, string]> = [
     ["inline-flex", "container"],

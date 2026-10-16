@@ -33,14 +33,14 @@ export function QuantityButton({
   return (
     <button
       aria-label={label}
-      className={`min-h-11 min-w-11 rounded-control border border-border bg-surface text-content hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted${stretch ? " w-full" : ""}`}
+      className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-border bg-surface text-content hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted${stretch ? " w-full" : ""}`}
       disabled={unavailable}
       onClick={() => {
         if (!unavailable) onIntent?.();
       }}
       type="submit"
     >
-      {pending ? <Icon name="loading" size="sm" /> : children}
+      {pending ? <Icon className="block shrink-0" name="loading" size="md" /> : children}
     </button>
   );
 }
