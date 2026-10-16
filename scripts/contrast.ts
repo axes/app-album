@@ -80,6 +80,7 @@ export function buildProposalContrastPairs(): ContrastPair[] {
       { name: `${theme} sticker-missing/surface`, fg: token("stickerMissing"), bg: token("surface"), min: 3 },
       { name: `${theme} sticker-duplicate/surface`, fg: token("stickerDuplicate"), bg: token("surface"), min: 3 },
       { name: `${theme} sticker-special/surface`, fg: token("stickerSpecial"), bg: token("surface"), min: 3 },
+      { name: `${theme} special-foreground/special`, fg: token("specialForeground"), bg: token("special") },
     );
   }
   return pairs;

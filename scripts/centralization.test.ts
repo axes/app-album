@@ -10,6 +10,7 @@ import {
   buildDesignTokensJson,
   buildUiTokensCss,
 } from "./build-ui-reference";
+import { buildProductiveTokensCss } from "./build-ui-tokens-css";
 
 const KEY_FILES = [
   "src/app/dev/ui/page.tsx",
@@ -97,6 +98,26 @@ describe("UI-04A.3 token centralization", () => {
     const overlay = read("src/app/app/albums/remove-button.tsx");
     expect(overlay).toContain("var(--album-overlay)");
     expect(overlay).not.toMatch(/var\(--album-text\)[^)]*backdrop/);
+  });
+
+  it("centralizes the special accent and its derived glow", () => {
+    expect(semanticColorKeys).toContain("special");
+    expect(semanticColorKeys).toContain("specialForeground");
+    expect(colorTokens.special.light).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(colorTokens.special.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(colorTokens.specialForeground.light).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(colorTokens.specialForeground.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+
+    const css = buildProductiveTokensCss();
+    expect(css).toContain(`--album-special: ${proposalColorTokens.special.light}`);
+    expect(css).toContain(
+      `--album-special-content: ${proposalColorTokens.specialForeground.light}`,
+    );
+
+    const globals = read("src/app/globals.css");
+    expect(globals).toContain("--album-special-glow");
+    expect(globals).toContain("color-mix(in srgb, var(--album-special)");
+    expect(globals).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
   it("uses only a token-driven identity placeholder", () => {

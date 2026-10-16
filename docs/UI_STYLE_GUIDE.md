@@ -25,15 +25,15 @@ Guía práctica del sistema visual vigente. La referencia ejecutable es `/dev/ui
 - Mantener portadas en proporción 3:4, `object-cover`, `rounded-card` y `alt` descriptivo cuando exista una imagen real.
 - Usar overlays sólidos sólo cuando aporten información legible.
 
-### Futuro / fuera de UI-04A
+### Evolución posterior a UI-04A
 
-- Rediseño de rutas productivas, AlbumCard, tablas administrativas, editor y sharing.
-- Cambios a la paleta global definitiva o nuevas variantes de dominio.
-- Tokens específicos de sombras si se demuestra una necesidad transversal.
+- Las fases UI-05 promovieron los tokens centralizados a la interfaz productiva y migraron AppShell, navegación y componentes del dominio.
+- UI-07A adopta la paleta productiva Albaricoque Mora sin cambiar layout, spacing, tipografía, componentes funcionales ni comportamiento.
+- Las referencias PNG/HTML originales se conservan como snapshots históricos; no son la fuente vigente de implementación.
 
 ## Tokens
 
-Los tokens `--album-*` definidos en `src/app/globals.css` son la única fuente de verdad de color. DaisyUI y Tailwind apuntan a ellos.
+`scripts/ui-tokens.ts` es la única fuente editada manualmente para los colores. `npm run ui:export` genera `src/styles/tokens.css`, donde se declaran los tokens productivos `--album-*`; DaisyUI y Tailwind apuntan a esas variables. No se edita la paleta directamente en el CSS generado.
 
 | Grupo | Tokens / utilidades implementadas |
 | --- | --- |
@@ -679,3 +679,54 @@ Los estados de lámina se derivan exclusivamente de `quantity` y cada uno define
 No existe estado Especial en producto. La card prioriza número, estado, cantidad y controles, sin `min-height` fijo. En el mosaico los dos controles comparten el ancho de la card (`flex-1` + `w-full`) y la cantidad vive en la etiqueta de estado; en la lista se conserva el contador explícito entre ambos. Los controles mantienen formularios separados, límites 0/1000, payloads existentes y labels `Añadir copia de lámina {code}` / `Quitar copia de lámina {code}`; el área táctil real nunca baja de 44 px.
 
 No se usan HEX/RGB ni modificadores de opacidad Tailwind sobre colores variables. La QA visual pendiente cubre 375 px, 768 px y desktop en light/dark, incluido el espacio protegido por el dock móvil.
+
+## UI-07A — Paleta productiva Albaricoque Mora
+
+UI-07A sustituye la paleta productiva anterior sin alterar estructura, layout, spacing, tipografía, navegación, componentes funcionales, Server Actions, datos ni dependencias. `colorTokens` conserva la referencia histórica; `proposalColorTokens` contiene Albaricoque Mora y `productiveColorTokens` continúa siendo un alias de esa propuesta.
+
+### Paleta semántica principal
+
+| Rol | Light | Dark |
+| --- | --- | --- |
+| `background` | `#fff8f3` | `#1b1820` |
+| `surface` | `#ffffff` | `#2d2a32` |
+| `surfaceSoft` | `#ffe0c2` | `#3b264a` |
+| `foreground` | `#2d2a32` | `#fff4eb` |
+| `foregroundMuted` | `#625a66` | `#c9b8d3` |
+| `primary` | `#5a189a` | `#a95fe3` |
+| `primaryForeground` | `#ffffff` | `#1b1820` |
+| `secondary` | `#9d4edd` | `#5a189a` |
+| `accent` | `#c44f16` | `#ff8f5a` |
+| `focus` | `#7b2cbf` | `#9d4edd` |
+
+En dark mode, `primaryForeground` es graphite profundo de forma intencional: `#a95fe3` sobre `#1b1820` alcanza 4.5347:1 y el contenido `#1b1820` sobre `#a95fe3` conserva contraste AA. El contrato es semántico y accesible; no exige que el foreground de primary sea blanco.
+
+### Estados de lámina y oro reservado
+
+- `stickerMissing`: muted/graphite (`#625a66` light, `#c9b8d3` dark).
+- `stickerOwned`: mora `#9d4edd`, con final `#5a189a`.
+- `stickerDuplicate`: albaricoque (`#c44f16` light, `#ff8f5a` dark).
+- `special` y `specialForeground`: `#fcd34d` sobre `#2d2a32`.
+
+El oro `special` queda reservado para logros, álbumes completados, medallas, celebraciones de 100% y estados excepcionales; no reemplaza roles normales de acción o estado. `--album-special-glow` deriva exclusivamente de `--album-special` con sombras de 12 px al 55% y 28 px al 25%. Está disponible como token global, pero UI-07A no le asigna consumidor.
+
+DaisyUI `neutral` e `info` se mapean a tokens semánticos existentes. No mantienen colores literales paralelos. Los umbrales automáticos permanecen en 4.5:1 para texto normal y 3:1 para foco/controles no textuales; incluyen primary, secondary, accent, focus, special y estados de lámina.
+
+### Fuente vigente y QA
+
+La referencia vigente se compone de `/dev/ui`, el resultado de `npm run ui:export` bajo `artifacts/ui-reference/` y esta guía. Las referencias HTML/PNG de `docs/design-references/` son material histórico de comparación y no deben implementarse directamente.
+
+La QA visual manual queda pendiente por falta de navegador en este entorno. Debe revisar botones primary dark, links y `text-primary` dark, foco, disabled, sticker owned, sticker duplicate y la experiencia completa light/dark a 375 px, 768 px y escritorio. Los tests de contraste, lint, suite y build no sustituyen esa revisión visual.
+
+
+## UI-07B — Visual Reference Lab
+
+`/dev/ui` es el **laboratorio canónico** y comparativo de UI-07B. **Actual** representa la baseline previa (`colorTokens`). **Candidata** parte de Albaricoque Mora (`proposalColorTokens`), pero es una exploración: **no está aprobada ni aplicada al producto**. Sus overrides dark (neutral casi negro, graphite y `surfaceSoft` apenas mora) existen únicamente en `src/app/dev/ui/visual-lab-tokens.ts`.
+
+Los selectores Actual/Candidata, Light/Dark y tipografía A/B son controles **local-only** y mantienen estado sólo en memoria. No usan `localStorage`, no importan el `ThemeToggle` productivo y no mutan `html` ni `body`: aplican `data-direction`, `data-theme`, `data-typography` y variables CSS al único wrapper `#dev-ui`. Las fuentes evaluadas son **A · Manrope** para body y headings, y **B · DM Sans + Manrope**, con DM Sans para body y Manrope para headings mediante `next/font/google`; ambas quedan acotadas al wrapper.
+
+El showcase único cubre foundations, tipografía completa, botones, formularios, feedback, álbum, láminas, navegación, diálogos y el logro 100%. El oro `#fcd34d` y su glow moderado se reservan al logro dentro del lab. Las interacciones de stickers, filtros y diálogos son demos locales: no comparten persistencia, Server Actions ni lógica de dominio productiva. El diálogo demuestra foco inicial, cierre con Escape y restauración al trigger; no declara implementar un focus trap completo.
+
+### Spacing fiel y responsive
+
+El spacing visible **refleja el producto**: grids `gap-3`, cards normalmente `p-4`/`p-5`, controles `px-3`/`px-4`, mosaico con mínimo cercano a 72–112 px según contexto y portadas 3:4. La escala visible 4/8/12/16/24/32/48 documenta esos ritmos sin proponer que todos deban usarse por igual. La referencia se adapta a 375 px, 768 px y desktop, evita overflow global, conserva targets de al menos 44 px, foco visible y neutralización por `prefers-reduced-motion`.

@@ -75,11 +75,11 @@
   --color-warning: var(--album-warning);
   --color-error: var(--album-danger);
 
-  /* daisyUI-only roles with no App Álbum equivalent (declared once, here). */
-  --color-neutral: #334155;
-  --color-neutral-content: #ffffff;
-  --color-info: #0369a1;
-  --color-info-content: #ffffff;
+  /* daisyUI-only roles mapped onto the canonical App Álbum tokens. */
+  --color-neutral: var(--album-text);
+  --color-neutral-content: var(--album-surface);
+  --color-info: var(--album-secondary);
+  --color-info-content: var(--album-secondary-content);
   --color-success-content: var(--album-success-content);
   --color-warning-content: var(--album-warning-content);
   --color-error-content: var(--album-danger-content);
@@ -116,11 +116,11 @@
   --color-warning: var(--album-warning);
   --color-error: var(--album-danger);
 
-  /* daisyUI-only roles with no App Álbum equivalent (declared once, here). */
-  --color-neutral: #475569;
-  --color-neutral-content: #f8fafc;
-  --color-info: #38bdf8;
-  --color-info-content: #0f172a;
+  /* daisyUI-only roles mapped onto the canonical App Álbum tokens. */
+  --color-neutral: var(--album-surface-soft);
+  --color-neutral-content: var(--album-text);
+  --color-info: var(--album-secondary);
+  --color-info-content: var(--album-secondary-content);
   --color-success-content: var(--album-success-content);
   --color-warning-content: var(--album-warning-content);
   --color-error-content: var(--album-danger-content);
@@ -185,6 +185,10 @@
    * shared easing. Consumed as `animate-enter` by PageHeader and the public
    * landing sections. */
   --animate-enter: album-enter var(--transition-normal) var(--ease-standard) both;
+
+  /* UI-07A: reserved gold glow, derived from the special token. Declared
+   * globally with no consumer yet; it must never hard-code a colour. */
+  --album-special-glow: 0 0 12px color-mix(in srgb, var(--album-special) 55%, transparent), 0 0 28px color-mix(in srgb, var(--album-special) 25%, transparent);
 }
 
 @keyframes album-enter {

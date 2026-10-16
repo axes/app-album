@@ -7,6 +7,7 @@ import {
   relativeLuminance,
   wcagRatio,
 } from "./contrast";
+import { proposalColorTokens } from "./ui-tokens";
 
 describe("contrast (WCAG 2.1)", () => {
   it("computes canonical extremes", () => {
@@ -31,6 +32,36 @@ describe("contrast (WCAG 2.1)", () => {
     expect(new Set(pairs.map((pair) => pair.name)).size).toBe(pairs.length);
     expect(pairs.some((pair) => pair.name.includes("sticker-special"))).toBe(true);
     expect(pairs.some((pair) => pair.name.includes("focus"))).toBe(true);
+  });
+
+  it("covers the required semantic pairs for both themes", () => {
+    const names = buildProposalContrastPairs().map((pair) => pair.name);
+    for (const theme of ["light", "dark"] as const) {
+      for (const fragment of [
+        "primary-foreground/primary",
+        "secondary-foreground/secondary",
+        "accent-foreground/accent",
+        "focus/background",
+        "special-foreground/special",
+        "sticker-owned/surface",
+        "sticker-missing/surface",
+        "sticker-duplicate/surface",
+      ]) {
+        expect(names, `${theme} ${fragment}`).toContain(`${theme} ${fragment}`);
+      }
+    }
+  });
+
+  it("keeps secondary-foreground/secondary at AA for both themes", () => {
+    for (const theme of ["light", "dark"] as const) {
+      expect(
+        wcagRatio(
+          proposalColorTokens.secondaryForeground[theme],
+          proposalColorTokens.secondary[theme],
+        ),
+        theme,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("passes every proposal contrast contract", () => {
