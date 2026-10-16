@@ -4,6 +4,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactElement,
   type ReactNode,
+  type Ref,
 } from "react";
 import { Icon } from "./icons";
 
@@ -35,6 +36,7 @@ export type ButtonVariant =
   | "secondary"
   | "ghost"
   | "danger"
+  | "dangerGhost"
   | "link";
 
 export type ButtonSize = "sm" | "md";
@@ -95,6 +97,14 @@ const variantClasses: Record<ButtonVariant, string> = {
   // DESIGN §7: danger uses the daisyUI error role (already mapped to
   // --album-danger in the theme).
   danger: "btn-error text-on",
+  // DESIGN §7 / D4: dangerGhost is the low-emphasis destructive affordance.
+  // Transparent background, danger foreground, no visible border. The border
+  // is made explicit here (`border-transparent`) so the variant guarantees a
+  // borderless control on its own, without relying on the base class. The
+  // hover tint (danger 12% mixed with surface) is centralised in
+  // `globals.css` as the `.danger-ghost` class so no component repeats a hex
+  // value or a Tailwind opacity modifier over a token.
+  dangerGhost: "danger-ghost bg-transparent border-transparent text-danger",
   link: "btn-link text-primary underline-offset-2 hover:text-accent",
 };
 
@@ -104,6 +114,7 @@ const loadingVariantClasses: Record<ButtonVariant, string> = {
   secondary: "text-content",
   ghost: "text-primary",
   danger: "text-on",
+  dangerGhost: "text-danger",
   link: "text-primary",
 };
 
@@ -146,6 +157,12 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
    * Trailing icon. Ignored while `loading` is `true`.
    */
   trailingIcon?: ReactNode;
+  /**
+   * Forwarded to the underlying `<button>` (React 19 treats `ref` as a regular
+   * prop). Consumers such as `ConfirmAction` need it to restore focus to the
+   * trigger after the dialog closes.
+   */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export function Button({
@@ -161,6 +178,7 @@ export function Button({
   trailingIcon,
   disabled,
   children,
+  ref,
   ...props
 }: ButtonProps) {
   if (iconOnly && !props["aria-label"]) {
@@ -231,6 +249,7 @@ export function Button({
     const child = children as ReactElement<{ className?: string }>;
     const childProps = {
       ...props,
+      ref,
       disabled: effectiveDisabled,
       "aria-busy": loading || undefined,
       "aria-disabled": effectiveDisabled || undefined,
@@ -242,6 +261,7 @@ export function Button({
 
   return (
     <button
+      ref={ref}
       type={type}
       className={classes}
       disabled={effectiveDisabled}

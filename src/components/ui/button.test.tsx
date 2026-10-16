@@ -12,6 +12,7 @@ const variantExpectations: Array<[ButtonVariant, string]> = [
   ["secondary", "bg-transparent"],
   ["ghost", "btn-ghost"],
   ["danger", "btn-error"],
+  ["dangerGhost", "danger-ghost"],
   ["link", "btn-link"],
 ];
 
@@ -54,6 +55,22 @@ describe("Button (DESIGN v2 §7)", () => {
       );
       unmount();
     }
+  });
+
+  it("renders dangerGhost as a transparent, borderless danger control", () => {
+    render(<Button variant="dangerGhost">Eliminar</Button>);
+
+    const className = screen.getByRole("button", { name: "Eliminar" })
+      .className;
+    // The hover tint (danger 12% + surface) is centralised in globals.css as
+    // the `.danger-ghost` class; the component only references it.
+    expect(className).toContain("danger-ghost");
+    expect(className).toContain("bg-transparent");
+    expect(className).toContain("text-danger");
+    // The variant guarantees a borderless control on its own, without relying
+    // on the base class.
+    expect(className).toContain("border-transparent");
+    expect(className).not.toContain("btn-error");
   });
 
   it("switches to 36 px (h-9) for the sm size and keeps the 44 px touch target", () => {
@@ -231,6 +248,13 @@ describe("Button (DESIGN v2 §7)", () => {
     expect(button.name).toBe("intent");
     expect(button.value).toBe("save");
     expect(button.disabled).toBe(true);
+  });
+
+  it("forwards a ref to the underlying button", () => {
+    const ref = { current: null as HTMLButtonElement | null };
+    render(<Button ref={ref}>Guardar</Button>);
+
+    expect(ref.current).toBe(screen.getByRole("button", { name: "Guardar" }));
   });
 
   it("merges a caller-provided className", () => {

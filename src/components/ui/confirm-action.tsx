@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Button, type ButtonVariant } from "./button";
 
 /**
  * Reusable destructive-action confirmation built on the native `<dialog>`.
@@ -46,6 +47,12 @@ export type ConfirmActionProps = {
   pendingLabel?: string;
   /** Visible content of the trigger button. */
   triggerLabel: ReactNode;
+  /**
+   * Button variant used by the trigger. Defaults to `ghost` so the trigger
+   * stays visually consistent with the rest of the Button family while the
+   * destructive emphasis lives on the solid `danger` confirm button.
+   */
+  triggerVariant?: ButtonVariant;
   /** Extra classes merged onto the trigger button. */
   triggerClassName?: string;
   /** Accessible name for the trigger when its visible label is not enough. */
@@ -68,15 +75,6 @@ export type ConfirmActionProps = {
   className?: string;
 };
 
-const triggerBase =
-  "inline-flex min-h-11 items-center justify-center gap-1 rounded-control transition-colors duration-[var(--transition-fast)] ease-[var(--motion-ease)] disabled:cursor-not-allowed disabled:opacity-50";
-
-const cancelClasses =
-  "btn btn-secondary min-h-11 rounded-control border-0 px-4 text-sm font-medium shadow-none";
-
-const confirmClasses =
-  "btn btn-error min-h-11 rounded-control border-0 px-4 text-sm font-medium shadow-none";
-
 export function ConfirmAction({
   title,
   description,
@@ -84,6 +82,7 @@ export function ConfirmAction({
   cancelLabel = "Cancelar",
   pendingLabel,
   triggerLabel,
+  triggerVariant = "ghost",
   triggerClassName,
   triggerAriaLabel,
   triggerTitle,
@@ -179,9 +178,10 @@ export function ConfirmAction({
 
   return (
     <>
-      <button
+      <Button
         ref={triggerRef}
         type="button"
+        variant={triggerVariant}
         disabled={disabled || busy}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -190,10 +190,10 @@ export function ConfirmAction({
         title={triggerTitle}
         onClick={open}
         data-testid={triggerTestId}
-        className={[triggerBase, triggerClassName].filter(Boolean).join(" ")}
+        className={triggerClassName}
       >
         {triggerLabel}
-      </button>
+      </Button>
 
       <dialog
         ref={dialogRef}
@@ -247,23 +247,23 @@ export function ConfirmAction({
             className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
             data-component="confirm-action-actions"
           >
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={close}
               disabled={busy}
-              className={cancelClasses}
             >
               {cancelLabel}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="danger"
               form={formId}
               onClick={onConfirmClick}
               disabled={busy}
-              className={confirmClasses}
             >
               {busy && pendingLabel ? pendingLabel : confirmLabel}
-            </button>
+            </Button>
           </div>
         </div>
       </dialog>

@@ -24,7 +24,7 @@ describe("Field", () => {
     const input = screen.getByLabelText("Usuario") as HTMLInputElement;
     expect(input.tagName).toBe("INPUT");
     expect(input.className).toContain("input");
-    expect(input.className).toContain("h-10");
+    expect(input.className).toContain("h-11");
     expect(input.id).toBe("username");
     expect(input.name).toBe("username");
     expect(input.autocomplete).toBe("username");
@@ -54,7 +54,7 @@ describe("Field", () => {
     ) as HTMLSelectElement;
     expect(select.tagName).toBe("SELECT");
     expect(select.className).toContain("select");
-    expect(select.className).toContain("h-10");
+    expect(select.className).toContain("h-11");
     expect(select.name).toBe("emailOwnerType");
     expect(select.required).toBe(true);
     expect(select.value).toBe("self");
@@ -99,7 +99,31 @@ describe("Field", () => {
 
     const hint = screen.getByText("3 a 30 caracteres");
     expect(hint.getAttribute("role")).toBeNull();
+    expect(hint.className).toContain("text-xs");
     expect(input.getAttribute("aria-describedby")).toBe(hint.id);
+  });
+
+  it("renders a decorative leading icon and reserves space for it", () => {
+    const { container } = render(
+      <Field label="Buscar" name="q" icon="explore" />,
+    );
+
+    const input = screen.getByLabelText("Buscar") as HTMLInputElement;
+    expect(input.className).toContain("pl-9");
+    const svg = container.querySelector("svg[data-icon='explore']");
+    expect(svg).toBeTruthy();
+    // The glyph is decorative: the visible label already names the control.
+    expect(svg?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("renders the error message with the error icon", () => {
+    const { container } = render(
+      <Field label="Usuario" name="username" error="No disponible" />,
+    );
+
+    const message = screen.getByRole("alert");
+    expect(message.textContent).toBe("No disponible");
+    expect(container.querySelector("svg[data-icon='error']")).toBeTruthy();
   });
 
   it("combines external descriptions with hint and error semantics", () => {

@@ -507,6 +507,30 @@
   color: var(--album-primary);
 }
 
+/* ---------------------------------------------------------------------------
+ * Admin primitives — centralised state colours (Commit 2)
+ *
+ * The selected-row tint and the danger-ghost hover are the only two state
+ * colours that need a colour-mix between a semantic token and the surface.
+ * They live here, once, so no component repeats a hex value or a Tailwind
+ * opacity modifier over a token.
+ *
+ *   - `.admin-row-selected` — primary 8% mixed with the surface, applied by
+ *     `DataTable` rows when `selected` is true.
+ *   - `.danger-ghost:hover` — danger 12% mixed with the surface, applied by
+ *     the `dangerGhost` Button variant.
+ *
+ * Both rules are intentionally unlayered so they win over Tailwind utilities
+ * without `!important`.
+ * ------------------------------------------------------------------------- */
+.admin-row-selected {
+  background-color: color-mix(in srgb, var(--album-primary) 8%, var(--album-surface));
+}
+
+.danger-ghost:hover {
+  background-color: color-mix(in srgb, var(--album-danger) 12%, var(--album-surface));
+}
+
 .app-shell-dock {
   position: fixed;
   left: 0;
