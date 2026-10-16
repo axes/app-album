@@ -114,39 +114,68 @@ export const colorTokens: SemanticColorTokens = {
   specialForeground: { light: "#2d2a32", dark: "#2d2a32" },
 };
 
-export const proposalColorTokens: SemanticColorTokens = {
-  background: { light: "#fff8f3", dark: "#1b1820" },
-  surface: { light: "#ffffff", dark: "#2d2a32" },
-  surfaceSoft: { light: "#ffe0c2", dark: "#3b264a" },
-  border: { light: "#a77d7b", dark: "#856d93" },
-  input: { light: "#ffffff", dark: "#2d2a32" },
-  inputBorder: { light: "#8a6f78", dark: "#856d93" },
-  foreground: { light: "#2d2a32", dark: "#fff4eb" },
-  foregroundMuted: { light: "#625a66", dark: "#c9b8d3" },
-  primary: { light: "#5a189a", dark: "#a95fe3" },
-  primaryForeground: { light: "#ffffff", dark: "#1b1820" },
-  secondary: { light: "#9d4edd", dark: "#5a189a" },
-  secondaryForeground: { light: "#ffffff", dark: "#ffffff" },
-  accent: { light: "#c44f16", dark: "#ff8f5a" },
-  accentForeground: { light: "#ffffff", dark: "#2d2a32" },
-  success: { light: "#047857", dark: "#4ade80" },
-  successForeground: { light: "#ffffff", dark: "#1b1820" },
+const designV2 = {
+  background: { light: "#f7f5ff", dark: "#130f1f" },
+  surface: { light: "#ffffff", dark: "#1c1630" },
+  surfaceSoft: { light: "#efebfb", dark: "#251d3f" },
+  border: { light: "#ddd6f3", dark: "#3a2f5c" },
+  inputBorder: { light: "#8e81c2", dark: "#6f63a8" },
+  foreground: { light: "#170b4a", dark: "#f7f2ff" },
+  foregroundMuted: { light: "#5b5280", dark: "#b9aedb" },
+  on: { light: "#ffffff", dark: "#130f1f" },
+  primary: { light: "#4a1fb8", dark: "#a78bfa" },
+  accent: { light: "#d93a00", dark: "#ff8a4c" },
+  focus: { light: "#6d43e8", dark: "#f7f2ff" },
+  success: { light: "#0f7a4f", dark: "#4ade80" },
   warning: { light: "#9a5200", dark: "#fbbf24" },
-  warningForeground: { light: "#ffffff", dark: "#1b1820" },
   danger: { light: "#b3261e", dark: "#ff8a80" },
-  dangerForeground: { light: "#ffffff", dark: "#1b1820" },
-  focus: { light: "#7b2cbf", dark: "#9d4edd" },
-  stickerOwned: { light: "#9d4edd", dark: "#9d4edd" },
-  stickerOwnedEnd: { light: "#5a189a", dark: "#5a189a" },
-  stickerMissing: { light: "#625a66", dark: "#c9b8d3" },
-  stickerDuplicate: { light: "#c44f16", dark: "#ff8f5a" },
-  stickerSpecial: { light: "#a16207", dark: "#fcd34d" },
-  stickerSpecialEnd: { light: "#713f12", dark: "#b45309" },
-  stickerFold: { light: "#fcd34d", dark: "#fcd34d" },
-  overlay: { light: "#2d2a32", dark: "#1b1820" },
-  special: { light: "#fcd34d", dark: "#fcd34d" },
-  specialForeground: { light: "#2d2a32", dark: "#2d2a32" },
+  ownedA: { light: "#6d3fd6", dark: "#7c4deb" },
+  ownedB: { light: "#4a1fb8", dark: "#5b21b6" },
+  specialA: { light: "#d93a00", dark: "#ff8a4c" },
+  specialB: { light: "#b53000", dark: "#e8581c" },
+  specialOn: { light: "#ffffff", dark: "#130f1f" },
+} as const;
+
+/**
+ * DESIGN v2 productive palette. The legacy semantic interface remains only so
+ * existing components keep rendering until the component-base step removes the
+ * aliases. Every compatibility role points to a DESIGN v2 canonical value.
+ */
+export const proposalColorTokens: SemanticColorTokens = {
+  background: designV2.background,
+  surface: designV2.surface,
+  surfaceSoft: designV2.surfaceSoft,
+  border: designV2.border,
+  input: designV2.surface,
+  inputBorder: designV2.inputBorder,
+  foreground: designV2.foreground,
+  foregroundMuted: designV2.foregroundMuted,
+  primary: designV2.primary,
+  primaryForeground: designV2.on,
+  secondary: designV2.surface,
+  secondaryForeground: designV2.foreground,
+  accent: designV2.accent,
+  accentForeground: designV2.on,
+  success: designV2.success,
+  successForeground: designV2.on,
+  warning: designV2.warning,
+  warningForeground: designV2.on,
+  danger: designV2.danger,
+  dangerForeground: designV2.on,
+  focus: designV2.focus,
+  stickerOwned: designV2.ownedA,
+  stickerOwnedEnd: designV2.ownedB,
+  stickerMissing: designV2.foregroundMuted,
+  stickerDuplicate: designV2.accent,
+  stickerSpecial: designV2.specialA,
+  stickerSpecialEnd: designV2.specialB,
+  stickerFold: designV2.on,
+  overlay: designV2.background,
+  special: designV2.specialA,
+  specialForeground: designV2.specialOn,
 };
+
+export const productiveCanonicalColorTokens = designV2;
 
 export const radiusTokens = {
   radiusControl: "0.375rem",
@@ -156,6 +185,7 @@ export const radiusTokens = {
 } as const;
 
 export const proposalRadiusTokens = {
+  radiusMini: "0.5rem",
   radiusControl: "0.75rem",
   radiusCard: "1.25rem",
   radiusSticker: "0.875rem",
@@ -172,6 +202,7 @@ export const proposalShadowTokens = {
   shadowSm: { light: "0 1px 2px rgb(23 11 74 / 0.06)", dark: "0 1px 2px rgb(0 0 0 / 0.3)" },
   shadowMd: { light: "0 6px 14px -4px rgb(23 11 74 / 0.14)", dark: "0 6px 14px -4px rgb(0 0 0 / 0.45)" },
   shadowLg: { light: "0 18px 30px -10px rgb(23 11 74 / 0.24)", dark: "0 18px 30px -10px rgb(0 0 0 / 0.55)" },
+  shadowGlow: { light: "0 0 0 4px rgb(109 67 232 / 0.25)", dark: "0 0 0 4px rgb(167 139 250 / 0.3)" },
 } as const;
 
 export const motionTokens = {
@@ -182,14 +213,18 @@ export const motionTokens = {
 } as const;
 
 export const typographyTokens = {
-  fontBody: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-  fontDisplay: '"Poppins", ui-rounded, "Trebuchet MS", system-ui, sans-serif',
-  displaySize: "2rem",
-  titleSize: "1.375rem",
-  subtitleSize: "1rem",
-  bodySize: "0.9375rem",
-  labelSize: "0.8125rem",
+  fontBody: '"Inter", system-ui, -apple-system, "Segoe UI", sans-serif',
+  fontDisplay: '"Poppins", system-ui, sans-serif',
+  displaySize: "2.5rem",
+  displayMobileSize: "2rem",
+  titleSize: "2rem",
+  subtitleSize: "1.5rem",
+  bodySize: "1rem",
+  buttonSize: "0.9375rem",
+  labelSize: "0.875rem",
   captionSize: "0.75rem",
+  stickerSize: "1.25rem",
+  stickerDenseSize: "1rem",
 } as const;
 
 export const fonts = {
@@ -202,10 +237,15 @@ export const spacingTokens = {
   space2: "0.5rem",
   space3: "0.75rem",
   space4: "1rem",
-  space5: "1.25rem",
   space6: "1.5rem",
   space8: "2rem",
   space12: "3rem",
+} as const;
+
+export const functionalSizeTokens = {
+  touchTargetMin: "44px",
+  layoutMax: "1120px",
+  mobileBreakpoint: "640px",
 } as const;
 
 export const spacingScale = ["1", "2", "3", "4", "6", "8"] as const;
@@ -219,7 +259,7 @@ export const typographyScale = [
 ] as const;
 
 export const projectMeta = {
-  name: "App Álbum",
+  name: "MiColección",
   description: "Sistema visual de referencia portable y autocontenido.",
 } as const;
 

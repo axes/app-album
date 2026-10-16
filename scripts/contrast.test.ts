@@ -7,7 +7,7 @@ import {
   relativeLuminance,
   wcagRatio,
 } from "./contrast";
-import { proposalColorTokens } from "./ui-tokens";
+import { productiveCanonicalColorTokens } from "./ui-tokens";
 
 describe("contrast (WCAG 2.1)", () => {
   it("computes canonical extremes", () => {
@@ -26,41 +26,45 @@ describe("contrast (WCAG 2.1)", () => {
     expect(meetsMinRatio("#170b4a", "#f7f5ff")).toBe(true);
   });
 
-  it("documents unique light/dark text and non-text pairs", () => {
+  it("documents the 12 DESIGN section 4 pairs for both themes", () => {
     const pairs = buildProposalContrastPairs();
-    expect(pairs.length).toBeGreaterThanOrEqual(30);
+    expect(pairs).toHaveLength(24);
     expect(new Set(pairs.map((pair) => pair.name)).size).toBe(pairs.length);
-    expect(pairs.some((pair) => pair.name.includes("sticker-special"))).toBe(true);
-    expect(pairs.some((pair) => pair.name.includes("focus"))).toBe(true);
   });
 
-  it("covers the required semantic pairs for both themes", () => {
+  it("covers every required DESIGN section 4 pair", () => {
     const names = buildProposalContrastPairs().map((pair) => pair.name);
     for (const theme of ["light", "dark"] as const) {
       for (const fragment of [
-        "primary-foreground/primary",
-        "secondary-foreground/secondary",
-        "accent-foreground/accent",
+        "text/background",
+        "text-muted/surface-soft",
+        "on/primary",
+        "on/accent",
+        "on/success",
+        "on/warning",
+        "on/danger",
+        "primary/background",
         "focus/background",
-        "special-foreground/special",
-        "sticker-owned/surface",
-        "sticker-missing/surface",
-        "sticker-duplicate/surface",
+        "input-border/surface",
+        "white/owned-a",
+        "special-on/special-a",
       ]) {
         expect(names, `${theme} ${fragment}`).toContain(`${theme} ${fragment}`);
       }
     }
   });
 
-  it("keeps secondary-foreground/secondary at AA for both themes", () => {
+  it("uses one canonical on colour for all filled semantic roles", () => {
     for (const theme of ["light", "dark"] as const) {
-      expect(
-        wcagRatio(
-          proposalColorTokens.secondaryForeground[theme],
-          proposalColorTokens.secondary[theme],
-        ),
-        theme,
-      ).toBeGreaterThanOrEqual(4.5);
+      for (const role of ["primary", "accent", "success", "warning", "danger"] as const) {
+        expect(
+          wcagRatio(
+            productiveCanonicalColorTokens.on[theme],
+            productiveCanonicalColorTokens[role][theme],
+          ),
+          `${theme} on/${role}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
     }
   });
 

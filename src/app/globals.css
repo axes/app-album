@@ -28,7 +28,7 @@
  * must exist in the compiled CSS even before a component consumes them.
  * `rounded-pill` has no consumer yet, and Tailwind only emits utilities it
  * finds in the scanned sources, so the whole scale is pinned here. */
-@source inline("rounded-control rounded-card rounded-sticker rounded-pill");
+@source inline("rounded-mini rounded-control rounded-card rounded-sticker rounded-pill");
 
 /* ---------------------------------------------------------------------------
  * Productive tokens
@@ -66,11 +66,11 @@
   --color-base-content: var(--album-text);
 
   --color-primary: var(--album-primary);
-  --color-primary-content: var(--album-primary-content);
-  --color-secondary: var(--album-secondary);
-  --color-secondary-content: var(--album-secondary-content);
+  --color-primary-content: var(--album-on);
+  --color-secondary: var(--album-surface);
+  --color-secondary-content: var(--album-text);
   --color-accent: var(--album-accent);
-  --color-accent-content: var(--album-accent-content);
+  --color-accent-content: var(--album-on);
   --color-success: var(--album-success);
   --color-warning: var(--album-warning);
   --color-error: var(--album-danger);
@@ -78,11 +78,11 @@
   /* daisyUI-only roles mapped onto the canonical App Álbum tokens. */
   --color-neutral: var(--album-text);
   --color-neutral-content: var(--album-surface);
-  --color-info: var(--album-secondary);
-  --color-info-content: var(--album-secondary-content);
-  --color-success-content: var(--album-success-content);
-  --color-warning-content: var(--album-warning-content);
-  --color-error-content: var(--album-danger-content);
+  --color-info: var(--album-primary);
+  --color-info-content: var(--album-on);
+  --color-success-content: var(--album-on);
+  --color-warning-content: var(--album-on);
+  --color-error-content: var(--album-on);
 
   --radius-selector: var(--album-radius-control);
   --radius-field: var(--album-radius-control);
@@ -107,11 +107,11 @@
   --color-base-content: var(--album-text);
 
   --color-primary: var(--album-primary);
-  --color-primary-content: var(--album-primary-content);
-  --color-secondary: var(--album-secondary);
-  --color-secondary-content: var(--album-secondary-content);
+  --color-primary-content: var(--album-on);
+  --color-secondary: var(--album-surface);
+  --color-secondary-content: var(--album-text);
   --color-accent: var(--album-accent);
-  --color-accent-content: var(--album-accent-content);
+  --color-accent-content: var(--album-on);
   --color-success: var(--album-success);
   --color-warning: var(--album-warning);
   --color-error: var(--album-danger);
@@ -119,11 +119,11 @@
   /* daisyUI-only roles mapped onto the canonical App Álbum tokens. */
   --color-neutral: var(--album-surface-soft);
   --color-neutral-content: var(--album-text);
-  --color-info: var(--album-secondary);
-  --color-info-content: var(--album-secondary-content);
-  --color-success-content: var(--album-success-content);
-  --color-warning-content: var(--album-warning-content);
-  --color-error-content: var(--album-danger-content);
+  --color-info: var(--album-primary);
+  --color-info-content: var(--album-on);
+  --color-success-content: var(--album-on);
+  --color-warning-content: var(--album-on);
+  --color-error-content: var(--album-on);
 
   --radius-selector: var(--album-radius-control);
   --radius-field: var(--album-radius-control);
@@ -160,7 +160,7 @@
   --color-border: var(--album-border);
   --color-input: var(--album-input);
   --color-input-border: var(--album-input-border);
-  --color-primary-text: var(--album-primary-content);
+  --color-primary-text: var(--album-on);
   --color-danger: var(--album-danger);
 
   /* New semantic aliases (available for the next phases). */
@@ -173,6 +173,7 @@
    * utilities, so the scale has to be registered here. The values stay in the
    * generated `--album-radius-*` tokens: these entries are references, never a
    * second copy of the numbers. */
+  --radius-mini: var(--album-radius-mini);
   --radius-control: var(--album-radius-control);
   --radius-card: var(--album-radius-card);
   --radius-sticker: var(--album-radius-sticker);
@@ -290,7 +291,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--album-focus);
+    outline: 3px solid var(--album-focus);
     outline-offset: 2px;
   }
 }

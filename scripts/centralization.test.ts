@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   colorTokens,
+  productiveCanonicalColorTokens,
   proposalColorTokens,
   semanticColorKeys,
 } from "./ui-tokens";
@@ -64,6 +65,24 @@ describe("UI-04A.3 token centralization", () => {
     expect(Object.keys(proposalColorTokens)).toEqual([...semanticColorKeys]);
   });
 
+  it("generates the DESIGN v2 productive contract with temporary aliases", () => {
+    const css = buildProductiveTokensCss();
+    const required = [
+      "background", "surface", "surface-soft", "border", "input-border",
+      "text", "text-muted", "on", "primary", "accent", "focus", "success",
+      "warning", "danger", "owned-a", "owned-b", "special-a", "special-b",
+      "special-on",
+    ];
+    for (const name of required) expect(css).toContain(`--album-${name}:`);
+    for (const token of Object.values(productiveCanonicalColorTokens)) {
+      expect(css).toContain(token.light);
+      expect(css).toContain(token.dark);
+    }
+    expect(css).toContain("--album-primary-content: var(--album-on)");
+    expect(css).toContain("--album-secondary: var(--album-surface)");
+    expect(css).toContain("--album-secondary-content: var(--album-text)");
+  });
+
   it("propagates every semantic proposal token to CSS and JSON", () => {
     const css = buildUiTokensCss();
     const json = JSON.parse(buildDesignTokensJson());
@@ -93,7 +112,7 @@ describe("UI-04A.3 token centralization", () => {
     expect(proposalColorTokens.overlay.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
 
     const css = read("src/styles/tokens.css");
-    expect(css).toMatch(/--album-overlay:\s*#[0-9a-fA-F]+/);
+    expect(css).toContain("--album-overlay: var(--album-background)");
 
     const overlay = read("src/app/app/albums/remove-button.tsx");
     expect(overlay).toContain("var(--album-overlay)");
@@ -109,10 +128,10 @@ describe("UI-04A.3 token centralization", () => {
     expect(colorTokens.specialForeground.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
 
     const css = buildProductiveTokensCss();
-    expect(css).toContain(`--album-special: ${proposalColorTokens.special.light}`);
-    expect(css).toContain(
-      `--album-special-content: ${proposalColorTokens.specialForeground.light}`,
-    );
+    expect(css).toContain("--album-special-a: #d93a00");
+    expect(css).toContain("--album-special-on: #ffffff");
+    expect(css).toContain("--album-special: var(--album-special-a)");
+    expect(css).toContain("--album-special-content: var(--album-special-on)");
 
     const globals = read("src/app/globals.css");
     expect(globals).toContain("--album-special-glow");

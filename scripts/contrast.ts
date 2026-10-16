@@ -1,4 +1,4 @@
-import { proposalColorTokens } from "./ui-tokens.ts";
+import { productiveCanonicalColorTokens } from "./ui-tokens.ts";
 
 export type ContrastPair = {
   name: string;
@@ -62,25 +62,21 @@ export function assertMinRatio(pairs: ContrastPair[], min = 4.5): void {
 export function buildProposalContrastPairs(): ContrastPair[] {
   const pairs: ContrastPair[] = [];
   for (const theme of ["light", "dark"] as const) {
-    const token = (key: keyof typeof proposalColorTokens) =>
-      proposalColorTokens[key][theme];
+    const token = (key: keyof typeof productiveCanonicalColorTokens) =>
+      productiveCanonicalColorTokens[key][theme];
     pairs.push(
-      { name: `${theme} foreground/background`, fg: token("foreground"), bg: token("background") },
-      { name: `${theme} foreground/surface`, fg: token("foreground"), bg: token("surface") },
-      { name: `${theme} foreground-muted/surface-soft`, fg: token("foregroundMuted"), bg: token("surfaceSoft") },
-      { name: `${theme} primary-foreground/primary`, fg: token("primaryForeground"), bg: token("primary") },
-      { name: `${theme} secondary-foreground/secondary`, fg: token("secondaryForeground"), bg: token("secondary") },
-      { name: `${theme} accent-foreground/accent`, fg: token("accentForeground"), bg: token("accent") },
-      { name: `${theme} success-foreground/success`, fg: token("successForeground"), bg: token("success") },
-      { name: `${theme} warning-foreground/warning`, fg: token("warningForeground"), bg: token("warning") },
-      { name: `${theme} danger-foreground/danger`, fg: token("dangerForeground"), bg: token("danger") },
+      { name: `${theme} text/background`, fg: token("foreground"), bg: token("background") },
+      { name: `${theme} text-muted/surface-soft`, fg: token("foregroundMuted"), bg: token("surfaceSoft") },
+      { name: `${theme} on/primary`, fg: token("on"), bg: token("primary") },
+      { name: `${theme} on/accent`, fg: token("on"), bg: token("accent") },
+      { name: `${theme} on/success`, fg: token("on"), bg: token("success") },
+      { name: `${theme} on/warning`, fg: token("on"), bg: token("warning") },
+      { name: `${theme} on/danger`, fg: token("on"), bg: token("danger") },
       { name: `${theme} primary/background`, fg: token("primary"), bg: token("background") },
       { name: `${theme} focus/background`, fg: token("focus"), bg: token("background"), min: 3 },
-      { name: `${theme} sticker-owned/surface`, fg: token("stickerOwned"), bg: token("surface"), min: 3 },
-      { name: `${theme} sticker-missing/surface`, fg: token("stickerMissing"), bg: token("surface"), min: 3 },
-      { name: `${theme} sticker-duplicate/surface`, fg: token("stickerDuplicate"), bg: token("surface"), min: 3 },
-      { name: `${theme} sticker-special/surface`, fg: token("stickerSpecial"), bg: token("surface"), min: 3 },
-      { name: `${theme} special-foreground/special`, fg: token("specialForeground"), bg: token("special") },
+      { name: `${theme} input-border/surface`, fg: token("inputBorder"), bg: token("surface"), min: 3 },
+      { name: `${theme} white/owned-a`, fg: "#ffffff", bg: token("ownedA") },
+      { name: `${theme} special-on/special-a`, fg: token("specialOn"), bg: token("specialA") },
     );
   }
   return pairs;
