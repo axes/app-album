@@ -100,7 +100,7 @@ export function ShareControls({ userAlbumId, sharing }: { userAlbumId: string; s
           <form action={enableSharingAction}>
             <input name="userAlbumId" type="hidden" value={userAlbumId} />
             <SubmitButton
-              className="min-h-11 rounded-control bg-primary px-3 py-2 text-sm text-primary-text focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-surface-soft disabled:text-muted"
+              className="min-h-11 rounded-control bg-primary px-3 py-2 text-sm text-primary-text focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted"
               label="Activar enlace público"
               pendingLabel="Activando…"
             />

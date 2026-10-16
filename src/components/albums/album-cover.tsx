@@ -38,7 +38,7 @@ export function AlbumCover({ coverUrl, title, className }: AlbumCoverProps) {
       data-testid="album-cover"
       data-placeholder={coverUrl ? "false" : "true"}
       className={joinClasses(
-        "relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-soft",
+        "relative aspect-[3/4] w-full overflow-hidden rounded-card border border-border bg-surface-muted",
         className,
       )}
     >

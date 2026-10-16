@@ -237,7 +237,7 @@ export function ConfirmAction({
               role="status"
               aria-live="polite"
               data-component="confirm-action-pending"
-              className="rounded-control border border-border bg-surface-soft px-3 py-2 text-sm text-content"
+              className="rounded-control border border-border bg-surface-muted px-3 py-2 text-sm text-content"
             >
               {pendingLabel}
             </p>

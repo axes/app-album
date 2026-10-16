@@ -8,10 +8,10 @@ import type { ReactNode } from "react";
  * hooks, so it renders from Server and Client Components alike.
  *
  * Variants (DESIGN §9):
- *   - `neutral`     — `bg-surface-soft`, `border-border`, `text-content`
+ *   - `neutral`     — `bg-surface-muted`, `border-border`, `text-content`
  *                     (normal text, not muted). The default for product
  *                     metadata where the badge must read like a label.
- *   - `secondary`   — same `bg-surface-soft` + `border-border` pair as
+ *   - `secondary`   — same `bg-surface-muted` + `border-border` pair as
  *                     `neutral`, but with `text-muted` so it reads as the
  *                     discreet "Bajo" state in `album-card.tsx`.
  *   - `primary`     — fill, `text-on` (DESIGN: `primary`).
@@ -24,6 +24,12 @@ import type { ReactNode } from "react";
  *                     identical to `primary`. Kept in the type for callers
  *                     that follow the daisyUI vocabulary; no productive
  *                     consumer uses it today.
+ *
+ * `bg-surface-muted` is the canonical Tailwind utility for the
+ * `--album-surface-soft` token: `globals.css` defines the alias
+ * `--color-surface-muted: var(--album-surface-soft)` in `@theme static`,
+ * so the compiled CSS exposes `.bg-surface-muted { background-color:
+ * var(--color-surface-muted) }` (verified by `ui-utilities.test.ts`).
  */
 export type BadgeVariant =
   | "neutral"
@@ -37,12 +43,12 @@ export type BadgeVariant =
 
 const variantClasses: Record<BadgeVariant, string> = {
   // DESIGN §9 "neutro: fondo surface-soft, borde border, texto normal".
-  neutral: "bg-surface-soft border-border text-content",
+  neutral: "bg-surface-muted border-border text-content",
   // DESIGN §9 calls for the same surface-soft + border pair, but the
   // product uses `secondary` to mark a discreet state ("Bajo") that
   // should not compete with the progress bar. The text is muted for
   // visual hierarchy, the background and border match `neutral`.
-  secondary: "bg-surface-soft border-border text-muted",
+  secondary: "bg-surface-muted border-border text-muted",
   primary: "bg-primary border-primary text-on",
   accent: "bg-accent border-accent text-on",
   success: "bg-success border-success text-on",

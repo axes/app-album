@@ -11,9 +11,9 @@ const variantExpectations: Array<[BadgeVariant, string, string]> = [
   // must pair with. Filled variants use `text-on`; outline variants use
   // the muted text token except `neutral`, which uses the normal content
   // colour (DESIGN §9: "texto normal, no muted").
-  ["neutral", "bg-surface-soft", "text-content"],
+  ["neutral", "bg-surface-muted", "text-content"],
   ["primary", "bg-primary", "text-on"],
-  ["secondary", "bg-surface-soft", "text-muted"],
+  ["secondary", "bg-surface-muted", "text-muted"],
   ["accent", "bg-accent", "text-on"],
   ["success", "bg-success", "text-on"],
   ["warning", "bg-warning", "text-on"],
@@ -43,7 +43,7 @@ describe("Badge (DESIGN v2 §9)", () => {
     render(<Badge>Estado</Badge>);
 
     const className = screen.getByText("Estado").className;
-    expect(className).toContain("bg-surface-soft");
+    expect(className).toContain("bg-surface-muted");
     expect(className).toContain("border-border");
     expect(className).toContain("text-content");
     expect(className).not.toContain("text-muted");
@@ -64,7 +64,7 @@ describe("Badge (DESIGN v2 §9)", () => {
     render(<Badge variant="secondary">Bajo</Badge>);
 
     const className = screen.getByText("Bajo").className;
-    expect(className).toContain("bg-surface-soft");
+    expect(className).toContain("bg-surface-muted");
     expect(className).toContain("border-border");
     expect(className).toContain("text-muted");
   });
