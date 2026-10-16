@@ -248,7 +248,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                               disabled={index === 0}
                               aria-label={`Subir página ${section.name}`}
                             >
-                              ↑
+                              <Icon name="chevronUp" size="sm" />
                             </button>
                           </ActionForm>
                           <ActionForm action={moveSectionAction} className="inline">
@@ -260,7 +260,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                               disabled={index === album.sections.length - 1}
                               aria-label={`Bajar página ${section.name}`}
                             >
-                              ↓
+                              <Icon name="chevronDown" size="sm" />
                             </button>
                           </ActionForm>
                           <DeletePageForm

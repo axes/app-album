@@ -97,6 +97,14 @@ export const ICON_SIZES = {
 
 export type IconSize = keyof typeof ICON_SIZES;
 
+/**
+ * DESIGN v2 §6: the loading glyph is the only animated icon. It spins at
+ * `--motion-spin` (800 ms) and the rotation is removed entirely under
+ * `prefers-reduced-motion` (see `globals.css`), where the gerund label
+ * ("Guardando…") carries the meaning on its own.
+ */
+const SPINNING_ICONS: ReadonlySet<IconName> = new Set<IconName>(["loading"]);
+
 export type IconProps = Omit<SVGProps<SVGSVGElement>, "name" | "ref"> & {
   /** Semantic name from the DESIGN v2 §6 map. */
   name: IconName;
@@ -131,6 +139,7 @@ export function Icon({ name, size = "md", label, className, ...rest }: IconProps
   }
 
   const pixels = ICON_SIZES[size];
+  const spins = SPINNING_ICONS.has(name);
 
   return (
     <Glyph
@@ -143,7 +152,9 @@ export function Icon({ name, size = "md", label, className, ...rest }: IconProps
       aria-label={label}
       aria-hidden={label ? undefined : true}
       focusable={false}
-      className={className}
+      className={[spins ? "animate-spin" : undefined, className]
+        .filter(Boolean)
+        .join(" ") || undefined}
       data-icon={name}
       {...rest}
     />

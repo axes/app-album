@@ -182,6 +182,11 @@
   /* Standard easing curve. */
   --ease-standard: var(--motion-ease);
 
+  /* DESIGN v2 §6: the loading icon spins at 800 ms (`--motion-spin`), not at
+   * Tailwind's 1 s default. Overriding the theme variable keeps `animate-spin`
+   * as the only class the component needs. */
+  --animate-spin: album-spin var(--motion-spin) linear infinite;
+
   /* UI-03B entrance utility: opacity + 5px translateY over 200ms with the
    * shared easing. Consumed as `animate-enter` by PageHeader and the public
    * landing sections. */
@@ -326,6 +331,14 @@
   }
 }
 
+/* DESIGN v2 §6: the loading glyph rotation. Duration comes from
+ * `--motion-spin` through the `--animate-spin` theme override above. */
+@keyframes album-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------------------------------------------------------------------------
  * UI-05C.3 — sticker interaction feedback (decorative layer)
  *
@@ -438,6 +451,12 @@
   /* UI-03B: the entrance utility is purely decorative, so it is removed
    * entirely (not merely shortened) under reduced motion. */
   .animate-enter {
+    animation: none;
+  }
+
+  /* DESIGN v2 §6: the spinner is decorative too — the gerund label carries
+   * the meaning — so the rotation is removed entirely. */
+  .animate-spin {
     animation: none;
   }
 

@@ -123,6 +123,36 @@ describe("Icon (DESIGN v2 §6)", () => {
     const html = renderToStaticMarkup(<Icon name="info" />);
     expect(html).toContain('stroke="currentColor"');
   });
+
+  it("spins the loading glyph and leaves every other icon still", () => {
+    const loading = renderToStaticMarkup(<Icon name="loading" />);
+    expect(loading).toContain("animate-spin");
+
+    for (const name of ["albums", "success", "warning", "error"] as const) {
+      expect(renderToStaticMarkup(<Icon name={name} />)).not.toContain(
+        "animate-spin",
+      );
+    }
+  });
+
+  it("keeps the spinner token-driven and neutralised under reduced motion", () => {
+    const globals = readFileSync(
+      resolve(process.cwd(), "src/app/globals.css"),
+      "utf8",
+    );
+
+    // 800 ms from the motion token, not Tailwind's 1 s default.
+    expect(globals).toContain(
+      "--animate-spin: album-spin var(--motion-spin) linear infinite;",
+    );
+    expect(globals).toContain("@keyframes album-spin");
+
+    // The reduced-motion block removes the rotation entirely.
+    const reduced = globals.slice(
+      globals.indexOf("@media (prefers-reduced-motion: reduce)"),
+    );
+    expect(reduced).toMatch(/\.animate-spin\s*\{\s*animation:\s*none;/);
+  });
 });
 
 describe("lucide-react import boundary", () => {
@@ -139,5 +169,68 @@ describe("lucide-react import boundary", () => {
     const source = readFileSync(join(SRC, "components/ui/icons.tsx"), "utf8");
     expect(source).toMatch(/from\s+["']lucide-react["']/);
     expect(source).not.toMatch(/import\s+\*\s+as\s+/);
+    expect(source).not.toMatch(/require\(\s*["']lucide-react["']\s*\)/);
+  });
+
+  it("names every Lucide glyph explicitly in the import block", () => {
+    const source = readFileSync(join(SRC, "components/ui/icons.tsx"), "utf8");
+    const block = source.match(
+      /import\s*\{([\s\S]*?)\}\s*from\s*["']lucide-react["']/,
+    );
+    expect(block, "icons.tsx must import from lucide-react").not.toBeNull();
+
+    const named = block![1]
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((entry) => entry.replace(/^type\s+/, "").split(/\s+as\s+/)[0].trim())
+      .filter((entry) => entry !== "LucideIcon")
+      .sort();
+
+    // The literal list is the contract: one named import per glyph, no
+    // namespace object and no dynamic lookup.
+    expect(named).toEqual(
+      [
+        "ArrowLeft",
+        "ArrowLeftRight",
+        "Check",
+        "ChevronDown",
+        "ChevronUp",
+        "CircleCheck",
+        "CircleX",
+        "Copy",
+        "Image",
+        "Info",
+        "LayoutGrid",
+        "List",
+        "LoaderCircle",
+        "Lock",
+        "Menu",
+        "Minus",
+        "Moon",
+        "Pencil",
+        "Plus",
+        "Search",
+        "Share2",
+        "Star",
+        "Sticker",
+        "Sun",
+        "Trash2",
+        "TriangleAlert",
+        "Trophy",
+        "User",
+        "X",
+      ].sort(),
+    );
+
+    // Every glyph in the semantic map is one of those named imports, so no
+    // entry can be resolved through a namespace or a string lookup.
+    const imported = new Set(named);
+    for (const [key, glyph] of Object.entries(ICONS)) {
+      expect(
+        imported.has(glyph.displayName ?? ""),
+        `${key} must resolve to a named import`,
+      ).toBe(true);
+    }
   });
 });
