@@ -1,5 +1,22 @@
 # App Álbum — Especificación de diseño (v2)
 
+## Erratas aprobadas (prevalecen sobre el texto)
+
+Las siguientes decisiones aprobadas corrigen o precisan cualquier instrucción contradictoria del resto de este documento:
+
+- **Segmentado:** todos sus ítems tienen una altura mínima de 44 px; §16 prevalece sobre §8.
+- **Copias:** no existe un tope de 9. El límite es el que impone el producto en el servidor. El contador muestra `+N` hasta `+99` y `99+` desde ese punto.
+- **Lámina especial:** se representa mediante una prop opcional `special`. Nunca se infiere desde el nombre ni desde el código. En producción no se muestra hasta que el dato exista.
+- **Perfil:** no existe destino ni ruta de perfil. La navegación muestra únicamente destinos reales.
+- **Nombre:** el nombre visible del producto es **MiColección**; «App Álbum» es sólo el nombre interno.
+- **Vista de láminas:** se conserva Lista y se agrega Compacto. Los modos son `Grid / Compacto / Lista`.
+- **Color sobre rellenos:** no existe color `secondary`. El único token de texto sobre rellenos es `--album-on`.
+- **Logo:** `LogoDefs` se declara una sola vez en el layout raíz, no en `AppShell`.
+- **Íconos extra aprobados:** `sun`, `moon`, `chevronUp`, `chevronDown`, `list`, `pencil`, `image` y `back`.
+- **Tile de lámina como botón y estado compartido:** aprobado con condiciones: no puede contener controles interactivos anidados, las Server Actions permanecen intactas y deben existir pruebas de consistencia del estado compartido.
+
+Esta copia versionada en el repositorio ya no es idéntica a la especificación entregada originalmente: incorpora estas erratas aprobadas, que tienen precedencia normativa.
+
 App para gestionar láminas de álbumes (marca: **MiColección**). Este documento es la especificación que debes implementar. Va acompañado de:
 
 | Archivo | Rol |
