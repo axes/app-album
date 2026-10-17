@@ -3,18 +3,20 @@ import type postgres from "postgres";
 import type { DrizzleCatalogRepository } from "@/lib/catalog/drizzle-repository";
 import type { DrizzleCollectionRepository } from "@/lib/collection/drizzle-repository";
 import { CollectionError } from "@/lib/collection/service";
+import { resolveIntegrationDatabaseUrl } from "@/test/integration-database";
 
 /**
  * Integration coverage for the real PostgreSQL collection repository.
  *
  * Mirrors the catalog suite: every server-only module is imported dynamically
- * and the suite is skipped without DATABASE_URL. The suite exercises the
+ * and the suite is skipped without a local database. The suite exercises the
  * constraints that the pure unit tests cannot reproduce: the UNIQUE
  * `(user_id, album_id)`, the CHECK `quantity >= 1`, the CASCADE on
  * `user_album → user_album_stickers`, the RESTRICT on master albums and
  * stickers, and the `+1/-1` concurrency under `pg_advisory_xact_lock`.
+ * `resolveIntegrationDatabaseUrl` refuses a non-local host outright.
  */
-const url = process.env.DATABASE_URL;
+const url = resolveIntegrationDatabaseUrl();
 const suite = url ? describe : describe.skip;
 
 suite("drizzle collection repository (integration)", () => {

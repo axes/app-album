@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type postgres from "postgres";
 import type { DrizzleAdminUserRepository } from "./drizzle-repository";
 import type { AdminOperationError } from "./service";
+import { resolveIntegrationDatabaseUrl } from "@/test/integration-database";
 
 /**
  * Integration coverage for the self-protection rule in the real PostgreSQL
@@ -10,12 +11,12 @@ import type { AdminOperationError } from "./service";
  * The unit tests in `policy.test.ts` prove the rule itself; this suite proves
  * that the repository actually calls it inside the transaction, so a crafted
  * request cannot demote or block the administrator who sent it. That cannot be
- * reproduced with an in-memory adapter, so the suite is skipped unless
- * DATABASE_URL points at a disposable local database, and every server-only
- * module is imported dynamically so the default unit run never touches the
- * database client.
+ * reproduced with an in-memory adapter, so the suite is skipped unless a local
+ * database is configured, and every server-only module is imported dynamically
+ * so the default unit run never touches the database client.
+ * `resolveIntegrationDatabaseUrl` refuses a non-local host outright.
  */
-const url = process.env.DATABASE_URL;
+const url = resolveIntegrationDatabaseUrl();
 const suite = url ? describe : describe.skip;
 
 suite("drizzle admin user repository — self-protection (integration)", () => {
