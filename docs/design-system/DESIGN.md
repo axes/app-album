@@ -23,16 +23,16 @@ App para gestionar láminas de álbumes (marca: **MiColección**). Este document
 |---|---|
 | `DESIGN.md` | Reglas, medidas y comportamiento. **Manda sobre el HTML.** |
 | `ui-tokens.css` / `design-tokens.json` | Fuente única de valores. Mismos datos en dos formatos. |
-| `reference.html` | Referencia visual y de comportamiento. Ábrelo en el navegador y compáralo con tu resultado. |
+| `docs/design-system/reference/reference.html` | Referencia visual y de comportamiento. Ábrelo en el navegador y compáralo con tu resultado. |
 
 ## 0. Instrucciones para el agente
 
-1. **No copies el CSS ni las clases de `reference.html`.** Sus nombres (`.btn.p`, `.slot`, `.sel`…) son de la demo. Impleméntalo con los componentes, convenciones y utilidades que ya existen en el repositorio. Si ya hay un componente equivalente, reutilízalo y ajústalo; no crees uno paralelo.
+1. **No copies el CSS ni las clases de `docs/design-system/reference/reference.html`.** Sus nombres (`.btn.p`, `.slot`, `.sel`…) son de la demo. Impleméntalo con los componentes, convenciones y utilidades que ya existen en el repositorio. Si ya hay un componente equivalente, reutilízalo y ajústalo; no crees uno paralelo.
 2. **Orden de trabajo:** (a) tokens y tema claro/oscuro, (b) tipografías, (c) íconos, (d) componentes base, (e) componentes de álbum, (f) navegación y diálogo.
 3. **Ningún componente lleva colores propios.** Todo color viene de un token `--album-*`. La única excepción es el logo (§14).
 4. Si el repo genera los tokens desde `scripts/ui-tokens.ts`, sincroniza ese script con `design-tokens.json` y regenera el CSS. No edites el CSS generado a mano.
 5. El diseño está **no aprobado todavía para producción**. Impleméntalo detrás de la misma estructura de temas que ya exista y no borres la dirección actual salvo que se te indique.
-6. Al terminar, entrega: lista de lo implementado, lo que no pudiste cumplir (con el motivo) y las capturas claro/oscuro comparadas con `reference.html`.
+6. Al terminar, entrega: lista de lo implementado, lo que no pudiste cumplir (con el motivo) y las capturas claro/oscuro comparadas con `docs/design-system/reference/reference.html`.
 
 ## 1. Principios
 
@@ -139,7 +139,7 @@ Mínimos: 4.5:1 en texto, 3:1 en texto grande, íconos y bordes funcionales.
 | Eliminar | `trash-2` | Compartir | `share-2` |
 | Intercambio | `arrow-left-right` | | |
 
-> En `reference.html` los íconos están redibujados a mano al estilo Lucide, y el botón "Compartir" usa una estrella como marcador. En la app usa los íconos oficiales y `share-2` para compartir.
+> En `docs/design-system/reference/reference.html` los íconos están redibujados a mano al estilo Lucide, y el botón "Compartir" usa una estrella como marcador. En la app usa los íconos oficiales y `share-2` para compartir.
 
 ## 7. Botones
 
@@ -366,4 +366,4 @@ Verifica cada punto en tema claro **y** oscuro:
 - [ ] El logo se ve igual en claro y oscuro.
 - [ ] Todos los pares de contraste de §4 se cumplen.
 - [ ] Con `prefers-reduced-motion: reduce` no quedan animaciones.
-- [ ] Se entregan capturas claro/oscuro comparadas con `reference.html` y una nota con lo que no pudo cumplirse.
+- [ ] Se entregan capturas claro/oscuro comparadas con `docs/design-system/reference/reference.html` y una nota con lo que no pudo cumplirse.

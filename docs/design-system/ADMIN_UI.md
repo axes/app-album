@@ -191,4 +191,4 @@ Los siguientes archivos fueron copiados sin cambios desde el directorio de refer
 - `design-tokens.json`;
 - `ui-tokens.css`.
 
-Las copias canónicas para revisión viven ahora en `docs/design-system/`. `reference.html` no forma parte del traslado solicitado y permanece fuera de este bloque.
+Las copias canónicas para revisión viven ahora en `docs/design-system/`. `reference.html` también quedó versionado, en `docs/design-system/reference/reference.html`.
