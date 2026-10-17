@@ -50,13 +50,15 @@ const statusLabels: Record<UserStatus, string> = {
 
 export type AdminUserListProps = {
   users: AdminUser[];
+  /** Id of the signed-in administrator, used to protect their own row. */
+  currentUserId: string;
 };
 
 function searchableText(user: AdminUser) {
   return [user.username, user.email].join(" ").toLocaleLowerCase("es-CL");
 }
 
-export function AdminUserList({ users }: AdminUserListProps) {
+export function AdminUserList({ users, currentUserId }: AdminUserListProps) {
   const [query, setQuery] = useState("");
   const normalizedQuery = query.trim().toLocaleLowerCase("es-CL");
   const filteredUsers = useMemo(
@@ -100,7 +102,7 @@ export function AdminUserList({ users }: AdminUserListProps) {
           )}
         />
       ) : (
-        <DataTable ariaLabel="Usuarios" minWidth="64rem" className="bg-surface">
+        <DataTable ariaLabel="Usuarios" minWidth="48rem" className="bg-surface">
           <DataTableHead>
             <DataTableRow>
               <DataTableHeaderCell>Usuario</DataTableHeaderCell>
@@ -117,7 +119,7 @@ export function AdminUserList({ users }: AdminUserListProps) {
                 <DataTableCell>
                   <div className="font-semibold text-content">{user.username}</div>
                 </DataTableCell>
-                <DataTableCell>{user.email}</DataTableCell>
+                <DataTableCell className="break-words">{user.email}</DataTableCell>
                 <DataTableCell>{ownerLabels[user.emailOwnerType]}</DataTableCell>
                 <DataTableCell>
                   <Badge variant={user.role === "admin" ? "primary" : "neutral"}>
@@ -135,6 +137,7 @@ export function AdminUserList({ users }: AdminUserListProps) {
                     username={user.username}
                     role={user.role}
                     status={user.status}
+                    isSelf={user.id === currentUserId}
                   />
                 </DataTableCell>
               </DataTableRow>

@@ -230,6 +230,7 @@ describe("Design v2 — every primitive utility class compiles to CSS", () => {
     ["flex-wrap", "AdminUserList row actions", "single wrapping action line"],
     ["max-w-md", "AdminUserList search field", "search input width"],
     ["font-semibold", "AdminUserList username cell", "username weight"],
+    ["break-words", "AdminUserList email cell", "wrapping email"],
   ];
 
   it.each(adminFoundationClasses)(

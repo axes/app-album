@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Button, type ButtonVariant } from "./button";
+import { Button, type ButtonSize, type ButtonVariant } from "./button";
 
 /**
  * Reusable destructive-action confirmation built on the native `<dialog>`.
@@ -59,6 +59,11 @@ export type ConfirmActionProps = {
    * destructive emphasis lives on the solid `danger` confirm button.
    */
   triggerVariant?: ButtonVariant;
+  /**
+   * Button size used by the trigger. Defaults to `md` (44 px). Pass `sm` when
+   * the trigger sits in a dense admin row alongside other compact controls.
+   */
+  triggerSize?: ButtonSize;
   /** Extra classes merged onto the trigger button. */
   triggerClassName?: string;
   /** Accessible name for the trigger when its visible label is not enough. */
@@ -90,6 +95,7 @@ export function ConfirmAction({
   triggerLabel,
   triggerIcon,
   triggerVariant = "ghost",
+  triggerSize = "md",
   triggerClassName,
   triggerAriaLabel,
   triggerTitle,
@@ -189,6 +195,7 @@ export function ConfirmAction({
         ref={triggerRef}
         type="button"
         variant={triggerVariant}
+        size={triggerSize}
         disabled={disabled || busy}
         aria-haspopup="dialog"
         aria-expanded={isOpen}

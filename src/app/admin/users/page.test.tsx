@@ -36,6 +36,20 @@ vi.mock("./actions", () => ({
   changeStatusAction: vi.fn(),
 }));
 
+/**
+ * The page resolves the signed-in administrator to protect their own row. The
+ * auth stack is server-only (session cookie + database), so it is replaced
+ * here; the layout guard is not under test.
+ */
+vi.mock("@/lib/auth/current-user", () => ({
+  getCurrentUser: vi.fn(async () => ({
+    id: "00000000-0000-4000-8000-000000000001",
+    username: "gino",
+    role: "admin",
+    status: "active",
+  })),
+}));
+
 import AdminUsersPage from "./page";
 
 beforeEach(() => {
@@ -74,5 +88,9 @@ describe("/admin/users Server Component", () => {
     expect(text).toContain("gino@example.com");
     expect(text).toContain("Administrador");
     expect(text).toContain("Activo");
+    // The signed-in administrator's own row is marked and protected.
+    expect(text).toContain("Tú");
+    expect(text).not.toContain("Degradar");
+    expect(text).not.toContain("Bloquear");
   });
 });

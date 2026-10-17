@@ -44,9 +44,11 @@ vi.mock("./actions", () => ({
   changeStatusAction: (state: unknown, data: FormData) => changeStatusActionMock(state, data),
 }));
 
+const SELF_ID = "00000000-0000-4000-8000-000000000001";
+
 const users: AdminUser[] = [
   {
-    id: "00000000-0000-4000-8000-000000000001",
+    id: SELF_ID,
     username: "gino",
     email: "gino@example.com",
     emailOwnerType: "self",
@@ -61,7 +63,29 @@ const users: AdminUser[] = [
     role: "user",
     status: "banned",
   },
+  {
+    id: "00000000-0000-4000-8000-000000000003",
+    username: "pedro",
+    email: "pedro@example.com",
+    emailOwnerType: "guardian",
+    role: "admin",
+    status: "active",
+  },
 ];
+
+function renderList() {
+  return render(<AdminUserList users={users} currentUserId={SELF_ID} />);
+}
+
+/** The dialog that is currently open, whichever row opened it. */
+function openDialog(): HTMLDialogElement {
+  const dialogs = Array.from(
+    document.querySelectorAll('[data-component="confirm-action"]'),
+  ) as HTMLDialogElement[];
+  const open = dialogs.find((dialog) => dialog.open);
+  if (!open) throw new Error("no open confirm dialog");
+  return open;
+}
 
 afterEach(() => {
   cleanup();
@@ -71,7 +95,7 @@ afterEach(() => {
 
 describe("AdminUserList", () => {
   it("renders an accessible local search and semantic table with the same user data", () => {
-    render(<AdminUserList users={users} />);
+    renderList();
 
     expect(screen.getByRole("searchbox", { name: "Buscar usuario" })).toBeTruthy();
     const region = screen.getByRole("region", { name: "Usuarios" });
@@ -96,9 +120,22 @@ describe("AdminUserList", () => {
     expect(maria.textContent).toContain("Bloqueado");
   });
 
+  it("keeps the table narrow enough for the shell and lets the email wrap", () => {
+    const html = renderToStaticMarkup(
+      <AdminUserList users={users} currentUserId={SELF_ID} />,
+    );
+
+    // The shell caps the content at max-w-5xl (64rem) minus 2 × 16 px of
+    // padding, so 48rem (768 px) always fits inside it.
+    expect(html).toContain("min-width:48rem");
+    expect(html).not.toContain("min-width:64rem");
+    // The email must wrap instead of widening the column.
+    expect(html).toContain("break-words");
+  });
+
   it("filters rows locally by username and by email", async () => {
     const user = userEvent.setup();
-    render(<AdminUserList users={users} />);
+    renderList();
     const search = screen.getByRole("searchbox", { name: "Buscar usuario" });
 
     await user.type(search, "maria");
@@ -114,7 +151,7 @@ describe("AdminUserList", () => {
 
   it("announces no results and clears the local filter", async () => {
     const user = userEvent.setup();
-    render(<AdminUserList users={users} />);
+    renderList();
 
     await user.type(
       screen.getByRole("searchbox", { name: "Buscar usuario" }),
@@ -128,11 +165,11 @@ describe("AdminUserList", () => {
     await user.click(screen.getByRole("button", { name: "Limpiar búsqueda" }));
     expect(screen.getByRole("region", { name: "Usuarios" })).toBeTruthy();
     expect(screen.getByRole("searchbox", { name: "Buscar usuario" })).toHaveProperty("value", "");
-    expect(screen.getByRole("status").textContent).toBe("2 resultados");
+    expect(screen.getByRole("status").textContent).toBe("3 resultados");
   });
 
   it("renders the empty state without search or table when there are no users", () => {
-    render(<AdminUserList users={[]} />);
+    render(<AdminUserList users={[]} currentUserId={SELF_ID} />);
 
     expect(screen.getByRole("heading", { name: "Todavía no hay usuarios" })).toBeTruthy();
     expect(screen.queryByRole("searchbox", { name: "Buscar usuario" })).toBeNull();
@@ -140,19 +177,18 @@ describe("AdminUserList", () => {
   });
 
   it("uses the approved badge vocabulary and never leaks the internal enum values", () => {
-    render(<AdminUserList users={users} />);
+    renderList();
 
-    const admin = screen.getByText("Administrador");
-    expect(admin.className).toContain("bg-primary");
-    expect(screen.getByText("Activo").className).toContain("bg-success");
-    expect(screen.getByText("Bloqueado").className).toContain("bg-danger");
+    // "Administrador" and "Activo" appear on more than one row, so scope the
+    // lookups to the row that carries the badge.
+    const pedro = screen.getByRole("row", { name: /pedro/ });
+    expect(within(pedro).getByText("Administrador").className).toContain("bg-primary");
+    expect(within(pedro).getByText("Activo").className).toContain("bg-success");
 
-    // "Usuario" is both a column header and a badge label, so scope the lookup
-    // to the row that actually carries the badge.
     const maria = screen.getByRole("row", { name: /maria/ });
     expect(within(maria).getByText("Usuario").className).toContain("bg-surface-muted");
+    expect(within(maria).getByText("Bloqueado").className).toContain("bg-danger");
 
-    // The raw values must not be visible anywhere in the table.
     const region = screen.getByRole("region", { name: "Usuarios" });
     expect(region.textContent).not.toMatch(/\badmin\b/);
     expect(region.textContent).not.toMatch(/\bbanned\b/);
@@ -160,62 +196,134 @@ describe("AdminUserList", () => {
   });
 
   it("names every row action with the user it affects", () => {
-    render(<AdminUserList users={users} />);
-
-    const gino = screen.getByRole("row", { name: /gino/ });
-    expect(within(gino).getByRole("button", { name: "Degradar a usuario a gino" })).toBeTruthy();
-    expect(within(gino).getByRole("button", { name: "Bloquear a gino" })).toBeTruthy();
+    renderList();
 
     const maria = screen.getByRole("row", { name: /maria/ });
     expect(
-      within(maria).getByRole("button", { name: "Promover a administrador a maria" }),
+      within(maria).getByRole("button", { name: "Promover a maria a administrador" }),
     ).toBeTruthy();
     expect(within(maria).getByRole("button", { name: "Desbloquear a maria" })).toBeTruthy();
+
+    const pedro = screen.getByRole("row", { name: /pedro/ });
+    expect(
+      within(pedro).getByRole("button", { name: "Degradar a pedro a usuario" }),
+    ).toBeTruthy();
+    expect(within(pedro).getByRole("button", { name: "Bloquear a pedro" })).toBeTruthy();
+  });
+
+  it("uses short visible labels so the actions column stays narrow", () => {
+    renderList();
+
+    const pedro = screen.getByRole("row", { name: /pedro/ });
+    expect(within(pedro).getByRole("button", { name: "Degradar a pedro a usuario" }).textContent)
+      .toBe("Degradar");
+    expect(within(pedro).getByRole("button", { name: "Bloquear a pedro" }).textContent)
+      .toBe("Bloquear");
   });
 
   it("keeps the row actions on one wrapping line instead of stacking them full width", () => {
-    render(<AdminUserList users={users} />);
+    renderList();
 
-    const gino = screen.getByRole("row", { name: /gino/ });
-    const actions = within(gino).getByRole("button", { name: "Bloquear a gino" }).closest("div");
+    const pedro = screen.getByRole("row", { name: /pedro/ });
+    const actions = within(pedro)
+      .getByRole("button", { name: "Bloquear a pedro" })
+      .closest("div");
     expect(actions?.className).toContain("flex-wrap");
     expect(actions?.className).toContain("items-center");
     expect(actions?.className).not.toContain("flex-col");
   });
 
   it("keeps the visible secondary border on the row action buttons", () => {
-    render(<AdminUserList users={users} />);
+    renderList();
 
     // Regression for the previous commit: the secondary variant must declare
     // `border-input-border` and must NOT also carry `border-transparent`, which
     // would win by Tailwind's alphabetical emission order and erase the outline.
-    for (const name of ["Degradar a usuario a gino", "Desbloquear a maria"]) {
+    for (const name of ["Degradar a pedro a usuario", "Desbloquear a maria"]) {
       const button = screen.getByRole("button", { name });
       expect(button.className).toContain("border-input-border");
       expect(button.className).not.toContain("border-transparent");
     }
 
     // The destructive trigger is `dangerGhost`: transparent border by design.
-    const block = screen.getByRole("button", { name: "Bloquear a gino" });
+    const block = screen.getByRole("button", { name: "Bloquear a pedro" });
     expect(block.className).toContain("border-transparent");
     expect(block.className).toContain("text-danger");
+  });
+});
+
+describe("AdminUserList — confirmación de cambios de rol", () => {
+  it("requires confirmation before promoting and states the consequence", async () => {
+    changeRoleActionMock.mockResolvedValue({ success: "Rol actualizado." });
+    renderList();
+
+    fireEvent.click(screen.getByRole("button", { name: "Promover a maria a administrador" }));
+
+    const dialog = openDialog();
+    expect(changeRoleActionMock).not.toHaveBeenCalled();
+
+    const titleId = dialog.getAttribute("aria-labelledby") ?? "";
+    const descriptionId = dialog.getAttribute("aria-describedby") ?? "";
+    expect(document.getElementById(titleId)?.textContent).toBe("Promover a maria");
+    expect(document.getElementById(descriptionId)?.textContent).toBe(
+      "maria podrá ver y administrar álbumes y usuarios.",
+    );
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Promover" }));
+
+    await waitFor(() => expect(changeRoleActionMock).toHaveBeenCalledTimes(1));
+    const payload = changeRoleActionMock.mock.calls[0]?.[1] as FormData;
+    expect(payload.get("userId")).toBe("00000000-0000-4000-8000-000000000002");
+    expect(payload.get("role")).toBe("admin");
+  });
+
+  it("requires confirmation before demoting and states the consequence", async () => {
+    changeRoleActionMock.mockResolvedValue({ success: "Rol actualizado." });
+    renderList();
+
+    fireEvent.click(screen.getByRole("button", { name: "Degradar a pedro a usuario" }));
+
+    const dialog = openDialog();
+    expect(changeRoleActionMock).not.toHaveBeenCalled();
+
+    const titleId = dialog.getAttribute("aria-labelledby") ?? "";
+    const descriptionId = dialog.getAttribute("aria-describedby") ?? "";
+    expect(document.getElementById(titleId)?.textContent).toBe("Degradar a pedro");
+    expect(document.getElementById(descriptionId)?.textContent).toBe(
+      "pedro perderá el acceso de administración.",
+    );
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Degradar" }));
+
+    await waitFor(() => expect(changeRoleActionMock).toHaveBeenCalledTimes(1));
+    const payload = changeRoleActionMock.mock.calls[0]?.[1] as FormData;
+    expect(payload.get("userId")).toBe("00000000-0000-4000-8000-000000000003");
+    expect(payload.get("role")).toBe("user");
+  });
+
+  it("sends nothing when the role confirmation is cancelled", async () => {
+    renderList();
+
+    fireEvent.click(screen.getByRole("button", { name: "Promover a maria a administrador" }));
+    const dialog = openDialog();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() => expect(dialog.open).toBe(false));
+    expect(changeRoleActionMock).not.toHaveBeenCalled();
   });
 
   it("confirms before blocking and explains the consequence", async () => {
     changeStatusActionMock.mockResolvedValue({ success: "Estado actualizado." });
-    render(<AdminUserList users={users} />);
+    renderList();
 
-    fireEvent.click(screen.getByRole("button", { name: "Bloquear a gino" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bloquear a pedro" }));
 
-    const dialog = document.querySelector(
-      '[data-component="confirm-action"]',
-    ) as HTMLDialogElement;
-    expect(dialog.open).toBe(true);
+    const dialog = openDialog();
     expect(changeStatusActionMock).not.toHaveBeenCalled();
 
     const titleId = dialog.getAttribute("aria-labelledby") ?? "";
     const descriptionId = dialog.getAttribute("aria-describedby") ?? "";
-    expect(document.getElementById(titleId)?.textContent).toBe("Bloquear a gino");
+    expect(document.getElementById(titleId)?.textContent).toBe("Bloquear a pedro");
     expect(document.getElementById(descriptionId)?.textContent).toContain(
       "perderá el acceso de inmediato",
     );
@@ -224,20 +332,55 @@ describe("AdminUserList", () => {
 
     await waitFor(() => expect(changeStatusActionMock).toHaveBeenCalledTimes(1));
     const payload = changeStatusActionMock.mock.calls[0]?.[1] as FormData;
-    expect(payload.get("userId")).toBe("00000000-0000-4000-8000-000000000001");
+    expect(payload.get("userId")).toBe("00000000-0000-4000-8000-000000000003");
     expect(payload.get("status")).toBe("banned");
   });
 
-  it("submits the role change with the untouched payload", async () => {
-    changeRoleActionMock.mockResolvedValue({ success: "Rol actualizado." });
-    render(<AdminUserList users={users} />);
+  it("sends nothing when the block confirmation is cancelled", async () => {
+    renderList();
 
-    fireEvent.click(screen.getByRole("button", { name: "Degradar a usuario a gino" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bloquear a pedro" }));
+    const dialog = openDialog();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
 
-    await waitFor(() => expect(changeRoleActionMock).toHaveBeenCalledTimes(1));
-    const payload = changeRoleActionMock.mock.calls[0]?.[1] as FormData;
-    expect(payload.get("userId")).toBe("00000000-0000-4000-8000-000000000001");
-    expect(payload.get("role")).toBe("user");
+    await waitFor(() => expect(dialog.open).toBe(false));
+    expect(changeStatusActionMock).not.toHaveBeenCalled();
+  });
+
+  it("unblocks without a confirmation step", async () => {
+    changeStatusActionMock.mockResolvedValue({ success: "Estado actualizado." });
+    renderList();
+
+    fireEvent.click(screen.getByRole("button", { name: "Desbloquear a maria" }));
+
+    await waitFor(() => expect(changeStatusActionMock).toHaveBeenCalledTimes(1));
+    const payload = changeStatusActionMock.mock.calls[0]?.[1] as FormData;
+    expect(payload.get("status")).toBe("active");
+  });
+});
+
+describe("AdminUserList — fila propia", () => {
+  it("marks the current user with a neutral badge and hides the destructive actions", () => {
+    renderList();
+
+    const gino = screen.getByRole("row", { name: /gino/ });
+    const badge = within(gino).getByText("Tú");
+    expect(badge.className).toContain("bg-surface-muted");
+
+    // No self-demotion and no self-blocking.
+    expect(within(gino).queryByRole("button", { name: /Degradar/ })).toBeNull();
+    expect(within(gino).queryByRole("button", { name: /Bloquear/ })).toBeNull();
+    // The other rows keep theirs.
+    expect(screen.getByRole("button", { name: "Degradar a pedro a usuario" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Bloquear a pedro" })).toBeTruthy();
+  });
+
+  it("does not mark any row when the current user is not in the list", () => {
+    render(<AdminUserList users={users} currentUserId="00000000-0000-4000-8000-0000000000ff" />);
+
+    expect(screen.queryByText("Tú")).toBeNull();
+    expect(screen.getByRole("button", { name: "Degradar a gino a usuario" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Bloquear a gino" })).toBeTruthy();
   });
 });
 
@@ -250,20 +393,25 @@ describe("AdminUserList", () => {
  */
 describe("AdminUserList — iconos visibles", () => {
   it("renders an <svg> inside every row action button", () => {
-    const html = renderToStaticMarkup(<AdminUserList users={users} />);
+    const html = renderToStaticMarkup(
+      <AdminUserList users={users} currentUserId={SELF_ID} />,
+    );
 
     for (const icon of ["chevronDown", "chevronUp", "lock", "unlock"]) {
       expect(html, `missing ${icon} glyph`).toContain(`data-icon="${icon}"`);
     }
 
-    // One glyph per action button: 2 users × 2 actions.
+    // One glyph per action button: gino has none (own row), maria and pedro
+    // have two each.
     const buttons = html.match(/<button[^>]*>.*?<\/button>/gs) ?? [];
     const withIcon = buttons.filter((button) => button.includes("<svg"));
-    expect(withIcon).toHaveLength(users.length * 2);
+    expect(withIcon).toHaveLength(4);
   });
 
   it("renders the magnifier <svg> inside the search field", () => {
-    const html = renderToStaticMarkup(<AdminUserList users={users} />);
+    const html = renderToStaticMarkup(
+      <AdminUserList users={users} currentUserId={SELF_ID} />,
+    );
     const searchBlock = html.match(/<div class="relative">.*?<\/div>/s)?.[0] ?? "";
 
     expect(searchBlock).toContain("<svg");
