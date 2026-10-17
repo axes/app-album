@@ -13,6 +13,7 @@ import {
   List,
   LoaderCircle,
   Lock,
+  LockOpen,
   LogOut,
   Menu,
   Minus,
@@ -85,6 +86,7 @@ export const ICONS = {
   back: ArrowLeft, // "← Álbumes" contextual back links
   logout: LogOut, // session logout control in the shell
   users: Users, // "Administrar usuarios" admin destination
+  unlock: LockOpen, // "Desbloquear" row action in the admin user list
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

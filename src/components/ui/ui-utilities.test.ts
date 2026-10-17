@@ -227,6 +227,9 @@ describe("Design v2 — every primitive utility class compiles to CSS", () => {
     ["max-w-md", "AdminAlbumList search field", "search input width"],
     ["font-semibold", "AdminAlbumList title cell", "album title weight"],
     ["text-right", "AdminAlbumList numeric/Acciones cell", "right-aligned cells"],
+    ["flex-wrap", "AdminUserList row actions", "single wrapping action line"],
+    ["max-w-md", "AdminUserList search field", "search input width"],
+    ["font-semibold", "AdminUserList username cell", "username weight"],
   ];
 
   it.each(adminFoundationClasses)(

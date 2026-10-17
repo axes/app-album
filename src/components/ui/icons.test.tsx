@@ -62,6 +62,7 @@ const DESIGN_EXTENSIONS: IconName[] = [
   "back",
   "logout",
   "users",
+  "unlock",
 ];
 
 describe("Icon (DESIGN v2 §6)", () => {
@@ -207,6 +208,7 @@ describe("lucide-react import boundary", () => {
         "List",
         "LoaderCircle",
         "Lock",
+        "LockOpen",
         "LogOut",
         "Menu",
         "Minus",

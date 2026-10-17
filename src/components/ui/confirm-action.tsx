@@ -48,6 +48,12 @@ export type ConfirmActionProps = {
   /** Visible content of the trigger button. */
   triggerLabel: ReactNode;
   /**
+   * Optional leading icon for the trigger button. Forwarded to `Button`'s
+   * `icon` slot so a destructive row action can carry the same glyph as its
+   * non-destructive siblings.
+   */
+  triggerIcon?: ReactNode;
+  /**
    * Button variant used by the trigger. Defaults to `ghost` so the trigger
    * stays visually consistent with the rest of the Button family while the
    * destructive emphasis lives on the solid `danger` confirm button.
@@ -82,6 +88,7 @@ export function ConfirmAction({
   cancelLabel = "Cancelar",
   pendingLabel,
   triggerLabel,
+  triggerIcon,
   triggerVariant = "ghost",
   triggerClassName,
   triggerAriaLabel,
@@ -188,6 +195,7 @@ export function ConfirmAction({
         aria-controls={dialogId}
         aria-label={triggerAriaLabel}
         title={triggerTitle}
+        icon={triggerIcon}
         onClick={open}
         data-testid={triggerTestId}
         className={triggerClassName}
