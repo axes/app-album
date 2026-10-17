@@ -46,6 +46,33 @@ export function meetsMinRatio(fg: string, bg: string, min = 4.5): boolean {
   return wcagRatio(fg, bg) >= min;
 }
 
+/**
+ * Mixes a foreground colour over a background colour in the sRGB colour space.
+ * `foregroundPercent` follows the CSS `color-mix()` percentage contract.
+ */
+export function mixSrgb(
+  foreground: string,
+  background: string,
+  foregroundPercent: number,
+): string {
+  if (foregroundPercent < 0 || foregroundPercent > 100) {
+    throw new Error("foregroundPercent must be between 0 and 100");
+  }
+
+  const foregroundChannels = parseHexColor(foreground);
+  const backgroundChannels = parseHexColor(background);
+  const foregroundWeight = foregroundPercent / 100;
+  const backgroundWeight = 1 - foregroundWeight;
+  const channels = foregroundChannels.map((channel, index) =>
+    Math.round(
+      channel * foregroundWeight +
+        backgroundChannels[index] * backgroundWeight,
+    ),
+  );
+
+  return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function assertMinRatio(pairs: ContrastPair[], min = 4.5): void {
   const failures = pairs.flatMap((pair) => {
     const threshold = pair.min ?? min;
@@ -64,6 +91,19 @@ export function buildProposalContrastPairs(): ContrastPair[] {
   for (const theme of ["light", "dark"] as const) {
     const token = (key: keyof typeof productiveCanonicalColorTokens) =>
       productiveCanonicalColorTokens[key][theme];
+    const selectedRow = mixSrgb(token("primary"), token("surface"), 8);
+    const dangerHover = mixSrgb(token("danger"), token("surface"), 12);
+    const dangerHoverOnSelectedRow = mixSrgb(
+      token("danger"),
+      selectedRow,
+      12,
+    );
+    const dangerHoverOnSurfaceSoft = mixSrgb(
+      token("danger"),
+      token("surfaceSoft"),
+      12,
+    );
+
     pairs.push(
       { name: `${theme} text/background`, fg: token("foreground"), bg: token("background") },
       { name: `${theme} text-muted/surface-soft`, fg: token("foregroundMuted"), bg: token("surfaceSoft") },
@@ -77,6 +117,19 @@ export function buildProposalContrastPairs(): ContrastPair[] {
       { name: `${theme} input-border/surface`, fg: token("inputBorder"), bg: token("surface"), min: 3 },
       { name: `${theme} white/owned-a`, fg: "#ffffff", bg: token("ownedA") },
       { name: `${theme} special-on/special-a`, fg: token("specialOn"), bg: token("specialA") },
+      { name: `${theme} danger/surface`, fg: token("danger"), bg: token("surface") },
+      { name: `${theme} danger/hover`, fg: token("danger"), bg: dangerHover },
+      { name: `${theme} danger/selected-row`, fg: token("danger"), bg: selectedRow },
+      {
+        name: `${theme} danger/hover-on-selected-row`,
+        fg: token("danger"),
+        bg: dangerHoverOnSelectedRow,
+      },
+      {
+        name: `${theme} danger/hover-on-surface-soft`,
+        fg: token("danger"),
+        bg: dangerHoverOnSurfaceSoft,
+      },
     );
   }
   return pairs;
