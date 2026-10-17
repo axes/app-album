@@ -224,6 +224,9 @@ describe("Design v2 — every primitive utility class compiles to CSS", () => {
     ["ease-[var(--motion-ease)]", "AdminNav", "token motion easing"],
     ["hover:text-primary", "AdminNav", "token hover foreground"],
     ["tabular-nums", "AdminSelectionBar", "stable selection count"],
+    ["max-w-md", "AdminAlbumList search field", "search input width"],
+    ["font-semibold", "AdminAlbumList title cell", "album title weight"],
+    ["text-right", "AdminAlbumList numeric/Acciones cell", "right-aligned cells"],
   ];
 
   it.each(adminFoundationClasses)(
