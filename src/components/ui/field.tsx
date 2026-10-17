@@ -95,12 +95,19 @@ const sharedClasses = [
  * Wraps a control with an optional leading icon. The icon is absolutely
  * positioned and `pointer-events-none`, so it never intercepts a click and the
  * control keeps its full hit area.
+ *
+ * `z-10` is required, not decorative: daisyUI's `.input` / `.select` declare
+ * `position: relative`, which makes the control a positioned element too. With
+ * both at `z-index: auto` the paint order falls back to DOM order, so the
+ * control — which comes after the icon — would paint its opaque `bg-input`
+ * background over the glyph and hide it. A positive `z-index` on the icon puts
+ * it back on top.
  */
 function withLeadingIcon(icon: IconName | undefined, control: React.ReactNode) {
   if (!icon) return control;
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+      <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted">
         <Icon name={icon} size="sm" />
       </span>
       {control}

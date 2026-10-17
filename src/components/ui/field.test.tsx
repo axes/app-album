@@ -116,6 +116,42 @@ describe("Field", () => {
     expect(svg?.getAttribute("aria-hidden")).toBe("true");
   });
 
+  /**
+   * Regression: the icon was in the DOM but invisible. daisyUI's `.input` and
+   * `.select` declare `position: relative`, which makes the control a
+   * positioned element too; with both at `z-index: auto` the paint order falls
+   * back to DOM order, so the control — rendered after the icon — painted its
+   * opaque `bg-input` background over the glyph. The existing assertion above
+   * only checked that the `<svg>` existed, which is why it never caught it.
+   */
+  it("stacks the leading icon above the control so its background cannot hide it", () => {
+    const { container } = render(
+      <Field label="Buscar" name="q" icon="explore" />,
+    );
+
+    const svg = container.querySelector("svg[data-icon='explore']");
+    const wrapper = svg?.parentElement;
+    expect(wrapper).toBeTruthy();
+    expect(wrapper!.className).toContain("absolute");
+    expect(wrapper!.className).toMatch(/(^|\s)z-\d+/);
+    // A click on the glyph must reach the control underneath and focus it.
+    expect(wrapper!.className).toContain("pointer-events-none");
+    // The control really is positioned, which is what makes the z-index load-bearing.
+    const input = screen.getByLabelText("Buscar") as HTMLInputElement;
+    expect(input.className).toContain("input");
+  });
+
+  it("stacks the leading icon above a select control too", () => {
+    const { container } = render(
+      <Field as="select" label="Página" name="sectionId" icon="explore">
+        <option value="">Sin página asignada</option>
+      </Field>,
+    );
+
+    const svg = container.querySelector("svg[data-icon='explore']");
+    expect(svg?.parentElement?.className).toMatch(/(^|\s)z-\d+/);
+  });
+
   it("renders the error message with the error icon", () => {
     const { container } = render(
       <Field label="Usuario" name="username" error="No disponible" />,

@@ -2,7 +2,9 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { Button, type ButtonSize, type ButtonVariant } from "./button";
+import { Icon } from "./icons";
 
 afterEach(cleanup);
 
@@ -318,5 +320,70 @@ describe("Button (DESIGN v2 §7)", () => {
     expect(() => render(<Button asChild>Texto suelto</Button>)).toThrow(
       /asChild/,
     );
+  });
+});
+
+/**
+ * Regression: `asChild` used to clone the child with only `className` and the
+ * forwarded props, so `icon` / `trailingIcon` were computed and then dropped.
+ * Every `asChild` button in the app (the admin "Crear álbum" CTA and the row
+ * "Editar" action) rendered without its glyph. These tests pin the contract:
+ * the clone re-renders the same `icon → content → trailingIcon` order as the
+ * native `<button>`.
+ */
+describe("Button asChild — icon slots (regresión)", () => {
+  it("renders the leading icon inside the cloned child, before its content", () => {
+    const html = renderToStaticMarkup(
+      <Button asChild icon={<Icon name="add" size="md" />}>
+        <a href="/x">Crear álbum</a>
+      </Button>,
+    );
+
+    expect(html).toContain("<svg");
+    expect(html).toContain('data-icon="add"');
+    expect(html.indexOf("<svg")).toBeLessThan(html.indexOf("Crear álbum"));
+    expect(html).toContain('href="/x"');
+  });
+
+  it("renders the trailing icon after the child content", () => {
+    const html = renderToStaticMarkup(
+      <Button asChild trailingIcon={<Icon name="back" size="sm" />}>
+        <a href="/x">Volver</a>
+      </Button>,
+    );
+
+    expect(html).toContain('data-icon="back"');
+    expect(html.indexOf("Volver")).toBeLessThan(html.indexOf("<svg"));
+  });
+
+  it("keeps the child's own content and the forwarded aria-label", () => {
+    const html = renderToStaticMarkup(
+      <Button
+        asChild
+        size="sm"
+        variant="secondary"
+        aria-label="Editar Minecraft"
+        icon={<Icon name="pencil" size="sm" />}
+      >
+        <a href="/y">Editar</a>
+      </Button>,
+    );
+
+    expect(html).toContain('aria-label="Editar Minecraft"');
+    expect(html).toContain(">Editar</a>");
+    expect(html).toContain('data-icon="pencil"');
+    expect(html).toContain("h-9");
+  });
+
+  it("swaps the icon for the spinner and the label for the gerund while loading", () => {
+    const html = renderToStaticMarkup(
+      <Button asChild loading loadingLabel="Guardando…" icon={<Icon name="add" />}>
+        <a href="/x">Guardar</a>
+      </Button>,
+    );
+
+    expect(html).toContain('data-icon="loading"');
+    expect(html).toContain("Guardando…");
+    expect(html).not.toContain(">Guardar</a>");
   });
 });

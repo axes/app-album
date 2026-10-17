@@ -1,11 +1,16 @@
 // @vitest-environment node
 
+import { createElement } from "react";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 import postcss from "postcss";
 import tailwind from "@tailwindcss/postcss";
+import { Button } from "./button";
+import { wcagRatio } from "../../../scripts/contrast";
+import { productiveCanonicalColorTokens } from "../../../scripts/ui-tokens";
 
 /**
  * DESIGN v2 §7 — daisyUI cascade guard for Button.
@@ -249,5 +254,141 @@ describe("Button — daisyUI cascade guard (DESIGN v2 §7)", () => {
     const h9Height = h9?.declarations.find((d) => d.prop === "height")?.value;
     expect(h11Height).toMatch(/calc\(var\(--spacing\)\s*\*\s*11\)/);
     expect(h9Height).toMatch(/calc\(var\(--spacing\)\s*\*\s*9\)/);
+  });
+});
+
+/**
+ * Regression: the secondary variant used to carry `border-transparent` in the
+ * shared base string *and* `border-input-border` in the variant string. Both
+ * are `border-color` utilities in `@layer utilities`, so the winner is decided
+ * by Tailwind's emission order — which is alphabetical, not the order the
+ * classes appear in the attribute. `border-transparent` sorts after
+ * `border-input-border`, so the secondary button rendered with no visible
+ * border at all.
+ *
+ * These tests read the real class list off the rendered component (so they
+ * cannot drift from `button.tsx`) and resolve the cascade the way the browser
+ * does: a declaration in the parent `@layer utilities` beats one inside
+ * daisyUI's nested sub-layer, and within the same layer the later source
+ * position wins.
+ */
+describe("Button — effective border colour (regresión)", () => {
+  const classNamesOf = (html: string): string[] => {
+    const match = html.match(/class="([^"]*)"/);
+    return match ? match[1].split(/\s+/).filter(Boolean) : [];
+  };
+
+  const compileWith = async (classNames: string[]) => {
+    const dir = resolve(tmpdir(), `app-album-border-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(dir, { recursive: true });
+    const file = resolve(dir, "probe.css");
+    const globalsAbs = resolve(process.cwd(), "src/app/globals.css");
+    writeFileSync(
+      file,
+      [
+        `@import "${globalsAbs}";`,
+        `@source inline("<button class=\\"${classNames.join(" ")}\\"></button>");`,
+      ].join("\n"),
+    );
+    try {
+      const result = await postcss([tailwind()]).process(readFileSync(file, "utf8"), { from: file });
+      return classify(postcss.parse(result.css));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+
+  /** Resolves the winning `border-color` for an element carrying `classNames`. */
+  const effectiveBorderColor = (
+    compiled: RuleLocation[],
+    classNames: string[],
+  ): { value: string; selector: string; inner: string } | null => {
+    const candidates = compiled.filter((rule) => {
+      const selector = rule.selector.trim();
+      const single = selector.match(/^\.((?:\\.|[^\s.])+)$/);
+      if (!single) return false;
+      const name = single[1].replace(/\\/g, "");
+      return (
+        classNames.includes(name) &&
+        rule.declarations.some((d) => d.prop === "border-color")
+      );
+    });
+
+    // Parent layer (inner === "") beats a nested daisyUI sub-layer; within the
+    // same layer, the later source position wins. Higher rank = wins.
+    const rank = (rule: RuleLocation) => (rule.inner ? 1 : 2);
+    candidates.sort((a, b) => rank(a) - rank(b) || a.start - b.start);
+
+    const winner = candidates[candidates.length - 1];
+    if (!winner) return null;
+    return {
+      value: winner.declarations.find((d) => d.prop === "border-color")!.value,
+      selector: winner.selector,
+      inner: winner.inner,
+    };
+  };
+
+  it("resolves the secondary button border to --album-input-border", async () => {
+    const classNames = classNamesOf(
+      renderToStaticMarkup(
+        createElement(Button, { variant: "secondary", size: "sm" }, "Editar"),
+      ),
+    );
+    expect(classNames).toContain("border-input-border");
+    expect(classNames).not.toContain("border-transparent");
+
+    const compiled = await compileWith(classNames);
+    const winner = effectiveBorderColor(compiled, classNames);
+
+    expect(winner, "the secondary button must declare a border colour").toBeTruthy();
+    expect(winner!.value).toBe("var(--color-input-border)");
+    expect(winner!.selector.trim()).toBe(".border-input-border");
+    expect(winner!.inner, "the winning utility must live in the parent @layer utilities").toBe("");
+  });
+
+  it("keeps daisyUI's .btn border-color in a nested sub-layer so it cannot win", async () => {
+    const classNames = classNamesOf(
+      renderToStaticMarkup(
+        createElement(Button, { variant: "secondary", size: "sm" }, "Editar"),
+      ),
+    );
+    const compiled = await compileWith(classNames);
+
+    const btnBorder = compiled.find(
+      (rule) =>
+        rule.selector.trim() === ".btn" &&
+        rule.declarations.some((d) => d.prop === "border-color"),
+    );
+    expect(btnBorder, ".btn must declare border-color").toBeTruthy();
+    expect(btnBorder!.inner).toMatch(/^daisyui/);
+    expect(btnBorder!.declarations.find((d) => d.prop === "border-color")!.value)
+      .toBe("var(--btn-border)");
+  });
+
+  it("keeps the filled variants borderless (border-transparent still wins there)", async () => {
+    for (const variant of ["primary", "accent", "danger"] as const) {
+      const classNames = classNamesOf(
+        renderToStaticMarkup(createElement(Button, { variant }, "Guardar")),
+      );
+      expect(classNames).toContain("border-transparent");
+      expect(classNames).not.toContain("border-input-border");
+
+      const compiled = await compileWith(classNames);
+      const winner = effectiveBorderColor(compiled, classNames);
+      expect(winner!.value, `${variant} must stay borderless`).toBe("transparent");
+    }
+  });
+
+  it("keeps the secondary border visible against the surface (WCAG 1.4.11, ≥ 3:1)", () => {
+    for (const theme of ["light", "dark"] as const) {
+      const ratio = wcagRatio(
+        productiveCanonicalColorTokens.inputBorder[theme],
+        productiveCanonicalColorTokens.surface[theme],
+      );
+      expect(
+        ratio,
+        `inputBorder/surface in ${theme} must reach 3:1 for a non-text UI boundary`,
+      ).toBeGreaterThanOrEqual(3);
+    }
   });
 });

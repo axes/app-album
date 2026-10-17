@@ -28,7 +28,9 @@ import { Icon } from "./icons";
  * Native `<button>` props (`type`, `name`, `value`, `disabled`, `form`,
  * `onClick`, `aria-*`, …) are forwarded untouched. The `asChild` escape hatch
  * from UI-03B keeps working: a single child element is cloned and receives the
- * button classes, so an anchor stays an anchor.
+ * button classes, so an anchor stays an anchor. The clone also re-renders the
+ * `icon` / `trailingIcon` slots around the child's own content, so an
+ * `asChild` button looks exactly like the native one.
  */
 export type ButtonVariant =
   | "primary"
@@ -55,9 +57,14 @@ const baseClasses = [
   // single exception listed in §7 ("solo en escritorio denso"); it still
   // honours min-h-11, only the visual height shrinks.
   // 1.5 px border (DESIGN §7): overrides daisyUI's `border-width: var(--border)`
-  // (1 px). The border is transparent in every variant and is painted with
-  // background on hover/active via the variant class.
-  "border-[1.5px] border-transparent",
+  // (1 px). The border *colour* is owned by `variantBorderClasses` below, not
+  // by this base string: daisyUI's `.btn` declares `border-color:
+  // var(--btn-border)` and Tailwind emits same-property utilities in
+  // alphabetical order, so a `border-transparent` here would beat
+  // `border-input-border` on the secondary variant regardless of the order the
+  // classes appear in the attribute. Keeping the colour out of the base makes
+  // each variant declare exactly one border colour, with no tie to break.
+  "border-[1.5px]",
   // 8 px gap (DESIGN §7): daisyUI's `.btn` ships `gap: 0.375rem` (6 px).
   "gap-2",
   // 150 ms transition, only the colour / border / opacity properties
@@ -91,21 +98,43 @@ const variantClasses: Record<ButtonVariant, string> = {
   // DESIGN §7: secondary = transparent, text colour, 1.5 px input-border.
   // daisyUI's `.btn-secondary` uses base-200 as the background, so we
   // explicitly reset to transparent and paint the border ourselves.
-  secondary: "bg-transparent border-input-border text-content hover:bg-surface-muted",
+  secondary: "bg-transparent text-content hover:bg-surface-muted",
   // DESIGN §7: ghost = transparent, primary text, no border.
   ghost: "btn-ghost text-primary hover:bg-surface-muted",
   // DESIGN §7: danger uses the daisyUI error role (already mapped to
   // --album-danger in the theme).
   danger: "btn-error text-on",
   // DESIGN §7 / D4: dangerGhost is the low-emphasis destructive affordance.
-  // Transparent background, danger foreground, no visible border. The border
-  // is made explicit here (`border-transparent`) so the variant guarantees a
-  // borderless control on its own, without relying on the base class. The
-  // hover tint (danger 12% mixed with surface) is centralised in
-  // `globals.css` as the `.danger-ghost` class so no component repeats a hex
-  // value or a Tailwind opacity modifier over a token.
-  dangerGhost: "danger-ghost bg-transparent border-transparent text-danger",
+  // Transparent background, danger foreground, no visible border. The hover
+  // tint (danger 12% mixed with surface) is centralised in `globals.css` as
+  // the `.danger-ghost` class so no component repeats a hex value or a
+  // Tailwind opacity modifier over a token.
+  dangerGhost: "danger-ghost bg-transparent text-danger",
   link: "btn-link text-primary underline-offset-2 hover:text-accent",
+};
+
+/**
+ * Border colour per variant, applied unconditionally — including while
+ * `loading`, where `variantClasses` is swapped for `loadingVariantClasses`.
+ *
+ * It lives in its own map because the border colour is part of the variant
+ * contract, not of the loading state: a secondary button must keep its
+ * `--album-input-border` outline while it is in flight. Every variant declares
+ * exactly one border colour, so no two utilities compete for the same property
+ * and the alphabetical emission order Tailwind uses cannot flip the result.
+ *
+ * `border-transparent` is the default for the filled and borderless variants:
+ * daisyUI's `.btn` would otherwise paint `var(--btn-border)` (the role colour)
+ * around them.
+ */
+const variantBorderClasses: Record<ButtonVariant, string> = {
+  primary: "border-transparent",
+  accent: "border-transparent",
+  secondary: "border-input-border",
+  ghost: "border-transparent",
+  danger: "border-transparent",
+  dangerGhost: "border-transparent",
+  link: "border-transparent",
 };
 
 const loadingVariantClasses: Record<ButtonVariant, string> = {
@@ -233,6 +262,9 @@ export function Button({
     // the contrast); we still keep the variant class so the focus ring
     // matches the rest of the family.
     loading ? loadingVariantClasses[variant] : variantClasses[variant],
+    // The border colour is applied in both states: it belongs to the variant,
+    // not to the loading state (see `variantBorderClasses`).
+    variantBorderClasses[variant],
     loading ? "cursor-wait" : null,
     className,
   ]
@@ -246,7 +278,16 @@ export function Button({
       );
     }
 
-    const child = children as ReactElement<{ className?: string }>;
+    // `asChild` keeps the child's own element (an anchor stays an anchor) but
+    // must still render the icon slots: the child's content is wrapped in the
+    // same `icon → content → trailingIcon` order the native `<button>` uses.
+    // Without this the icons were silently dropped, because the clone only
+    // carried `className` and the forwarded props.
+    const child = children as ReactElement<{
+      className?: string;
+      children?: ReactNode;
+    }>;
+    const childContent = loading ? loadingLabel : child.props.children;
     const childProps = {
       ...props,
       ref,
@@ -254,6 +295,13 @@ export function Button({
       "aria-busy": loading || undefined,
       "aria-disabled": effectiveDisabled || undefined,
       className: [child.props.className, classes].filter(Boolean).join(" "),
+      children: (
+        <>
+          {leadingIcon}
+          {iconOnly ? null : childContent}
+          {trailing}
+        </>
+      ),
     };
 
     return cloneElement(child, childProps);

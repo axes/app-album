@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderToStaticMarkup } from "react-dom/server";
 import type { AlbumSummary } from "@/lib/catalog/service";
 import { AdminAlbumList } from "./album-list";
 
@@ -121,5 +122,40 @@ describe("AdminAlbumList", () => {
     expect(screen.getByText("Borrador").className).toContain("bg-surface-muted");
     const minecraft = screen.getByRole("row", { name: /Minecraft/ });
     expect(within(minecraft).getByText("240").className).toContain("tabular-nums");
+  });
+});
+
+/**
+ * Regression: the row action and the search field must actually paint their
+ * glyphs. The previous revision rendered the markup without any `<svg>` — the
+ * `asChild` branch of `Button` dropped the `icon` slot, and the `Field` icon
+ * was painted underneath the control's opaque background. Both bugs were
+ * invisible to the assertions above, which only looked at text, roles and
+ * class names, so these tests inspect the serialised markup instead.
+ */
+describe("AdminAlbumList — iconos visibles (regresión)", () => {
+  it("renders the pencil <svg> inside every Editar link", () => {
+    const html = renderToStaticMarkup(<AdminAlbumList albums={albums} />);
+    const anchors = html.match(/<a[^>]*href="\/admin\/albums\/[^"]*"[^>]*>.*?<\/a>/gs) ?? [];
+
+    expect(anchors).toHaveLength(albums.length);
+    for (const anchor of anchors) {
+      expect(anchor).toContain("<svg");
+      expect(anchor).toContain('data-icon="pencil"');
+      // Icon first, then the visible label: the order the native button uses.
+      expect(anchor.indexOf("<svg")).toBeLessThan(anchor.indexOf(">Editar</a>"));
+    }
+  });
+
+  it("renders the magnifier <svg> inside the search field", () => {
+    const html = renderToStaticMarkup(<AdminAlbumList albums={albums} />);
+    const searchBlock = html.match(/<div class="relative">.*?<\/div>/s)?.[0] ?? "";
+
+    expect(searchBlock).toContain("<svg");
+    expect(searchBlock).toContain('data-icon="explore"');
+    // The glyph must sit above the control: daisyUI's `.input` is
+    // `position: relative`, so without a positive z-index the input's opaque
+    // background paints over the icon.
+    expect(searchBlock).toContain("z-10");
   });
 });
