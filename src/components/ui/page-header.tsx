@@ -13,6 +13,12 @@ export type PageHeaderProps = {
   description?: string;
   metadata?: ReactNode;
   actions?: ReactNode;
+  /**
+   * Optional contextual back link rendered above the title (typically a
+   * `next/link` anchor). Kept as a `ReactNode` so the header stays
+   * presentational and the caller owns the destination and copy.
+   */
+  backLink?: ReactNode;
   className?: string;
 };
 
@@ -21,6 +27,7 @@ export function PageHeader({
   description,
   metadata,
   actions,
+  backLink,
   className,
 }: PageHeaderProps) {
   return (
@@ -33,11 +40,14 @@ export function PageHeader({
         .join(" ")}
     >
       <div className="flex min-w-0 flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-content">{title}</h1>
-        {description ? (
-          <p className="text-sm text-muted">{description}</p>
+        {backLink ? (
+          <div className="type-caption text-muted">{backLink}</div>
         ) : null}
-        {metadata ? <div className="text-xs text-muted">{metadata}</div> : null}
+        <h1 className="text-content">{title}</h1>
+        {description ? (
+          <p className="type-small text-muted">{description}</p>
+        ) : null}
+        {metadata ? <div className="type-caption text-muted">{metadata}</div> : null}
       </div>
       {actions ? (
         <div className="flex flex-wrap items-center gap-2">{actions}</div>

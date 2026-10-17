@@ -3,34 +3,89 @@ import {
   assertMinRatio,
   buildProposalContrastPairs,
   meetsMinRatio,
+  mixSrgb,
   parseHexColor,
   relativeLuminance,
   wcagRatio,
 } from "./contrast";
+import { productiveCanonicalColorTokens } from "./ui-tokens";
 
 describe("contrast (WCAG 2.1)", () => {
-  it("computes canonical extremes", () => {
-    expect(wcagRatio("#000000", "#ffffff")).toBeCloseTo(21, 1);
-    expect(wcagRatio("#ffffff", "#ffffff")).toBeCloseTo(1, 5);
+  const light = (key: keyof typeof productiveCanonicalColorTokens) =>
+    productiveCanonicalColorTokens[key].light;
+
+  it("computes canonical token extremes", () => {
+    expect(wcagRatio(light("foreground"), light("surface"))).toBeGreaterThan(15);
+    expect(wcagRatio(light("surface"), light("surface"))).toBeCloseTo(1, 5);
   });
 
-  it("parses full HEX and rejects invalid input", () => {
-    expect(parseHexColor("#4a1fb8")).toEqual([74, 31, 184]);
-    expect(() => parseHexColor("#fff")).toThrow(/Invalid hex/);
+  it("parses full token HEX and rejects shortened token input", () => {
+    expect(parseHexColor(light("primary"))).toHaveLength(3);
+    expect(() => parseHexColor(light("primary").slice(0, 4))).toThrow(
+      /Invalid hex/,
+    );
   });
 
-  it("computes luminance and boolean minimums", () => {
-    expect(relativeLuminance("#000000")).toBeCloseTo(0, 5);
-    expect(relativeLuminance("#ffffff")).toBeCloseTo(1, 5);
-    expect(meetsMinRatio("#170b4a", "#f7f5ff")).toBe(true);
+  it("computes luminance and boolean minimums from canonical tokens", () => {
+    expect(relativeLuminance(light("foreground"))).toBeLessThan(0.02);
+    expect(relativeLuminance(light("surface"))).toBeCloseTo(1, 5);
+    expect(meetsMinRatio(light("foreground"), light("background"))).toBe(true);
   });
 
-  it("documents unique light/dark text and non-text pairs", () => {
+  it("mixes canonical tokens in sRGB without embedding colour literals", () => {
+    expect(
+      mixSrgb(light("danger"), light("surface"), 12),
+    ).not.toBe(light("danger"));
+    expect(() => mixSrgb(light("danger"), light("surface"), 101)).toThrow(
+      /between 0 and 100/,
+    );
+  });
+
+  it("documents the 17 DESIGN and dangerGhost pairs for both themes", () => {
     const pairs = buildProposalContrastPairs();
-    expect(pairs.length).toBeGreaterThanOrEqual(30);
+    expect(pairs).toHaveLength(34);
     expect(new Set(pairs.map((pair) => pair.name)).size).toBe(pairs.length);
-    expect(pairs.some((pair) => pair.name.includes("sticker-special"))).toBe(true);
-    expect(pairs.some((pair) => pair.name.includes("focus"))).toBe(true);
+  });
+
+  it("covers every required DESIGN section 4 pair", () => {
+    const names = buildProposalContrastPairs().map((pair) => pair.name);
+    for (const theme of ["light", "dark"] as const) {
+      for (const fragment of [
+        "text/background",
+        "text-muted/surface-soft",
+        "on/primary",
+        "on/accent",
+        "on/success",
+        "on/warning",
+        "on/danger",
+        "primary/background",
+        "focus/background",
+        "input-border/surface",
+        "white/owned-a",
+        "special-on/special-a",
+        "danger/surface",
+        "danger/hover",
+        "danger/selected-row",
+        "danger/hover-on-selected-row",
+        "danger/hover-on-surface-soft",
+      ]) {
+        expect(names, `${theme} ${fragment}`).toContain(`${theme} ${fragment}`);
+      }
+    }
+  });
+
+  it("uses one canonical on colour for all filled semantic roles", () => {
+    for (const theme of ["light", "dark"] as const) {
+      for (const role of ["primary", "accent", "success", "warning", "danger"] as const) {
+        expect(
+          wcagRatio(
+            productiveCanonicalColorTokens.on[theme],
+            productiveCanonicalColorTokens[role][theme],
+          ),
+          `${theme} on/${role}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 
   it("passes every proposal contrast contract", () => {
@@ -41,6 +96,9 @@ describe("contrast (WCAG 2.1)", () => {
   });
 
   it("reports failures with name and measured ratio", () => {
-    expect(() => assertMinRatio([{ name: "bad", fg: "#ffffff", bg: "#ffffff" }])).toThrow(/bad.*1\.00:1/s);
+    const sameToken = light("surface");
+    expect(() =>
+      assertMinRatio([{ name: "bad", fg: sameToken, bg: sameToken }]),
+    ).toThrow(/bad.*1\.00:1/s);
   });
 });

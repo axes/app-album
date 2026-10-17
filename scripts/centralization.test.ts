@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   colorTokens,
+  productiveCanonicalColorTokens,
   proposalColorTokens,
   semanticColorKeys,
 } from "./ui-tokens";
@@ -10,6 +11,7 @@ import {
   buildDesignTokensJson,
   buildUiTokensCss,
 } from "./build-ui-reference";
+import { buildProductiveTokensCss } from "./build-ui-tokens-css";
 
 const KEY_FILES = [
   "src/app/dev/ui/page.tsx",
@@ -17,7 +19,7 @@ const KEY_FILES = [
   "src/components/ui/app-shell.tsx",
   "src/components/ui/mobile-nav.tsx",
   "src/components/ui/nav-link.tsx",
-  "src/components/ui/logo-placeholder.tsx",
+  "src/components/ui/icons.tsx",
   "scripts/build-ui-reference.ts",
   "scripts/build-ui-tokens-css.ts",
   // UI-05B: productive album library surfaces.
@@ -63,6 +65,24 @@ describe("UI-04A.3 token centralization", () => {
     expect(Object.keys(proposalColorTokens)).toEqual([...semanticColorKeys]);
   });
 
+  it("generates the DESIGN v2 productive contract with temporary aliases", () => {
+    const css = buildProductiveTokensCss();
+    const required = [
+      "background", "surface", "surface-soft", "border", "input-border",
+      "text", "text-muted", "on", "primary", "accent", "focus", "success",
+      "warning", "danger", "owned-a", "owned-b", "special-a", "special-b",
+      "special-on",
+    ];
+    for (const name of required) expect(css).toContain(`--album-${name}:`);
+    for (const token of Object.values(productiveCanonicalColorTokens)) {
+      expect(css).toContain(token.light);
+      expect(css).toContain(token.dark);
+    }
+    expect(css).toContain("--album-primary-content: var(--album-on)");
+    expect(css).toContain("--album-secondary: var(--album-surface)");
+    expect(css).toContain("--album-secondary-content: var(--album-text)");
+  });
+
   it("propagates every semantic proposal token to CSS and JSON", () => {
     const css = buildUiTokensCss();
     const json = JSON.parse(buildDesignTokensJson());
@@ -92,11 +112,31 @@ describe("UI-04A.3 token centralization", () => {
     expect(proposalColorTokens.overlay.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
 
     const css = read("src/styles/tokens.css");
-    expect(css).toMatch(/--album-overlay:\s*#[0-9a-fA-F]+/);
+    expect(css).toContain("--album-overlay: var(--album-background)");
 
     const overlay = read("src/app/app/albums/remove-button.tsx");
     expect(overlay).toContain("var(--album-overlay)");
     expect(overlay).not.toMatch(/var\(--album-text\)[^)]*backdrop/);
+  });
+
+  it("centralizes the special accent and its derived glow", () => {
+    expect(semanticColorKeys).toContain("special");
+    expect(semanticColorKeys).toContain("specialForeground");
+    expect(colorTokens.special.light).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(colorTokens.special.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(colorTokens.specialForeground.light).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+    expect(colorTokens.specialForeground.dark).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+
+    const css = buildProductiveTokensCss();
+    expect(css).toContain("--album-special-a: #d93a00");
+    expect(css).toContain("--album-special-on: #ffffff");
+    expect(css).toContain("--album-special: var(--album-special-a)");
+    expect(css).toContain("--album-special-content: var(--album-special-on)");
+
+    const globals = read("src/app/globals.css");
+    expect(globals).toContain("--album-special-glow");
+    expect(globals).toContain("color-mix(in srgb, var(--album-special)");
+    expect(globals).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
   it("uses only a token-driven identity placeholder", () => {
@@ -105,6 +145,49 @@ describe("UI-04A.3 token centralization", () => {
     expect(page).toContain("proposal-identity-placeholder");
     expect(portable).toContain("identity-placeholder");
     expect(`${page}\n${portable}`).not.toMatch(/brand-mark|linearGradient|mark-base/i);
+  });
+
+  // DESIGN v2 §14: the logo colours are fixed and must never read a theme
+  // token, so `logo.tsx` and `logo-defs.tsx` are the only two files allowed to
+  // carry hex literals outside `scripts/ui-tokens.ts`. This test pins the
+  // exact palette and proves the exception stays confined to those two files.
+  it("confines the fixed logo palette to the logo components", () => {
+    const LOGO_FILES = [
+      "src/components/ui/logo.tsx",
+      "src/components/ui/logo-defs.tsx",
+    ];
+    const DESIGN_LOGO_HEX = [
+      "#4a1fb8",
+      "#2a1285",
+      "#ff8a2b",
+      "#ff4d12",
+      "#6b2fc9",
+      "#f0583a",
+      "#190c58",
+      "#5b34e0",
+      "#ffc48f",
+    ];
+
+    const defs = read("src/components/ui/logo-defs.tsx");
+    for (const hex of DESIGN_LOGO_HEX) {
+      expect(defs, `logo-defs.tsx must declare ${hex}`).toContain(hex);
+    }
+
+    // The mark itself is declared once; `Logo` only references it. Comments
+    // are stripped first so prose that names the tags does not trip the check.
+    const logo = read("src/components/ui/logo.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(logo).toContain('href="#mark"');
+    expect(logo).not.toMatch(/<symbol\b|<linearGradient\b/);
+    expect(logo).not.toMatch(HEX_LITERAL);
+
+    // No other key file may carry the logo palette.
+    for (const path of KEY_FILES) {
+      if (LOGO_FILES.includes(path)) continue;
+      const source = read(path);
+      for (const hex of DESIGN_LOGO_HEX) {
+        expect(source, `${path} must not embed the logo colour ${hex}`).not.toContain(hex);
+      }
+    }
   });
 
   it("does not introduce colour-coupled token names", () => {

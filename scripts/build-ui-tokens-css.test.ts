@@ -3,12 +3,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildProductiveTokensCss } from "./build-ui-tokens-css";
 import {
-  productiveColorTokens,
+  productiveCanonicalColorTokens,
   productiveRadiusTokens,
   productiveShadowTokens,
   productiveMotionTokens,
   productiveTypographyTokens,
-  semanticColorKeys,
 } from "./ui-tokens";
 
 const OUT_PATH = resolve(process.cwd(), "src/styles/tokens.css");
@@ -26,10 +25,17 @@ describe("build-ui-tokens-css UI-05A productive tokens", () => {
 
   it("propagates every productive token to the generated CSS", () => {
     const css = buildProductiveTokensCss();
-    for (const key of semanticColorKeys) {
-      expect(css).toContain(productiveColorTokens[key].light);
-      expect(css).toContain(productiveColorTokens[key].dark);
+    for (const token of Object.values(productiveCanonicalColorTokens)) {
+      expect(css).toContain(token.light);
+      expect(css).toContain(token.dark);
     }
+    expect(css).toContain("--album-on:");
+    expect(css).toContain("--album-owned-a:");
+    expect(css).toContain("--album-special-on:");
+    expect(css).toContain("--album-primary-content: var(--album-on)");
+    expect(css).toContain(
+      `--album-radius-mini: ${productiveRadiusTokens.radiusMini}`,
+    );
     expect(css).toContain(
       `--album-radius-control: ${productiveRadiusTokens.radiusControl}`,
     );
@@ -54,6 +60,15 @@ describe("build-ui-tokens-css UI-05A productive tokens", () => {
     expect(css).toContain(
       `--font-display: ${productiveTypographyTokens.fontDisplay}`,
     );
+    expect(productiveTypographyTokens.fontDisplay).toBe(
+      'var(--font-poppins), "Poppins", system-ui, sans-serif',
+    );
+    expect(productiveTypographyTokens.fontBody).toBe(
+      'var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif',
+    );
+    expect(css).toContain(
+      `--glow: ${productiveShadowTokens.shadowGlow.light}`,
+    );
   });
 
   it("keeps the radius scale out of Tailwind's own --radius-* namespace", () => {
@@ -61,7 +76,7 @@ describe("build-ui-tokens-css UI-05A productive tokens", () => {
     // Tailwind's `--radius-*` namespace owns the `rounded-*` utilities. A bare
     // `--radius-control` in this sheet would collide with the `@theme static`
     // mapping in `globals.css` and silently leave the utilities ungenerated.
-    expect(css).not.toMatch(/^\s*--radius-(control|card|sticker|pill):/m);
+    expect(css).not.toMatch(/^\s*--radius-(mini|control|card|sticker|pill):/m);
   });
 
   it("matches the versioned src/styles/tokens.css byte-for-byte", () => {

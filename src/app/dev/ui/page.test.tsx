@@ -2,132 +2,107 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const navigationMocks = vi.hoisted(() => ({
-  notFound: vi.fn(() => {
-    throw new Error("NEXT_NOT_FOUND");
-  }),
+const navigationMocks = vi.hoisted(() => ({ notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }) }));
+vi.mock("next/navigation", () => ({ notFound: navigationMocks.notFound, redirect: vi.fn() }));
+vi.mock("next/font/google", () => ({
+  Manrope: () => ({ variable: "manrope-variable" }),
+  DM_Sans: () => ({ variable: "dm-sans-variable" }),
 }));
 
-vi.mock("next/navigation", () => ({
-  notFound: navigationMocks.notFound,
-  redirect: vi.fn(),
-}));
+describe("/dev/ui UI-07B Visual Reference Lab", () => {
+  beforeEach(() => { vi.resetModules(); vi.stubEnv("NODE_ENV", "development"); });
+  afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
 
-vi.mock("@/components/theme-toggle", () => ({
-  ThemeToggle: () => <span data-testid="theme-toggle">theme</span>,
-}));
-
-describe("/dev/ui UI-04A.3", () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.stubEnv("NODE_ENV", "development");
+  it("renders local selectors and all combinations on one showcase", async () => {
+    const { default: Page } = await import("./page");
+    const { container } = render(<Page />);
+    const main = container.querySelector("#dev-ui")!;
+    expect(main.getAttribute("data-direction")).toBe("current");
+    expect(main.getAttribute("data-theme")).toBe("light");
+    expect(main.getAttribute("data-typography")).toBe("manrope");
+    for (const [direction, directionLabel] of [["current", "Actual"], ["candidate", "Candidata"]] as const) {
+      for (const [theme, themeLabel] of [["light", "Light"], ["dark", "Dark"]] as const) {
+        fireEvent.click(screen.getByRole("button", { name: directionLabel }));
+        fireEvent.click(screen.getByRole("button", { name: themeLabel }));
+        expect(main.getAttribute("data-direction")).toBe(direction);
+        expect(main.getAttribute("data-theme")).toBe(theme);
+      }
+    }
+    fireEvent.click(screen.getByRole("button", { name: "B · DM Sans + Manrope" }));
+    expect(main.getAttribute("data-typography")).toBe("editorial");
+    expect(container.querySelector("style")?.textContent).toContain(
+      "--lab-body:var(--lab-font-dm-sans);--lab-heading:var(--lab-font-manrope)",
+    );
+    expect(container.querySelectorAll("main#dev-ui")).toHaveLength(1);
   });
 
-  afterEach(() => {
-    cleanup();
-    vi.unstubAllEnvs();
+  it("loads both scoped Google font variables", async () => {
+    const { default: Page } = await import("./page");
+    const { container } = render(<Page />);
+    expect(container.querySelector("main")?.className).toContain("manrope-variable");
+    expect(container.querySelector("main")?.className).toContain("dm-sans-variable");
   });
 
-  it("renders the compact editorial header and same-origin download", async () => {
+  it("covers the required lab sections without a snapshot", async () => {
     const { default: Page } = await import("./page");
     render(<Page />);
-    expect(screen.getByRole("heading", { level: 1, name: /propuesta de diseño/i })).toBeTruthy();
-    expect(screen.getByRole("img", { name: /placeholder de identidad app álbum/i })).toBeTruthy();
-    expect(screen.getByRole("group", { name: /dirección visual/i })).toBeTruthy();
-    expect(screen.getByTestId("theme-toggle")).toBeTruthy();
-    const download = screen.getByRole("link", { name: /descargar referencia/i });
-    expect(download.getAttribute("href")).toBe("/dev/ui/download");
-    expect(download.getAttribute("download")).not.toBeNull();
-  });
-
-  it("renders all planned editorial sections", async () => {
-    const { default: Page } = await import("./page");
-    render(<Page />);
-    for (const name of [
-      "Qué cambia respecto a la referencia",
-      "Paleta",
-      "Tipografía",
-      "Radios y sombras",
-      "Botones y campos",
-      "Mensajes y badges",
-      "Componentes del álbum",
-      "Estado vacío y navegación móvil",
-      "Movimiento",
-    ]) {
+    for (const name of ["Foundations", "Typography", "Spacing, radius, shadows & glow", "Buttons", "Forms", "Feedback", "Album", "Stickers", "Navigation", "Dialogs", "Achievement"]) {
       expect(screen.getByRole("heading", { name })).toBeTruthy();
     }
+    expect(screen.getByText(/Álbum completado 100%/)).toBeTruthy();
+    expect(screen.getByRole("progressbar", { name: "Progreso Mundial 2026" }).getAttribute("aria-valuenow")).toBe("63");
   });
 
-  it("renders 24 accessible sticker slots and the four foil positions", async () => {
+  it("has labelled controls, 44px target rules and complete form states", async () => {
     const { default: Page } = await import("./page");
     const { container } = render(<Page />);
-    const stickers = container.querySelectorAll("button.sticker");
-    expect(stickers).toHaveLength(24);
-    expect(container.querySelectorAll("button.sticker-foil")).toHaveLength(4);
-    for (const number of [1, 8, 16, 24]) {
-      expect(container.querySelector(`button.sticker-foil[aria-label^="Lámina ${number} "]`)).toBeTruthy();
-    }
-    expect(within(stickers[2] as HTMLElement).getByText("×2")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Dirección" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Tema" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Tipografía" })).toBeTruthy();
+    expect(screen.getByLabelText("Nombre")).toBeTruthy();
+    expect(screen.getByLabelText("Categoría")).toBeTruthy();
+    expect(screen.getByLabelText("Notas")).toBeTruthy();
+    expect(screen.getByLabelText("Bloqueado").hasAttribute("disabled")).toBe(true);
+    expect(container.querySelector("style")?.textContent).toContain("min-height:44px");
+    expect(container.querySelector("style")?.textContent).toContain("prefers-reduced-motion:reduce");
+    const focusDemo = screen.getByRole("button", { name: "Focus" });
+    expect(focusDemo.className).toContain("is-focus-demo");
+    expect(focusDemo.hasAttribute("autofocus")).toBe(false);
+    expect(screen.getByText(/Candidata no aprobada/i)).toBeTruthy();
   });
 
-  it("cycles sticker state locally and updates counters, progress and filters", async () => {
+  it("keeps sticker interactions and dialogs local", async () => {
     const { default: Page } = await import("./page");
     render(<Page />);
-    const missing = screen.getByRole("button", { name: "Lámina 5, me falta" });
-    fireEvent.click(missing);
+    fireEvent.click(screen.getByRole("button", { name: "Lámina 5, me falta" }));
     expect(screen.getByRole("button", { name: "Lámina 5, pegada" })).toBeTruthy();
-    expect(screen.getByRole("progressbar", { name: "71% completado" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Lámina 5, pegada" }));
-    expect(screen.getByRole("button", { name: "Lámina 5, repetida" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Lámina 5, repetida" }));
-    expect(screen.getByRole("button", { name: "Lámina 5, me falta" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Me faltan" }));
-    expect(screen.getByRole("button", { name: "Lámina 5, me falta" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Lámina 1 especial, pegada" })).toBeNull();
+
+    const trigger = screen.getByRole("button", { name: "Eliminar álbum…" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: "¿Eliminar este álbum?" });
+    expect(within(dialog).getByText(/no modifica ningún dato/i)).toBeTruthy();
+    expect(document.activeElement).toBe(
+      within(dialog).getByRole("button", { name: "Cancelar" }),
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 
-  it("includes circular and linear progress with complete ARIA values", async () => {
-    const { default: Page } = await import("./page");
-    render(<Page />);
-    const progress = screen.getAllByRole("progressbar");
-    expect(progress.length).toBeGreaterThanOrEqual(6);
-    expect(progress.some((item) => item.getAttribute("aria-valuenow") === "67")).toBe(true);
-    expect(progress.some((item) => item.getAttribute("aria-valuenow") === "100")).toBe(true);
-  });
-
-  it("reuses the simple identity placeholder in header and empty state", async () => {
+  it("is isolated from product theme, storage and product routes", async () => {
     const { default: Page } = await import("./page");
     const { container } = render(<Page />);
-    expect(container.querySelectorAll(".proposal-identity-placeholder")).toHaveLength(2);
-    expect(container.querySelector(".proposal-brand svg")).toBeNull();
-    expect(container.querySelector(".proposal-empty svg")).toBeNull();
-  });
-
-  it("renders messages with SVG, empty state and four-link mobile nav", async () => {
-    const { default: Page } = await import("./page");
-    const { container } = render(<Page />);
-    expect(container.querySelectorAll(".proposal-alert svg")).toHaveLength(3);
-    expect(screen.getByText("Aún no tienes láminas")).toBeTruthy();
-    const nav = screen.getByRole("navigation", { name: /navegación inferior/i });
-    expect(within(nav).getAllByRole("link")).toHaveLength(4);
-    expect(within(nav).getByRole("link", { name: /álbum/i }).getAttribute("aria-current")).toBe("page");
-  });
-
-  it("keeps proposal isolated and emits token-driven styles without concrete colours", async () => {
-    const { default: Page } = await import("./page");
-    const { container } = render(<Page />);
-    const main = container.querySelector("main");
-    expect(main?.getAttribute("data-direction")).toBe("current");
-    expect(container.querySelector('[data-showcase="proposal"]')).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
+    expect(document.body.hasAttribute("data-theme")).toBe(false);
+    expect(container.innerHTML).not.toContain("localStorage");
     expect(container.innerHTML).not.toMatch(/href="\/(app|admin|share)/);
-    // Concrete values rendered here are injected from scripts/ui-tokens.ts;
-    // centralization.test.ts guards that this component source owns no literals.
-    expect(container.innerHTML).toContain("var(--album-proposal-primary)");
   });
 
   it("fails closed outside development and Vercel Preview", async () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("NODE_ENV", "production"); vi.stubEnv("VERCEL_ENV", "production");
     const { default: Page } = await import("./page");
     expect(() => Page()).toThrow("NEXT_NOT_FOUND");
     expect(navigationMocks.notFound).toHaveBeenCalled();

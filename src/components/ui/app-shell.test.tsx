@@ -33,7 +33,7 @@ vi.mock("next/link", () => ({
     href: string;
     children: React.ReactNode;
     className?: string;
-    "aria-current"?: string;
+    "aria-current"?: "page";
     "aria-label"?: string;
     "data-current"?: string;
   }) => (
@@ -118,11 +118,15 @@ describe("AppShell (UI-05A)", () => {
     expect(mocks.logoutAction).not.toHaveBeenCalled();
   });
 
-  it("renders the token-driven logo placeholder in the header", () => {
+  it("renders the DESIGN v2 logo and the visible product name in the header", () => {
     const html = rendered({ children: "x" });
-    expect(html).toContain("logo-placeholder");
-    expect(html).toContain('aria-label="Logo de App Álbum"');
-    expect(html).toContain("App Álbum");
+    expect(html).toContain('data-component="logo"');
+    expect(html).toContain('href="#mark"');
+    expect(html).toContain('aria-label="MiColección"');
+    expect(html).toContain("MiColección");
+    // The definitions live in the root layout, not in the shell.
+    expect(html).not.toContain('data-component="logo-defs"');
+    expect(html).not.toContain('id="mark"');
   });
 
   it("renders the mobile dock with the two real destinations on small viewports", () => {
@@ -137,14 +141,54 @@ describe("AppShell (UI-05A)", () => {
     expect(html).toContain('data-item-count="2"');
   });
 
-  it("renders four real mobile destinations for an admin", () => {
+  it("keeps the mobile dock user-only for an admin and adds the admin row", () => {
     const html = rendered({
       user: { username: "root", role: "admin" },
       children: "x",
     });
-    expect(html).toContain('data-item-count="4"');
+    // The dock stays at two user destinations for every role.
+    expect(html).toContain('data-item-count="2"');
+    // Admin destinations live in their own second header row.
+    expect(html).toContain('data-component="app-shell-admin-row"');
+    expect(html).toContain('data-component="admin-nav"');
     expect(html).toContain('href="/admin/albums"');
     expect(html).toContain('href="/admin/users"');
+  });
+
+  it("does not render the admin row for a regular user", () => {
+    const html = rendered({
+      user: { username: "erin", role: "user" },
+      children: "x",
+    });
+    expect(html).not.toContain('data-component="app-shell-admin-row"');
+    expect(html).not.toContain('data-component="admin-nav"');
+  });
+
+  it("does not render the admin row in the public shell", () => {
+    const html = rendered({ children: "x" });
+    expect(html).not.toContain('data-component="app-shell-admin-row"');
+    expect(html).not.toContain('data-component="admin-nav"');
+  });
+
+  it("renders the user destinations with their DESIGN v2 icons", () => {
+    const { container } = render(
+      <AppShell user={{ username: "erin", role: "user" }}>x</AppShell>,
+    );
+    const headerNav = container.querySelector(
+      'nav[aria-label="Navegación principal"]',
+    );
+    expect(headerNav?.querySelector('[data-icon="albums"]')).toBeTruthy();
+    expect(headerNav?.querySelector('[data-icon="explore"]')).toBeTruthy();
+  });
+
+  it("renders the logout control as a ghost button with the logout icon", () => {
+    const html = rendered({
+      user: { username: "erin", role: "user" },
+      children: "x",
+    });
+    expect(html).toContain("btn-ghost");
+    expect(html).toContain('data-icon="logout"');
+    expect(html).toContain("Cerrar sesión");
   });
 
   it("renders the skip link first and targets the single main landmark", () => {
@@ -191,5 +235,31 @@ describe("AppShell (UI-05A)", () => {
     );
     const currents = dock?.querySelectorAll('[aria-current="page"]') ?? [];
     expect(currents.length).toBe(1);
+  });
+
+  it("flags exactly one aria-current='page' in the admin row on an album detail route", () => {
+    mocks.pathname = "/admin/albums/42";
+    const { container } = render(
+      <AppShell user={{ username: "root", role: "admin" }}>x</AppShell>,
+    );
+    const adminNav = container.querySelector(
+      'nav[aria-label="Navegación de administración"]',
+    );
+    const currents = adminNav?.querySelectorAll('[aria-current="page"]') ?? [];
+    expect(currents.length).toBe(1);
+    expect(currents[0]?.getAttribute("href")).toBe("/admin/albums");
+  });
+
+  it("flags exactly one aria-current='page' in the admin row on /admin/users", () => {
+    mocks.pathname = "/admin/users";
+    const { container } = render(
+      <AppShell user={{ username: "root", role: "admin" }}>x</AppShell>,
+    );
+    const adminNav = container.querySelector(
+      'nav[aria-label="Navegación de administración"]',
+    );
+    const currents = adminNav?.querySelectorAll('[aria-current="page"]') ?? [];
+    expect(currents.length).toBe(1);
+    expect(currents[0]?.getAttribute("href")).toBe("/admin/users");
   });
 });

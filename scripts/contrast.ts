@@ -1,4 +1,4 @@
-import { proposalColorTokens } from "./ui-tokens.ts";
+import { productiveCanonicalColorTokens } from "./ui-tokens.ts";
 
 export type ContrastPair = {
   name: string;
@@ -46,6 +46,33 @@ export function meetsMinRatio(fg: string, bg: string, min = 4.5): boolean {
   return wcagRatio(fg, bg) >= min;
 }
 
+/**
+ * Mixes a foreground colour over a background colour in the sRGB colour space.
+ * `foregroundPercent` follows the CSS `color-mix()` percentage contract.
+ */
+export function mixSrgb(
+  foreground: string,
+  background: string,
+  foregroundPercent: number,
+): string {
+  if (foregroundPercent < 0 || foregroundPercent > 100) {
+    throw new Error("foregroundPercent must be between 0 and 100");
+  }
+
+  const foregroundChannels = parseHexColor(foreground);
+  const backgroundChannels = parseHexColor(background);
+  const foregroundWeight = foregroundPercent / 100;
+  const backgroundWeight = 1 - foregroundWeight;
+  const channels = foregroundChannels.map((channel, index) =>
+    Math.round(
+      channel * foregroundWeight +
+        backgroundChannels[index] * backgroundWeight,
+    ),
+  );
+
+  return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function assertMinRatio(pairs: ContrastPair[], min = 4.5): void {
   const failures = pairs.flatMap((pair) => {
     const threshold = pair.min ?? min;
@@ -62,24 +89,47 @@ export function assertMinRatio(pairs: ContrastPair[], min = 4.5): void {
 export function buildProposalContrastPairs(): ContrastPair[] {
   const pairs: ContrastPair[] = [];
   for (const theme of ["light", "dark"] as const) {
-    const token = (key: keyof typeof proposalColorTokens) =>
-      proposalColorTokens[key][theme];
+    const token = (key: keyof typeof productiveCanonicalColorTokens) =>
+      productiveCanonicalColorTokens[key][theme];
+    const selectedRow = mixSrgb(token("primary"), token("surface"), 8);
+    const dangerHover = mixSrgb(token("danger"), token("surface"), 12);
+    const dangerHoverOnSelectedRow = mixSrgb(
+      token("danger"),
+      selectedRow,
+      12,
+    );
+    const dangerHoverOnSurfaceSoft = mixSrgb(
+      token("danger"),
+      token("surfaceSoft"),
+      12,
+    );
+
     pairs.push(
-      { name: `${theme} foreground/background`, fg: token("foreground"), bg: token("background") },
-      { name: `${theme} foreground/surface`, fg: token("foreground"), bg: token("surface") },
-      { name: `${theme} foreground-muted/surface-soft`, fg: token("foregroundMuted"), bg: token("surfaceSoft") },
-      { name: `${theme} primary-foreground/primary`, fg: token("primaryForeground"), bg: token("primary") },
-      { name: `${theme} secondary-foreground/secondary`, fg: token("secondaryForeground"), bg: token("secondary") },
-      { name: `${theme} accent-foreground/accent`, fg: token("accentForeground"), bg: token("accent") },
-      { name: `${theme} success-foreground/success`, fg: token("successForeground"), bg: token("success") },
-      { name: `${theme} warning-foreground/warning`, fg: token("warningForeground"), bg: token("warning") },
-      { name: `${theme} danger-foreground/danger`, fg: token("dangerForeground"), bg: token("danger") },
+      { name: `${theme} text/background`, fg: token("foreground"), bg: token("background") },
+      { name: `${theme} text-muted/surface-soft`, fg: token("foregroundMuted"), bg: token("surfaceSoft") },
+      { name: `${theme} on/primary`, fg: token("on"), bg: token("primary") },
+      { name: `${theme} on/accent`, fg: token("on"), bg: token("accent") },
+      { name: `${theme} on/success`, fg: token("on"), bg: token("success") },
+      { name: `${theme} on/warning`, fg: token("on"), bg: token("warning") },
+      { name: `${theme} on/danger`, fg: token("on"), bg: token("danger") },
       { name: `${theme} primary/background`, fg: token("primary"), bg: token("background") },
       { name: `${theme} focus/background`, fg: token("focus"), bg: token("background"), min: 3 },
-      { name: `${theme} sticker-owned/surface`, fg: token("stickerOwned"), bg: token("surface"), min: 3 },
-      { name: `${theme} sticker-missing/surface`, fg: token("stickerMissing"), bg: token("surface"), min: 3 },
-      { name: `${theme} sticker-duplicate/surface`, fg: token("stickerDuplicate"), bg: token("surface"), min: 3 },
-      { name: `${theme} sticker-special/surface`, fg: token("stickerSpecial"), bg: token("surface"), min: 3 },
+      { name: `${theme} input-border/surface`, fg: token("inputBorder"), bg: token("surface"), min: 3 },
+      { name: `${theme} white/owned-a`, fg: "#ffffff", bg: token("ownedA") },
+      { name: `${theme} special-on/special-a`, fg: token("specialOn"), bg: token("specialA") },
+      { name: `${theme} danger/surface`, fg: token("danger"), bg: token("surface") },
+      { name: `${theme} danger/hover`, fg: token("danger"), bg: dangerHover },
+      { name: `${theme} danger/selected-row`, fg: token("danger"), bg: selectedRow },
+      {
+        name: `${theme} danger/hover-on-selected-row`,
+        fg: token("danger"),
+        bg: dangerHoverOnSelectedRow,
+      },
+      {
+        name: `${theme} danger/hover-on-surface-soft`,
+        fg: token("danger"),
+        bg: dangerHoverOnSurfaceSoft,
+      },
     );
   }
   return pairs;

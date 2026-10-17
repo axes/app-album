@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@/components/ui/icons";
 
 export function albumCoverPresentation(url: string | null, title: string) {
   return url
@@ -14,18 +15,7 @@ function CoverPlaceholder() {
       className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded border border-border bg-surface-muted p-4 text-center text-muted"
       data-testid="album-cover-placeholder"
     >
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        className="h-9 w-9"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      >
-        <rect x="4" y="3" width="16" height="18" rx="2" />
-        <path d="m7 16 3-3 2 2 2-2 3 3" />
-        <circle cx="9" cy="8" r="1.25" />
-      </svg>
+      <Icon name="image" size="lg" />
       <span className="text-xs">Sin portada</span>
     </div>
   );

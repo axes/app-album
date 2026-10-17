@@ -1,0 +1,146 @@
+/*
+ * App Álbum — ui-tokens.css (v2, candidata corregida)
+ *
+ * Fuente única de color, forma, espaciado, movimiento y tipografía.
+ * Regla: los componentes NUNCA llevan valores hexadecimales propios.
+ * Todo color sale de un token --album-*. El único hex permitido fuera de
+ * este archivo es el del logo (colores fijos, ver DESIGN.md §14).
+ *
+ * Si el repo genera este archivo desde scripts/ui-tokens.ts, sincroniza
+ * ese script con design-tokens.json y regenera; no edites el CSS generado a mano.
+ */
+
+@layer tokens {
+
+  /* ---------- Tema claro (por defecto) ---------- */
+  :root,
+  [data-theme="light"] {
+    color-scheme: light;
+
+    /* Superficies */
+    --album-background: #f7f5ff;
+    --album-surface: #ffffff;
+    --album-surface-soft: #efebfb;
+    --album-border: #ddd6f3;        /* decorativo: bordes de tarjeta y separadores */
+    --album-input-border: #8e81c2;  /* funcional: bordes de campos y láminas faltantes (>= 3:1) */
+
+    /* Texto */
+    --album-text: #170b4a;
+    --album-text-muted: #5b5280;
+    --album-on: #ffffff;            /* texto/ícono sobre primary, accent, success, warning, danger */
+
+    /* Marca */
+    --album-primary: #4a1fb8;
+    --album-accent: #d93a00;
+    --album-focus: #6d43e8;
+
+    /* Estado */
+    --album-success: #0f7a4f;
+    --album-warning: #9a5200;
+    --album-danger: #b3261e;
+
+    /* Láminas */
+    --album-owned-a: #6d3fd6;       /* degradado de lámina pegada, inicio */
+    --album-owned-b: #4a1fb8;       /* degradado de lámina pegada, fin */
+    --album-special-a: #d93a00;     /* degradado de lámina especial, inicio */
+    --album-special-b: #b53000;     /* degradado de lámina especial, fin */
+    --album-special-on: #ffffff;    /* texto sobre lámina especial pegada */
+
+    /* Elevación */
+    --shadow-sm: 0 1px 2px rgb(23 11 74 / 0.06);
+    --shadow-md: 0 6px 14px -4px rgb(23 11 74 / 0.14);
+    --shadow-lg: 0 18px 30px -10px rgb(23 11 74 / 0.24);
+    --glow: 0 0 0 4px rgb(109 67 232 / 0.25);   /* anillo de foco en campos */
+  }
+
+  /* ---------- Tema oscuro ---------- */
+  [data-theme="dark"],
+  .dark {
+    color-scheme: dark;
+
+    --album-background: #130f1f;
+    --album-surface: #1c1630;
+    --album-surface-soft: #251d3f;
+    --album-border: #3a2f5c;
+    --album-input-border: #6f63a8;
+
+    --album-text: #f7f2ff;
+    --album-text-muted: #b9aedb;
+    --album-on: #130f1f;
+
+    --album-primary: #a78bfa;
+    --album-accent: #ff8a4c;
+    --album-focus: #f7f2ff;          /* blanco: distinto de cualquier estado de lámina */
+
+    --album-success: #4ade80;
+    --album-warning: #fbbf24;
+    --album-danger: #ff8a80;
+
+    --album-owned-a: #7c4deb;
+    --album-owned-b: #5b21b6;
+    --album-special-a: #ff8a4c;
+    --album-special-b: #e8581c;
+    --album-special-on: #130f1f;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 6px 14px -4px rgb(0 0 0 / 0.45);
+    --shadow-lg: 0 18px 30px -10px rgb(0 0 0 / 0.55);
+    --glow: 0 0 0 4px rgb(167 139 250 / 0.3);
+  }
+
+  /* ---------- Tokens compartidos (no cambian con el tema) ---------- */
+  :root {
+    /* Espaciado (escala de 4 px) */
+    --s1: 0.25rem;   /*  4 */
+    --s2: 0.5rem;    /*  8 */
+    --s3: 0.75rem;   /* 12 */
+    --s4: 1rem;      /* 16 */
+    --s6: 1.5rem;    /* 24 */
+    --s8: 2rem;      /* 32 */
+    --s12: 3rem;     /* 48 */
+
+    /* Radios */
+    --r-md: 0.75rem;     /* controles: botones, campos, alertas */
+    --r-lg: 1.25rem;     /* tarjetas, diálogos, estado vacío */
+    --r-tile: 0.875rem;  /* láminas y portada */
+    --r-sm: 0.5rem;      /* mini-controles sobre lámina */
+    --r-pill: 9999px;    /* badges, segmentados, contadores */
+
+    /* Movimiento */
+    --fast: 150ms;
+    --norm: 200ms;
+    --spin: 800ms;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Tipografía: las fuentes se cargan localmente (next/font) o por @font-face */
+    --font-display: "Poppins", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    --text-display: 2.5rem;   /* 40 */
+    --text-h1: 2rem;          /* 32 */
+    --text-h2: 1.5rem;        /* 24 */
+    --text-h3: 1.125rem;      /* 18 */
+    --text-body: 1rem;        /* 16 */
+    --text-button: 0.9375rem; /* 15 */
+    --text-small: 0.875rem;   /* 14 */
+    --text-caption: 0.75rem;  /* 12 */
+    --text-tile: 1.25rem;     /* 20: número de lámina */
+    --text-tile-dense: 1rem;  /* 16 */
+
+    /* Medidas funcionales */
+    --target-min: 44px;       /* alto mínimo de cualquier control táctil */
+    --layout-max: 1120px;
+    --bp-mobile: 640px;
+  }
+
+  @media (max-width: 640px) {
+    :root { --text-display: 2rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

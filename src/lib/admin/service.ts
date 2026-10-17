@@ -25,7 +25,8 @@ export class AdminOperationError extends Error {
       | "invalid_input"
       | "forbidden"
       | "not_found"
-      | "last_active_admin",
+      | "last_active_admin"
+      | "self_mutation",
   ) {
     super(code);
     this.name = "AdminOperationError";
