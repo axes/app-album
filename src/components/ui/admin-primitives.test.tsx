@@ -78,7 +78,7 @@ describe("DataTable (Commit 2 — admin foundation)", () => {
 });
 
 describe("CollapsibleSurfaceCard (Commit 2 — admin foundation)", () => {
-  it("starts collapsed and hides the panel", () => {
+  it("starts collapsed with an existing hidden panel controlled by an h3 button", () => {
     render(
       <CollapsibleSurfaceCard title="Láminas" summary="12 elementos">
         <p>Contenido</p>
@@ -86,11 +86,14 @@ describe("CollapsibleSurfaceCard (Commit 2 — admin foundation)", () => {
     );
 
     const button = screen.getByRole("button", { name: /Láminas/ });
+    const heading = screen.getByRole("heading", { level: 3, name: /Láminas/ });
+    const panel = screen.getByText("Contenido").parentElement as HTMLElement;
+
     expect(button.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("Contenido")).toBeNull();
-    expect(
-      screen.getByRole("heading", { level: 3, name: /Láminas/ }),
-    ).toBeTruthy();
+    expect(heading.firstElementChild).toBe(button);
+    expect(button.parentElement).toBe(heading);
+    expect(panel.id).toBe(button.getAttribute("aria-controls"));
+    expect(panel.hidden).toBe(true);
   });
 
   it("toggles the panel and wires aria-controls to the panel id", async () => {
@@ -107,6 +110,7 @@ describe("CollapsibleSurfaceCard (Commit 2 — admin foundation)", () => {
     expect(button.getAttribute("aria-expanded")).toBe("true");
     const panel = screen.getByText("Contenido").parentElement as HTMLElement;
     expect(panel.id).toBe(button.getAttribute("aria-controls"));
+    expect(panel.hidden).toBe(false);
   });
 
   it("honours defaultOpen", () => {
@@ -116,7 +120,8 @@ describe("CollapsibleSurfaceCard (Commit 2 — admin foundation)", () => {
       </CollapsibleSurfaceCard>,
     );
 
-    expect(screen.getByText("Contenido")).toBeTruthy();
+    const panel = screen.getByText("Contenido").parentElement as HTMLElement;
+    expect(panel.hidden).toBe(false);
     expect(
       screen.getByRole("button", { name: /Láminas/ }).getAttribute(
         "aria-expanded",
@@ -211,6 +216,7 @@ describe("AdminSelectionBar (Commit 2 — admin foundation)", () => {
 
     const status = screen.getByRole("status");
     expect(status.getAttribute("aria-live")).toBe("polite");
+    expect(status.className).toContain("tabular-nums");
     expect(status.textContent).toContain("3 seleccionadas");
     // The live region wraps only the count text; the actions are a sibling so
     // they are not re-announced on every selection change.

@@ -16,8 +16,9 @@ import { Icon } from "./icons";
  *     the disclosure is reachable and operable from the keyboard;
  *   - the button carries `aria-expanded` and `aria-controls` pointing at the
  *     panel id;
- *   - the panel is only mounted while open, so its content is not exposed to
- *     assistive tech when collapsed;
+ *   - the panel is always mounted so `aria-controls` always resolves to an
+ *     existing id, and the native `hidden` attribute removes it from layout and
+ *     the accessibility tree while collapsed;
  *   - the affordance is the DESIGN v2 §6 `chevronDown` icon (20 px), rotated
  *     when open — never a text glyph and never a native `<details>`.
  */
@@ -72,11 +73,13 @@ export function CollapsibleSurfaceCard({
           />
         </button>
       </h3>
-      {open ? (
-        <div id={panelId} className="border-t border-border p-4">
-          {children}
-        </div>
-      ) : null}
+      <div
+        id={panelId}
+        hidden={!open}
+        className="border-t border-border p-4"
+      >
+        {children}
+      </div>
     </section>
   );
 }

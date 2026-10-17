@@ -184,6 +184,60 @@ describe("Design v2 — every primitive utility class compiles to CSS", () => {
     },
   );
 
+  // Admin foundation — critical layout, interaction and token utilities.
+  const adminFoundationClasses: Array<[string, string, string]> = [
+    ["overflow-x-auto", "DataTable", "keyboard-scrollable table region"],
+    ["rounded-card", "DataTable", "shared card radius"],
+    ["border-border", "DataTable", "token border"],
+    ["focus-visible:outline", "DataTable", "visible keyboard focus"],
+    ["focus-visible:outline-2", "DataTable", "focus width"],
+    ["focus-visible:outline-offset-2", "DataTable", "focus offset"],
+    ["border-collapse", "DataTable", "semantic table layout"],
+    ["h-14", "DataTableRow", "56 px row height"],
+    ["hover:bg-surface-muted", "DataTableRow", "surface-soft hover"],
+    ["text-xs", "DataTableHeaderCell", "12 px header text"],
+    ["font-semibold", "DataTableHeaderCell", "600 header weight"],
+    ["text-muted", "DataTableHeaderCell", "muted header text"],
+    ["align-middle", "DataTableCell", "cell vertical alignment"],
+    ["bg-surface", "CollapsibleSurfaceCard", "card surface"],
+    ["shadow-none", "CollapsibleSurfaceCard", "flat card elevation"],
+    ["w-full", "CollapsibleSurfaceCard", "full-width disclosure"],
+    ["items-center", "CollapsibleSurfaceCard", "disclosure alignment"],
+    ["justify-between", "CollapsibleSurfaceCard", "title/chevron spacing"],
+    ["text-left", "CollapsibleSurfaceCard", "disclosure text alignment"],
+    ["text-lg", "CollapsibleSurfaceCard", "18 px heading"],
+    ["rotate-180", "CollapsibleSurfaceCard", "open chevron state"],
+    ["transition-transform", "CollapsibleSurfaceCard", "chevron motion"],
+    ["inline-flex", "SelectionCheckbox", "44 px target layout"],
+    ["min-h-11", "SelectionCheckbox", "44 px target height"],
+    ["min-w-11", "SelectionCheckbox", "44 px target width"],
+    ["cursor-pointer", "SelectionCheckbox", "enabled affordance"],
+    ["cursor-not-allowed", "SelectionCheckbox", "disabled affordance"],
+    ["h-5", "SelectionCheckbox", "20 px native checkbox height"],
+    ["w-5", "SelectionCheckbox", "20 px native checkbox width"],
+    ["accent-primary", "SelectionCheckbox", "token-driven native accent"],
+    ["overflow-x-auto", "AdminNav", "mobile horizontal navigation"],
+    ["whitespace-nowrap", "AdminNav", "single-line labels"],
+    ["flex-none", "AdminNav", "stable navigation slots"],
+    ["min-h-11", "AdminNav", "44 px link target"],
+    ["duration-[var(--transition-fast)]", "AdminNav", "token motion duration"],
+    ["ease-[var(--motion-ease)]", "AdminNav", "token motion easing"],
+    ["hover:text-primary", "AdminNav", "token hover foreground"],
+    ["tabular-nums", "AdminSelectionBar", "stable selection count"],
+  ];
+
+  it.each(adminFoundationClasses)(
+    "class %s for %s (%s) compiles to a CSS rule",
+    async (className) => {
+      const css = await compile([className]);
+      const cssForm = escapeCssSelector(className);
+      expect(
+        css.includes(cssForm),
+        `${cssForm} must exist in the compiled CSS`,
+      ).toBe(true);
+    },
+  );
+
   // SegmentedControl.
   const segmentedClasses: Array<[string, string]> = [
     ["inline-flex", "container"],

@@ -41,7 +41,7 @@ export function AdminSelectionBar({
       <p
         role="status"
         aria-live="polite"
-        className="text-sm font-medium text-content"
+        className="text-sm font-medium tabular-nums text-content"
       >
         {count} {label}
       </p>
