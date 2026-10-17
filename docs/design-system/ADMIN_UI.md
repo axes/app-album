@@ -192,3 +192,11 @@ Los siguientes archivos fueron copiados sin cambios desde el directorio de refer
 - `ui-tokens.css`.
 
 Las copias canónicas para revisión viven ahora en `docs/design-system/`. `reference.html` también quedó versionado, en `docs/design-system/reference/reference.html`.
+
+## Acciones por fila en la administración de álbumes
+
+Decisiones aprobadas para la lista `/admin/albums`:
+
+- La acción **Editar** por fila usa `Button size="sm"` (36 px de alto) como excepción explícita del admin de escritorio denso. La regla general de 44 px de DESIGN v2 §16 sigue vigente para el resto de controles; esta excepción se limita a las acciones dentro de filas de tabla administrativa en escritorio.
+- El **título del álbum ya no es un enlace**. La entrada al detalle es el botón **Editar** de la fila, con `aria-label` que incluye el nombre del álbum. Así no existen dos destinos distintos hacia la misma ruta ni un enlace duplicado dentro de la celda del título.
+- El título se conserva como dato principal de la fila, en texto (`text-content`), junto al slug como línea secundaria.
