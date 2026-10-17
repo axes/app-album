@@ -1,0 +1,149 @@
+{
+  "name": "App Álbum",
+  "version": "2.0.0-candidata",
+  "description": "Sistema visual de App Álbum (MiColección). Equivalente estructurado de ui-tokens.css.",
+  "color": {
+    "light": {
+      "background": "#f7f5ff",
+      "surface": "#ffffff",
+      "surfaceSoft": "#efebfb",
+      "border": "#ddd6f3",
+      "inputBorder": "#8e81c2",
+      "text": "#170b4a",
+      "textMuted": "#5b5280",
+      "on": "#ffffff",
+      "primary": "#4a1fb8",
+      "accent": "#d93a00",
+      "focus": "#6d43e8",
+      "success": "#0f7a4f",
+      "warning": "#9a5200",
+      "danger": "#b3261e",
+      "ownedA": "#6d3fd6",
+      "ownedB": "#4a1fb8",
+      "specialA": "#d93a00",
+      "specialB": "#b53000",
+      "specialOn": "#ffffff"
+    },
+    "dark": {
+      "background": "#130f1f",
+      "surface": "#1c1630",
+      "surfaceSoft": "#251d3f",
+      "border": "#3a2f5c",
+      "inputBorder": "#6f63a8",
+      "text": "#f7f2ff",
+      "textMuted": "#b9aedb",
+      "on": "#130f1f",
+      "primary": "#a78bfa",
+      "accent": "#ff8a4c",
+      "focus": "#f7f2ff",
+      "success": "#4ade80",
+      "warning": "#fbbf24",
+      "danger": "#ff8a80",
+      "ownedA": "#7c4deb",
+      "ownedB": "#5b21b6",
+      "specialA": "#ff8a4c",
+      "specialB": "#e8581c",
+      "specialOn": "#130f1f"
+    }
+  },
+  "logo": {
+    "note": "Colores fijos. Nunca dependen del tema.",
+    "baseFrom": "#4a1fb8",
+    "baseTo": "#2a1285",
+    "innerSquare": "#190c58",
+    "innerStroke": "#5b34e0",
+    "stickerFrom": "#ff8a2b",
+    "stickerTo": "#ff4d12",
+    "photoFrom": "#4a1fb8",
+    "photoMid": "#6b2fc9",
+    "photoTo": "#f0583a",
+    "fold": "#ffc48f"
+  },
+  "contrast": {
+    "minimum": { "text": 4.5, "largeText": 3, "nonText": 3 },
+    "measured": {
+      "light": { "text/background": 16.4, "textMuted/surfaceSoft": 6.1, "on/primary": 9.6, "on/accent": 4.6, "on/success": 5.4, "on/warning": 5.9, "on/danger": 6.5, "primary/background": 8.9, "focus/background": 5.4, "inputBorder/surface": 3.5, "white/ownedA": 6.3, "specialOn/specialA": 4.6 },
+      "dark": { "text/background": 17.1, "textMuted/surfaceSoft": 7.6, "on/primary": 6.9, "on/accent": 8.1, "on/success": 10.8, "on/warning": 11.3, "on/danger": 8.2, "primary/background": 6.9, "focus/background": 17.1, "inputBorder/surface": 3.3, "white/ownedA": 5.1, "specialOn/specialA": 8.1 }
+    }
+  },
+  "space": { "s1": "0.25rem", "s2": "0.5rem", "s3": "0.75rem", "s4": "1rem", "s6": "1.5rem", "s8": "2rem", "s12": "3rem" },
+  "radius": { "sm": "0.5rem", "md": "0.75rem", "tile": "0.875rem", "lg": "1.25rem", "pill": "9999px" },
+  "shadow": {
+    "light": {
+      "sm": "0 1px 2px rgb(23 11 74 / 0.06)",
+      "md": "0 6px 14px -4px rgb(23 11 74 / 0.14)",
+      "lg": "0 18px 30px -10px rgb(23 11 74 / 0.24)",
+      "glow": "0 0 0 4px rgb(109 67 232 / 0.25)"
+    },
+    "dark": {
+      "sm": "0 1px 2px rgb(0 0 0 / 0.3)",
+      "md": "0 6px 14px -4px rgb(0 0 0 / 0.45)",
+      "lg": "0 18px 30px -10px rgb(0 0 0 / 0.55)",
+      "glow": "0 0 0 4px rgb(167 139 250 / 0.3)"
+    }
+  },
+  "motion": {
+    "fast": "150ms",
+    "normal": "200ms",
+    "spin": "800ms",
+    "ease": "cubic-bezier(0.2, 0, 0, 1)",
+    "reducedMotion": "Con prefers-reduced-motion: reduce, toda animación y transición pasa a 0.01ms."
+  },
+  "typography": {
+    "families": {
+      "display": { "name": "Poppins", "weights": [600, 700], "fallback": "system-ui, sans-serif", "use": "Títulos, números, número de lámina" },
+      "body": { "name": "Inter", "weights": [400, 500, 600], "fallback": "system-ui, -apple-system, 'Segoe UI', sans-serif", "use": "Texto, etiquetas, botones, campos" },
+      "alternatives": [
+        { "display": "Outfit", "body": "Inter", "note": "Alternativa más ligera" }
+      ]
+    },
+    "scale": {
+      "display": { "size": "2.5rem", "mobileSize": "2rem", "lineHeight": 1.1, "weight": 700, "letterSpacing": "-0.02em", "family": "display" },
+      "h1": { "size": "2rem", "lineHeight": 1.2, "weight": 700, "letterSpacing": "-0.015em", "family": "display" },
+      "h2": { "size": "1.5rem", "lineHeight": 1.25, "weight": 600, "family": "display" },
+      "h3": { "size": "1.125rem", "lineHeight": 1.3, "weight": 600, "family": "display" },
+      "body": { "size": "1rem", "lineHeight": 1.5, "weight": 400, "family": "body" },
+      "small": { "size": "0.875rem", "lineHeight": 1.5, "weight": 400, "family": "body" },
+      "label": { "size": "0.875rem", "weight": 600, "family": "body" },
+      "caption": { "size": "0.75rem", "weight": 400, "family": "body", "color": "textMuted" },
+      "button": { "size": "0.9375rem", "weight": 600, "family": "body", "textTransform": "none" },
+      "numeric": { "size": "1.5rem", "lineHeight": 1.1, "weight": 700, "family": "display", "fontVariantNumeric": "tabular-nums" },
+      "stickerNumber": { "size": "1.25rem", "denseSize": "1rem", "weight": 600, "family": "display" }
+    },
+    "rules": ["Sin mayúsculas forzadas en botones ni etiquetas.", "Cifras con tabular-nums en contadores y estadísticas."]
+  },
+  "icons": {
+    "library": "lucide-react",
+    "stroke": 2,
+    "caps": "round",
+    "sizes": { "sm": "16px", "md": "20px", "lg": "24px" },
+    "map": {
+      "albums": "sticker", "explore": "search", "profile": "user",
+      "add": "plus", "remove": "minus", "owned": "check", "repeated": "copy", "special": "star",
+      "completed": "trophy", "delete": "trash-2", "swap": "arrow-left-right", "share": "share-2",
+      "success": "circle-check", "warning": "triangle-alert", "error": "circle-x", "info": "info",
+      "close": "x", "menu": "menu", "grid": "layout-grid", "lock": "lock", "loading": "loader-circle"
+    }
+  },
+  "component": {
+    "touchTargetMin": "44px",
+    "button": { "height": "44px", "heightSmall": "36px", "paddingX": "1rem", "paddingXSmall": "0.75rem", "radius": "radius.md", "border": "1.5px", "gap": "0.5rem", "disabledOpacity": 0.45, "activeScale": 0.97, "hoverBrightness": 1.1 },
+    "field": { "height": "44px", "paddingX": "0.75rem", "border": "1.5px", "radius": "radius.md", "textareaMinHeight": "88px", "checkbox": "20px" },
+    "segmented": { "padding": "0.25rem", "itemHeight": "40px", "radius": "radius.pill" },
+    "badge": { "paddingY": "0.1875rem", "paddingX": "0.625rem", "fontSize": "0.75rem", "weight": 600 },
+    "alert": { "padding": "0.75rem 1rem", "radius": "radius.md", "icon": "20px", "tintMix": "12%", "borderMix": "50%" },
+    "progressBar": { "height": "0.625rem", "gradient": "90deg ownedA to specialA" },
+    "ring": { "size": "64px", "sizeCompact": "48px", "stroke": 7, "radiusPx": 26, "dasharray": 163.4 },
+    "sticker": {
+      "aspect": "3 / 4", "radius": "radius.tile", "border": "2px", "minColumnWidth": "64px", "minColumnWidthDense": "48px",
+      "gap": "0.5rem", "gapDense": "6px", "maxCopies": 9, "gradientAngle": "150deg",
+      "countBadge": { "min": "1.375rem", "fontSize": "0.6875rem" }, "fold": { "width": "32%", "color": "rgba(255,255,255,0.8)" },
+      "selectedRing": "0 0 0 3px surface, 0 0 0 6px primary"
+    },
+    "quickControls": { "buttonHeight": "28px", "radius": "radius.sm", "icon": "14px", "visibleWhen": "hover:hover y (hover o focus-within)" },
+    "quantityBar": { "stepperButton": "44px", "miniTile": "56px", "position": "sticky en demo; fixed sobre la barra inferior en la app", "offsetBottom": "0.75rem + safe-area" },
+    "nav": { "itemHeight": "44px", "mobileItemHeight": "56px", "mobileRadius": "1.5rem", "mobileMaxWidth": "380px", "mobileLabel": "0.6875rem" },
+    "dialog": { "maxWidth": "400px", "radius": "radius.lg", "padding": "1.5rem", "backdrop": "rgb(19 15 31 / 0.7) + blur(4px)" },
+    "layout": { "maxWidth": "1120px", "pagePadding": "1.5rem", "pagePaddingMobile": "1rem", "sectionGap": "3rem", "cardPadding": "1.5rem", "cardPaddingMobile": "1rem", "mobileBreakpoint": "640px" }
+  }
+}
