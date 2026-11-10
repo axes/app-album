@@ -181,6 +181,18 @@ describe("AppShell (UI-05A)", () => {
     expect(headerNav?.querySelector('[data-icon="explore"]')).toBeTruthy();
   });
 
+  it("keeps the header actions on a single row that never wraps", () => {
+    const html = rendered({
+      user: { username: "erin", role: "user" },
+      children: "x",
+    });
+    const actions = html.match(/<div class="([^"]*app-shell-actions[^"]*)"/);
+    expect(actions).not.toBeNull();
+    expect(actions?.[1]).toContain("flex-nowrap");
+    expect(actions?.[1]).toContain("shrink-0");
+    expect(actions?.[1]).not.toContain("flex-wrap");
+  });
+
   it("renders the logout control as a ghost button with the logout icon", () => {
     const html = rendered({
       user: { username: "erin", role: "user" },

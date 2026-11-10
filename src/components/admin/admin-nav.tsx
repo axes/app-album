@@ -10,9 +10,10 @@ import { NavLink } from "@/components/ui/nav-link";
  *
  *  - Desktop: rendered as a second header row, below the user row
  *    (`Mis álbumes` / `Explorar álbumes` + theme + username + logout).
- *  - Mobile: the same row stays reachable as a compact, horizontally
- *    scrollable strip, so both destinations remain available without turning
- *    them into extra dock slots.
+ *  - Mobile: the same row stays reachable as a compact strip. Below `sm` each
+ *    item shows its `shortLabel` behind an "Admin" context tag, so both
+ *    destinations fit at 375 px without horizontal scrolling. The full label
+ *    remains the accessible name of the link.
  *
  * Every item is a `NavLink`, so the active state keeps flowing through the
  * single `aria-current="page"` source. Icons come from the DESIGN v2 §6 map
@@ -31,6 +32,11 @@ import { NavLink } from "@/components/ui/nav-link";
 export type AdminNavItem = {
   href: string;
   label: string;
+  /**
+   * Compact label shown below `sm`, where the full labels do not fit side by
+   * side. The link keeps the full `label` as its accessible name.
+   */
+  shortLabel: string;
   icon: IconName;
   /**
    * Optional parent prefix that also marks the item as current. Used by
@@ -44,10 +50,16 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavItem[] = [
   {
     href: "/admin/albums",
     label: "Administrar álbumes",
+    shortLabel: "Álbumes",
     icon: "albums",
     prematch: "/admin/albums",
   },
-  { href: "/admin/users", label: "Administrar usuarios", icon: "users" },
+  {
+    href: "/admin/users",
+    label: "Administrar usuarios",
+    shortLabel: "Usuarios",
+    icon: "users",
+  },
 ] as const;
 
 const linkBase =
@@ -61,15 +73,25 @@ export function AdminNav() {
       className="admin-nav w-full"
     >
       <ul className="admin-nav-list flex w-full items-center gap-1 overflow-x-auto whitespace-nowrap">
+        <li
+          className="admin-nav-context flex-none pr-1 text-xs font-semibold uppercase tracking-wide text-muted sm:hidden"
+          aria-hidden="true"
+        >
+          Admin
+        </li>
         {ADMIN_NAV_ITEMS.map((item) => (
           <li key={item.href} className="admin-nav-slot flex-none">
             <NavLink
               href={item.href}
               prematch={item.prematch}
               className={linkBase}
+              aria-label={item.label}
             >
               <Icon name={item.icon} size="sm" />
-              <span>{item.label}</span>
+              <span className="hidden sm:inline">{item.label}</span>
+              <span className="sm:hidden" aria-hidden="true">
+                {item.shortLabel}
+              </span>
             </NavLink>
           </li>
         ))}

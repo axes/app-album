@@ -18,6 +18,11 @@ import { NavLink } from "./nav-link";
  * it is present it renders the authenticated navigation, the username and the
  * logout form.
  *
+ * The header is a single row at every width: the action cluster never wraps.
+ * Below `sm` the theme and logout controls collapse to their icons (the
+ * accessible name stays in the markup), and the username only appears from
+ * `lg`, truncated, so a long name cannot push the row onto a second line.
+ *
  * Administrative destinations are kept in their own region: for an admin the
  * shell renders `AdminNav` as a second header row, below the user row. The
  * desktop user row and the mobile dock stay conceptually separate — the dock
@@ -110,12 +115,13 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
             )}
           </nav>
 
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          <div className="app-shell-actions ml-auto flex shrink-0 flex-nowrap items-center gap-2">
             <ThemeToggle />
             {user ? (
               <>
                 <span
-                  className="app-shell-username hidden text-sm text-muted sm:inline"
+                  className="app-shell-username hidden max-w-40 truncate text-sm text-muted lg:inline"
+                  title={user.username}
                   data-component="app-shell-username"
                 >
                   {user.username}
@@ -126,8 +132,9 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
                     variant="ghost"
                     size="sm"
                     icon={<Icon name="logout" size="sm" />}
+                    title="Cerrar sesión"
                   >
-                    Cerrar sesión
+                    <span className="sr-only sm:not-sr-only">Cerrar sesión</span>
                   </Button>
                 </form>
               </>
@@ -137,7 +144,7 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
 
         {isAdmin ? (
           <div
-            className="app-shell-admin-row mx-auto w-full max-w-5xl border-t border-border px-4 py-2"
+            className="app-shell-admin-row mx-auto w-full max-w-5xl border-t border-border px-4 py-1"
             data-component="app-shell-admin-row"
           >
             <AdminNav />

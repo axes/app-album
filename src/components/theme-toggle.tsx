@@ -50,10 +50,10 @@ export function ThemeToggle() {
       aria-label={label}
       aria-pressed={theme === "dark"}
       title={label}
-      className="inline-flex min-h-11 items-center gap-2 rounded border border-border bg-surface px-3 py-1 text-sm text-content hover:bg-surface-muted"
+      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-control border border-border bg-surface px-3 py-1 text-sm text-content hover:bg-surface-muted"
     >
       <Icon name={isDark ? "sun" : "moon"} size="md" />
-      <span>{theme === "dark" ? "Claro" : "Oscuro"}</span>
+      <span className="hidden sm:inline">{theme === "dark" ? "Claro" : "Oscuro"}</span>
     </button>
   );
 }
