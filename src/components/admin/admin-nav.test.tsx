@@ -59,6 +59,17 @@ describe("AdminNav (Commit 1 — administrative navigation separation)", () => {
     ]);
   });
 
+  it("declares a compact label per item and keeps the full label as the accessible name", () => {
+    expect(ADMIN_NAV_ITEMS.map((item) => item.shortLabel)).toEqual([
+      "Álbumes",
+      "Usuarios",
+    ]);
+    const html = renderToStaticMarkup(<AdminNav />);
+    for (const item of ADMIN_NAV_ITEMS) {
+      expect(html).toContain(`aria-label="${item.label}"`);
+    }
+  });
+
   it("declares every item with a label, an icon and a unique href", () => {
     const hrefs = new Set<string>();
     for (const item of ADMIN_NAV_ITEMS) {
