@@ -24,7 +24,7 @@ vi.mock("next/link", () => ({
     href: string;
     children: React.ReactNode;
     className?: string;
-    "aria-current"?: string;
+    "aria-current"?: "page";
     "aria-label"?: string;
     "data-current"?: string;
   }) => (
@@ -90,6 +90,15 @@ describe("MobileNav (UI-05A)", () => {
     expect(html).not.toContain("disabled");
     expect(html).not.toContain("data-provisional");
     expect(html).not.toContain("(provisional)");
+  });
+
+  it("never publishes admin destinations in the dock", () => {
+    // Admin destinations live in their own region (AdminNav, second header
+    // row). The dock is user-only for every role, so it must never leak an
+    // /admin route.
+    const html = renderToStaticMarkup(<MobileNav />);
+    expect(html).not.toContain("/admin/albums");
+    expect(html).not.toContain("/admin/users");
   });
 
   it("keeps an accessible label per item and a minimum 48px tall slot", () => {

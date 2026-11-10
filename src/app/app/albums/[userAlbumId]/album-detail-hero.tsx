@@ -17,9 +17,9 @@ export function AlbumDetailHero({ album, id, progress, sharing }: AlbumDetailHer
       </div>
       <div className="flex min-w-0 flex-col gap-5">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Álbum</p>
-          <h1 className="mt-1 break-words text-2xl font-semibold text-content">{album.title}</h1>
-          <p className="mt-1 text-sm text-muted">{metadata}</p>
+          <p className="type-label text-primary">Álbum</p>
+          <h1 className="mt-1 break-words text-content">{album.title}</h1>
+          <p className="type-small mt-1 text-muted">{metadata}</p>
         </div>
         <CollectionSummary progress={progress} />
         <ShareControls sharing={sharing} userAlbumId={id} />

@@ -38,14 +38,14 @@ export function AlbumProgress({ progress, detailed = false }: AlbumProgressProps
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs tabular-nums text-content">
+        <span className="type-small tabular-nums text-content">
           {progress.owned} / {progress.total} láminas
         </span>
-        <span className="text-xs font-medium tabular-nums text-muted">{progress.percentage}%</span>
+        <span className="type-numeric text-muted">{progress.percentage}%</span>
       </div>
       <UiProgress value={progress.percentage} label={label} variant="primary" />
       {detailed ? (
-        <p className="text-xs text-muted">
+        <p className="type-caption text-muted">
           {progress.missing} faltantes · {progress.duplicates} repetidas
         </p>
       ) : null}

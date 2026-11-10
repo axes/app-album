@@ -39,6 +39,8 @@ export const semanticColorKeys = [
   "stickerSpecialEnd",
   "stickerFold",
   "overlay",
+  "special",
+  "specialForeground",
 ] as const;
 
 export type SemanticColorKey = (typeof semanticColorKeys)[number];
@@ -74,6 +76,8 @@ export const cssNameByColorToken: Readonly<Record<SemanticColorKey, string>> = {
   stickerSpecialEnd: "sticker-special-end",
   stickerFold: "sticker-fold",
   overlay: "overlay",
+  special: "special",
+  specialForeground: "special-content",
 };
 
 export const colorTokens: SemanticColorTokens = {
@@ -106,39 +110,72 @@ export const colorTokens: SemanticColorTokens = {
   stickerSpecialEnd: { light: "#155e75", dark: "#0e7490" },
   stickerFold: { light: "#ffffff", dark: "#f8fafc" },
   overlay: { light: "#1f2448", dark: "#0b0820" },
+  special: { light: "#fcd34d", dark: "#fcd34d" },
+  specialForeground: { light: "#2d2a32", dark: "#2d2a32" },
 };
 
-export const proposalColorTokens: SemanticColorTokens = {
-  background: { light: "#f7f5ff", dark: "#120b2e" },
-  surface: { light: "#ffffff", dark: "#1d1347" },
-  surfaceSoft: { light: "#efebfb", dark: "#160e3a" },
-  border: { light: "#ddd6f3", dark: "#36286e" },
-  input: { light: "#ffffff", dark: "#1d1347" },
-  inputBorder: { light: "#8e81c2", dark: "#7a6cba" },
-  foreground: { light: "#170b4a", dark: "#f4f1ff" },
-  foregroundMuted: { light: "#5b5280", dark: "#b0a6da" },
+const designV2 = {
+  background: { light: "#f7f5ff", dark: "#130f1f" },
+  surface: { light: "#ffffff", dark: "#1c1630" },
+  surfaceSoft: { light: "#efebfb", dark: "#251d3f" },
+  border: { light: "#ddd6f3", dark: "#3a2f5c" },
+  inputBorder: { light: "#8e81c2", dark: "#6f63a8" },
+  foreground: { light: "#170b4a", dark: "#f7f2ff" },
+  foregroundMuted: { light: "#5b5280", dark: "#b9aedb" },
+  on: { light: "#ffffff", dark: "#130f1f" },
   primary: { light: "#4a1fb8", dark: "#a78bfa" },
-  primaryForeground: { light: "#ffffff", dark: "#120b2e" },
-  secondary: { light: "#5b5280", dark: "#b0a6da" },
-  secondaryForeground: { light: "#ffffff", dark: "#120b2e" },
-  accent: { light: "#d93a00", dark: "#ff7a3d" },
-  accentForeground: { light: "#ffffff", dark: "#120b2e" },
+  accent: { light: "#d93a00", dark: "#ff8a4c" },
+  focus: { light: "#6d43e8", dark: "#f7f2ff" },
   success: { light: "#0f7a4f", dark: "#4ade80" },
-  successForeground: { light: "#ffffff", dark: "#062b17" },
   warning: { light: "#9a5200", dark: "#fbbf24" },
-  warningForeground: { light: "#ffffff", dark: "#2b1a00" },
   danger: { light: "#b3261e", dark: "#ff8a80" },
-  dangerForeground: { light: "#ffffff", dark: "#3a0906" },
-  focus: { light: "#6d43e8", dark: "#c4b5fd" },
-  stickerOwned: { light: "#4a1fb8", dark: "#a78bfa" },
-  stickerOwnedEnd: { light: "#2a1285", dark: "#6d43e8" },
-  stickerMissing: { light: "#8e81c2", dark: "#7a6cba" },
-  stickerDuplicate: { light: "#4a1fb8", dark: "#a78bfa" },
-  stickerSpecial: { light: "#d93a00", dark: "#ff7a3d" },
-  stickerSpecialEnd: { light: "#7a1d00", dark: "#d93a00" },
-  stickerFold: { light: "#ffffff", dark: "#f4f1ff" },
-  overlay: { light: "#1d0f4a", dark: "#06031a" },
+  ownedA: { light: "#6d3fd6", dark: "#7c4deb" },
+  ownedB: { light: "#4a1fb8", dark: "#5b21b6" },
+  specialA: { light: "#d93a00", dark: "#ff8a4c" },
+  specialB: { light: "#b53000", dark: "#e8581c" },
+  specialOn: { light: "#ffffff", dark: "#130f1f" },
+} as const;
+
+/**
+ * DESIGN v2 productive palette. The legacy semantic interface remains only so
+ * existing components keep rendering until the component-base step removes the
+ * aliases. Every compatibility role points to a DESIGN v2 canonical value.
+ */
+export const proposalColorTokens: SemanticColorTokens = {
+  background: designV2.background,
+  surface: designV2.surface,
+  surfaceSoft: designV2.surfaceSoft,
+  border: designV2.border,
+  input: designV2.surface,
+  inputBorder: designV2.inputBorder,
+  foreground: designV2.foreground,
+  foregroundMuted: designV2.foregroundMuted,
+  primary: designV2.primary,
+  primaryForeground: designV2.on,
+  secondary: designV2.surface,
+  secondaryForeground: designV2.foreground,
+  accent: designV2.accent,
+  accentForeground: designV2.on,
+  success: designV2.success,
+  successForeground: designV2.on,
+  warning: designV2.warning,
+  warningForeground: designV2.on,
+  danger: designV2.danger,
+  dangerForeground: designV2.on,
+  focus: designV2.focus,
+  stickerOwned: designV2.ownedA,
+  stickerOwnedEnd: designV2.ownedB,
+  stickerMissing: designV2.foregroundMuted,
+  stickerDuplicate: designV2.accent,
+  stickerSpecial: designV2.specialA,
+  stickerSpecialEnd: designV2.specialB,
+  stickerFold: designV2.on,
+  overlay: designV2.background,
+  special: designV2.specialA,
+  specialForeground: designV2.specialOn,
 };
+
+export const productiveCanonicalColorTokens = designV2;
 
 export const radiusTokens = {
   radiusControl: "0.375rem",
@@ -148,6 +185,7 @@ export const radiusTokens = {
 } as const;
 
 export const proposalRadiusTokens = {
+  radiusMini: "0.5rem",
   radiusControl: "0.75rem",
   radiusCard: "1.25rem",
   radiusSticker: "0.875rem",
@@ -164,6 +202,7 @@ export const proposalShadowTokens = {
   shadowSm: { light: "0 1px 2px rgb(23 11 74 / 0.06)", dark: "0 1px 2px rgb(0 0 0 / 0.3)" },
   shadowMd: { light: "0 6px 14px -4px rgb(23 11 74 / 0.14)", dark: "0 6px 14px -4px rgb(0 0 0 / 0.45)" },
   shadowLg: { light: "0 18px 30px -10px rgb(23 11 74 / 0.24)", dark: "0 18px 30px -10px rgb(0 0 0 / 0.55)" },
+  shadowGlow: { light: "0 0 0 4px rgb(109 67 232 / 0.25)", dark: "0 0 0 4px rgb(167 139 250 / 0.3)" },
 } as const;
 
 export const motionTokens = {
@@ -174,14 +213,19 @@ export const motionTokens = {
 } as const;
 
 export const typographyTokens = {
-  fontBody: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-  fontDisplay: '"Poppins", ui-rounded, "Trebuchet MS", system-ui, sans-serif',
-  displaySize: "2rem",
-  titleSize: "1.375rem",
-  subtitleSize: "1rem",
-  bodySize: "0.9375rem",
-  labelSize: "0.8125rem",
+  fontBody:
+    'var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif',
+  fontDisplay: 'var(--font-poppins), "Poppins", system-ui, sans-serif',
+  displaySize: "2.5rem",
+  displayMobileSize: "2rem",
+  titleSize: "2rem",
+  subtitleSize: "1.5rem",
+  bodySize: "1rem",
+  buttonSize: "0.9375rem",
+  labelSize: "0.875rem",
   captionSize: "0.75rem",
+  stickerSize: "1.25rem",
+  stickerDenseSize: "1rem",
 } as const;
 
 export const fonts = {
@@ -194,10 +238,15 @@ export const spacingTokens = {
   space2: "0.5rem",
   space3: "0.75rem",
   space4: "1rem",
-  space5: "1.25rem",
   space6: "1.5rem",
   space8: "2rem",
   space12: "3rem",
+} as const;
+
+export const functionalSizeTokens = {
+  touchTargetMin: "44px",
+  layoutMax: "1120px",
+  mobileBreakpoint: "640px",
 } as const;
 
 export const spacingScale = ["1", "2", "3", "4", "6", "8"] as const;
@@ -211,7 +260,7 @@ export const typographyScale = [
 ] as const;
 
 export const projectMeta = {
-  name: "App Álbum",
+  name: "MiColección",
   description: "Sistema visual de referencia portable y autocontenido.",
 } as const;
 

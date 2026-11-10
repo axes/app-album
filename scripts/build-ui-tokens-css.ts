@@ -24,13 +24,13 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  cssNameByColorToken,
-  productiveColorTokens,
+  functionalSizeTokens,
+  productiveCanonicalColorTokens,
   productiveMotionTokens,
   productiveRadiusTokens,
   productiveShadowTokens,
   productiveTypographyTokens,
-  semanticColorKeys,
+  spacingTokens,
   type ThemeName,
 } from "./ui-tokens.ts";
 
@@ -38,13 +38,58 @@ const OUT_PATH = resolve(process.cwd(), "src/styles/tokens.css");
 const LIGHT_THEME: ThemeName = "light";
 const DARK_THEME: ThemeName = "dark";
 
+const canonicalColorCssNames = {
+  background: "background",
+  surface: "surface",
+  surfaceSoft: "surface-soft",
+  border: "border",
+  inputBorder: "input-border",
+  foreground: "text",
+  foregroundMuted: "text-muted",
+  on: "on",
+  primary: "primary",
+  accent: "accent",
+  focus: "focus",
+  success: "success",
+  warning: "warning",
+  danger: "danger",
+  ownedA: "owned-a",
+  ownedB: "owned-b",
+  specialA: "special-a",
+  specialB: "special-b",
+  specialOn: "special-on",
+} as const;
+
 function colorDeclarations(theme: ThemeName): string {
-  return semanticColorKeys
-    .map(
-      (key) =>
-        `  --album-${cssNameByColorToken[key]}: ${productiveColorTokens[key][theme]};`,
-    )
-    .join("\n");
+  const canonical = Object.entries(canonicalColorCssNames)
+    .map(([key, cssName]) => {
+      const token = productiveCanonicalColorTokens[
+        key as keyof typeof productiveCanonicalColorTokens
+      ];
+      return `  --album-${cssName}: ${token[theme]};`;
+    });
+  const compatibility = [
+    "  /* Temporary compatibility aliases; remove in the base-components step. */",
+    "  --album-input: var(--album-surface);",
+    "  --album-primary-content: var(--album-on);",
+    "  --album-secondary: var(--album-surface);",
+    "  --album-secondary-content: var(--album-text);",
+    "  --album-accent-content: var(--album-on);",
+    "  --album-success-content: var(--album-on);",
+    "  --album-warning-content: var(--album-on);",
+    "  --album-danger-content: var(--album-on);",
+    "  --album-sticker-owned: var(--album-owned-a);",
+    "  --album-sticker-owned-end: var(--album-owned-b);",
+    "  --album-sticker-missing: var(--album-text-muted);",
+    "  --album-sticker-duplicate: var(--album-accent);",
+    "  --album-sticker-special: var(--album-special-a);",
+    "  --album-sticker-special-end: var(--album-special-b);",
+    "  --album-sticker-fold: var(--album-on);",
+    "  --album-overlay: var(--album-background);",
+    "  --album-special: var(--album-special-a);",
+    "  --album-special-content: var(--album-special-on);",
+  ];
+  return [...canonical, ...compatibility].join("\n");
 }
 
 function shadowDeclarations(theme: ThemeName): string {
@@ -52,11 +97,13 @@ function shadowDeclarations(theme: ThemeName): string {
     `  --shadow-sm: ${productiveShadowTokens.shadowSm[theme]};`,
     `  --shadow-md: ${productiveShadowTokens.shadowMd[theme]};`,
     `  --shadow-lg: ${productiveShadowTokens.shadowLg[theme]};`,
+    `  --glow: ${productiveShadowTokens.shadowGlow[theme]};`,
   ].join("\n");
 }
 
 function radiusDeclarations(): string {
   return [
+    `  --album-radius-mini: ${productiveRadiusTokens.radiusMini};`,
     `  --album-radius-control: ${productiveRadiusTokens.radiusControl};`,
     `  --album-radius-card: ${productiveRadiusTokens.radiusCard};`,
     `  --album-radius-sticker: ${productiveRadiusTokens.radiusSticker};`,
@@ -75,10 +122,30 @@ function motionDeclarations(): string {
   ].join("\n");
 }
 
-function typographyDeclarations(): string {
+function sharedDeclarations(): string {
   return [
+    `  --s1: ${spacingTokens.space1};`,
+    `  --s2: ${spacingTokens.space2};`,
+    `  --s3: ${spacingTokens.space3};`,
+    `  --s4: ${spacingTokens.space4};`,
+    `  --s6: ${spacingTokens.space6};`,
+    `  --s8: ${spacingTokens.space8};`,
+    `  --s12: ${spacingTokens.space12};`,
     `  --font-display: ${productiveTypographyTokens.fontDisplay};`,
     `  --font-body: ${productiveTypographyTokens.fontBody};`,
+    `  --text-display: ${productiveTypographyTokens.displaySize};`,
+    `  --text-h1: ${productiveTypographyTokens.titleSize};`,
+    `  --text-h2: ${productiveTypographyTokens.subtitleSize};`,
+    "  --text-h3: 1.125rem;",
+    `  --text-body: ${productiveTypographyTokens.bodySize};`,
+    `  --text-button: ${productiveTypographyTokens.buttonSize};`,
+    `  --text-small: ${productiveTypographyTokens.labelSize};`,
+    `  --text-caption: ${productiveTypographyTokens.captionSize};`,
+    `  --text-tile: ${productiveTypographyTokens.stickerSize};`,
+    `  --text-tile-dense: ${productiveTypographyTokens.stickerDenseSize};`,
+    `  --target-min: ${functionalSizeTokens.touchTargetMin};`,
+    `  --layout-max: ${functionalSizeTokens.layoutMax};`,
+    `  --bp-mobile: ${functionalSizeTokens.mobileBreakpoint};`,
   ].join("\n");
 }
 
@@ -90,7 +157,7 @@ function themeBlock(selector: string, theme: ThemeName): string {
     shadowDeclarations(theme),
     radiusDeclarations(),
     motionDeclarations(),
-    typographyDeclarations(),
+    sharedDeclarations(),
     `}`,
   ];
   return lines
@@ -113,6 +180,12 @@ export function buildProductiveTokensCss(): string {
     light,
     "",
     dark,
+    "",
+    `@media (max-width: ${functionalSizeTokens.mobileBreakpoint}) {`,
+    "  :root {",
+    `    --text-display: ${productiveTypographyTokens.displayMobileSize};`,
+    "  }",
+    "}",
     "",
   ].join("\n");
 }

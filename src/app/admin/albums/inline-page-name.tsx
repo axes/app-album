@@ -1,16 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { Icon } from "@/components/ui/icons";
 import { renameSectionAction } from "./actions";
-
-function PencilIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="m4 14.5-.5 2 2-.5L15 6.5 13.5 5 4 14.5Z" />
-      <path d="m12.5 6 1.5 1.5" />
-    </svg>
-  );
-}
 
 export function InlinePageName({
   albumId,
@@ -90,7 +82,7 @@ export function InlinePageName({
         >
           <span>{name}</span>
           <span className="invisible text-primary group-hover/row:visible group-focus-within/row:visible">
-            <PencilIcon />
+            <Icon name="pencil" size="sm" />
           </span>
         </button>
         {error ? <p className="mt-1 text-xs text-danger" role="alert">{error}</p> : null}

@@ -13,6 +13,9 @@ function messageFor(error: unknown): string {
     if (error.code === "last_active_admin") {
       return "Debe permanecer al menos un administrador activo.";
     }
+    if (error.code === "self_mutation") {
+      return "No puedes cambiar tu propio rol ni bloquear tu propia cuenta.";
+    }
     if (error.code === "forbidden") {
       return "No tienes autorización para realizar esta operación.";
     }

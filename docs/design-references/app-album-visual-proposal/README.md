@@ -10,17 +10,19 @@ Esta carpeta contiene referencias visuales externas utilizadas para definir y va
 
 ## Propósito
 
-Estos archivos son material de referencia visual.
+Estos archivos son snapshots históricos de referencia visual.
 
-No forman parte del código productivo ni deben ser usados directamente como implementación.
+No forman parte del código productivo, no representan la paleta productiva vigente y no deben usarse directamente como implementación ni como fuente de tokens.
 
-La línea gráfica finalmente adoptada por el proyecto debe quedar documentada en:
+La fuente manual única de color es `scripts/ui-tokens.ts`. La referencia vigente de la paleta productiva Albaricoque Mora queda documentada en:
 
 - `docs/UI_STYLE_GUIDE.md`
 
 y reflejada en:
 
-- `/dev/ui`
+- `/dev/ui`;
+- el export generado por `npm run ui:export` bajo `artifacts/ui-reference/`;
+- `src/styles/tokens.css`, artefacto productivo generado y verificado byte por byte.
 
 ## Uso
 
@@ -36,3 +38,9 @@ Para trabajos de diseño y revisión visual, estas referencias pueden usarse com
 - layout;
 - navegación;
 - motion.
+
+## Estado desde UI-07A
+
+Las referencias de esta carpeta permanecen deliberadamente sin modificar para conservar el contexto histórico. UI-07A adopta Albaricoque Mora mediante tokens semánticos centralizados; cualquier validación actual debe realizarse contra `/dev/ui`, el export portable y `docs/UI_STYLE_GUIDE.md`, no contra los colores incrustados en estos snapshots.
+
+La revisión visual manual de light/dark y breakpoints continúa pendiente cuando no existe navegador disponible en el entorno de validación.

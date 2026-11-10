@@ -8,7 +8,7 @@ export default function HomePage() {
     <AppShell>
       <section className="flex max-w-2xl flex-col gap-6 rounded-card border border-border bg-surface p-6 sm:p-8">
         <PageHeader
-          title="App Álbum"
+          title="MiColección"
           description="Organiza tus álbumes, registra tus láminas y revisa fácilmente cuáles te faltan o tienes repetidas."
         />
         <nav aria-label="Acciones de acceso" className="flex flex-wrap gap-3">

@@ -165,7 +165,7 @@ export function RemoveAlbumButton({ userAlbumId }: { userAlbumId: string }) {
               role="status"
               aria-live="polite"
               data-testid="remove-album-pending"
-              className="rounded-control border border-border bg-surface-soft px-3 py-2 text-sm text-content"
+              className="rounded-control border border-border bg-surface-muted px-3 py-2 text-sm text-content"
             >
               Quitando álbum…
             </p>

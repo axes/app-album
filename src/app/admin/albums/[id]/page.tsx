@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Icon } from "@/components/ui/icons";
 import { DrizzleCatalogRepository } from "@/lib/catalog/drizzle-repository";
 import { CatalogError, CatalogService, type Sticker } from "@/lib/catalog/service";
 import { ActionForm, Card, Collapsible } from "../action-form";
@@ -90,7 +91,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   return (
     <section className="flex flex-col gap-6">
       <nav aria-label="Navegación contextual" className="flex gap-4 text-sm">
-        <Link className="text-primary underline" href="/admin/albums">← Álbumes</Link>
+        <Link className="inline-flex items-center gap-1 text-primary underline" href="/admin/albums">
+          <Icon name="back" size="sm" />
+          Álbumes
+        </Link>
       </nav>
 
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -212,7 +216,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           <div className="overflow-x-auto rounded border border-border">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
+                <tr className="type-caption border-b border-border bg-surface-muted tracking-wide text-muted">
                   <th className="w-16 px-3 py-2 font-medium">Orden</th>
                   <th className="px-3 py-2 font-medium">Nombre</th>
                   <th className="w-28 px-3 py-2 font-medium">Láminas</th>
@@ -244,7 +248,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                               disabled={index === 0}
                               aria-label={`Subir página ${section.name}`}
                             >
-                              ↑
+                              <Icon name="chevronUp" size="sm" />
                             </button>
                           </ActionForm>
                           <ActionForm action={moveSectionAction} className="inline">
@@ -256,7 +260,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                               disabled={index === album.sections.length - 1}
                               aria-label={`Bajar página ${section.name}`}
                             >
-                              ↓
+                              <Icon name="chevronDown" size="sm" />
                             </button>
                           </ActionForm>
                           <DeletePageForm

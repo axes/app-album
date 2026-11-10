@@ -1,17 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type postgres from "postgres";
 import type { DrizzleCatalogRepository } from "./drizzle-repository";
+import { resolveIntegrationDatabaseUrl } from "@/test/integration-database";
 
 /**
  * Integration coverage for the real PostgreSQL repository.
  *
  * The unique `(album_id, position)` index is what made page deletion fail, and
  * that behaviour cannot be reproduced with an in-memory adapter. The suite is
- * skipped unless DATABASE_URL points at a disposable local database, and every
- * server-only module is imported dynamically so the default unit run never
- * touches the database client.
+ * skipped unless a local database is configured, and every server-only module
+ * is imported dynamically so the default unit run never touches the database
+ * client. `resolveIntegrationDatabaseUrl` refuses a non-local host outright.
  */
-const url = process.env.DATABASE_URL;
+const url = resolveIntegrationDatabaseUrl();
 const suite = url ? describe : describe.skip;
 
 suite("drizzle catalog repository (integration)", () => {

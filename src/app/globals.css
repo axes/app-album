@@ -28,7 +28,7 @@
  * must exist in the compiled CSS even before a component consumes them.
  * `rounded-pill` has no consumer yet, and Tailwind only emits utilities it
  * finds in the scanned sources, so the whole scale is pinned here. */
-@source inline("rounded-control rounded-card rounded-sticker rounded-pill");
+@source inline("rounded-mini rounded-control rounded-card rounded-sticker rounded-pill");
 
 /* ---------------------------------------------------------------------------
  * Productive tokens
@@ -66,23 +66,23 @@
   --color-base-content: var(--album-text);
 
   --color-primary: var(--album-primary);
-  --color-primary-content: var(--album-primary-content);
-  --color-secondary: var(--album-secondary);
-  --color-secondary-content: var(--album-secondary-content);
+  --color-primary-content: var(--album-on);
+  --color-secondary: var(--album-surface);
+  --color-secondary-content: var(--album-text);
   --color-accent: var(--album-accent);
-  --color-accent-content: var(--album-accent-content);
+  --color-accent-content: var(--album-on);
   --color-success: var(--album-success);
   --color-warning: var(--album-warning);
   --color-error: var(--album-danger);
 
-  /* daisyUI-only roles with no App Álbum equivalent (declared once, here). */
-  --color-neutral: #334155;
-  --color-neutral-content: #ffffff;
-  --color-info: #0369a1;
-  --color-info-content: #ffffff;
-  --color-success-content: var(--album-success-content);
-  --color-warning-content: var(--album-warning-content);
-  --color-error-content: var(--album-danger-content);
+  /* daisyUI-only roles mapped onto the canonical App Álbum tokens. */
+  --color-neutral: var(--album-text);
+  --color-neutral-content: var(--album-surface);
+  --color-info: var(--album-primary);
+  --color-info-content: var(--album-on);
+  --color-success-content: var(--album-on);
+  --color-warning-content: var(--album-on);
+  --color-error-content: var(--album-on);
 
   --radius-selector: var(--album-radius-control);
   --radius-field: var(--album-radius-control);
@@ -107,23 +107,23 @@
   --color-base-content: var(--album-text);
 
   --color-primary: var(--album-primary);
-  --color-primary-content: var(--album-primary-content);
-  --color-secondary: var(--album-secondary);
-  --color-secondary-content: var(--album-secondary-content);
+  --color-primary-content: var(--album-on);
+  --color-secondary: var(--album-surface);
+  --color-secondary-content: var(--album-text);
   --color-accent: var(--album-accent);
-  --color-accent-content: var(--album-accent-content);
+  --color-accent-content: var(--album-on);
   --color-success: var(--album-success);
   --color-warning: var(--album-warning);
   --color-error: var(--album-danger);
 
-  /* daisyUI-only roles with no App Álbum equivalent (declared once, here). */
-  --color-neutral: #475569;
-  --color-neutral-content: #f8fafc;
-  --color-info: #38bdf8;
-  --color-info-content: #0f172a;
-  --color-success-content: var(--album-success-content);
-  --color-warning-content: var(--album-warning-content);
-  --color-error-content: var(--album-danger-content);
+  /* daisyUI-only roles mapped onto the canonical App Álbum tokens. */
+  --color-neutral: var(--album-surface-soft);
+  --color-neutral-content: var(--album-text);
+  --color-info: var(--album-primary);
+  --color-info-content: var(--album-on);
+  --color-success-content: var(--album-on);
+  --color-warning-content: var(--album-on);
+  --color-error-content: var(--album-on);
 
   --radius-selector: var(--album-radius-control);
   --radius-field: var(--album-radius-control);
@@ -160,8 +160,14 @@
   --color-border: var(--album-border);
   --color-input: var(--album-input);
   --color-input-border: var(--album-input-border);
-  --color-primary-text: var(--album-primary-content);
+  --color-primary-text: var(--album-on);
   --color-danger: var(--album-danger);
+
+  /* DESIGN v2 §18 aliases actually consumed by the current primitives
+   * (Button variants, SegmentedControl, Badge). Only the ones that are
+   * referenced are added; the remaining §18 entries are deferred until a
+   * consumer needs them. */
+  --color-on: var(--album-on);
 
   /* New semantic aliases (available for the next phases). */
   --color-sticker-owned: var(--sticker-owned);
@@ -173,6 +179,7 @@
    * utilities, so the scale has to be registered here. The values stay in the
    * generated `--album-radius-*` tokens: these entries are references, never a
    * second copy of the numbers. */
+  --radius-mini: var(--album-radius-mini);
   --radius-control: var(--album-radius-control);
   --radius-card: var(--album-radius-card);
   --radius-sticker: var(--album-radius-sticker);
@@ -181,10 +188,142 @@
   /* Standard easing curve. */
   --ease-standard: var(--motion-ease);
 
+  /* DESIGN v2 §6: the loading icon spins at 800 ms (`--motion-spin`), not at
+   * Tailwind's 1 s default. Overriding the theme variable keeps `animate-spin`
+   * as the only class the component needs. */
+  --animate-spin: album-spin var(--motion-spin) linear infinite;
+
   /* UI-03B entrance utility: opacity + 5px translateY over 200ms with the
    * shared easing. Consumed as `animate-enter` by PageHeader and the public
    * landing sections. */
   --animate-enter: album-enter var(--transition-normal) var(--ease-standard) both;
+
+  /* UI-07A: reserved gold glow, derived from the special token. Declared
+   * globally with no consumer yet; it must never hard-code a colour. */
+  --album-special-glow: 0 0 12px color-mix(in srgb, var(--album-special) 55%, transparent), 0 0 28px color-mix(in srgb, var(--album-special) 25%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+ * DESIGN v2 typography
+ *
+ * These product roles are intentionally unlayered so they take precedence over
+ * transitional Tailwind typography utilities without requiring structural
+ * changes across every screen. The isolated `/dev/ui` laboratory owns its
+ * Manrope/DM Sans rules and is explicitly excluded from this product contract.
+ *
+ * The :where(...):where(:not(...)) shape is the only one that keeps the
+ * whole rule at zero specificity (0,0,0) while still letting us exclude
+ * `#dev-ui` and any other sub-tree. A bare `:not(#dev-ui h1)` or an id
+ * outside `:not()` would push the rule to (0,1,0,0) and let it win over
+ * the Tailwind utilities, which is the bug the specificity test guards
+ * against.
+ * ------------------------------------------------------------------------- */
+/* The product typography contract is the single source of truth for fonts,
+ * weights and sizes. Every selector sits inside `:where(...)` so the whole
+ * rule carries zero specificity and any Tailwind utility on a heading
+ * (`text-sm`, `text-content`, …) wins over the contract without `!important`.
+ *
+ * The `/dev/ui` laboratory is fully isolated: it loads its own `Manrope` /
+ * `DM Sans` variables and must never inherit the product rules. A leading
+ * `body :where(.dev-ui-scope) h1` token-based `:where()` would still bleed
+ * through `<main id="dev-ui">`; instead we use `:not(#dev-ui …)` inside the
+ * selector list and rely on `#dev-ui` having a single, well-known id
+ * declared in `src/app/dev/ui/visual-lab.tsx`. `:not(id)` contributes id
+ * specificity (0,1,0,0), but `:not()` itself is an argument-only pseudo
+ * class, so the *list* of excluded elements can stay as rich as needed
+ * without changing the inner specificity of the rule.
+ */
+:where(body) {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+:where(h1):where(:not(#dev-ui h1)) {
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+:where(h2):where(:not(#dev-ui h2)) {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+:where(h3):where(:not(#dev-ui h3)) {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+:where(button):where(:not(#dev-ui button)),
+:where([role="button"]):where(:not(#dev-ui [role="button"])),
+.type-button {
+  font-family: var(--font-body);
+  font-size: var(--text-button);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.type-button-compact {
+  font-size: 0.8125rem;
+}
+
+:where(label):where(:not(#dev-ui label)) {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.type-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.type-small {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.type-caption {
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 400;
+}
+
+.type-label {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.type-numeric {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.type-sticker-number {
+  font-family: var(--font-display);
+  font-size: var(--text-tile);
+  font-weight: 600;
+}
+
+.type-sticker-number-compact {
+  font-size: var(--text-tile-dense);
 }
 
 @keyframes album-enter {
@@ -195,6 +334,14 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* DESIGN v2 §6: the loading glyph rotation. Duration comes from
+ * `--motion-spin` through the `--animate-spin` theme override above. */
+@keyframes album-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -286,7 +433,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--album-focus);
+    outline: 3px solid var(--album-focus);
     outline-offset: 2px;
   }
 }
@@ -310,6 +457,12 @@
   /* UI-03B: the entrance utility is purely decorative, so it is removed
    * entirely (not merely shortened) under reduced motion. */
   .animate-enter {
+    animation: none;
+  }
+
+  /* DESIGN v2 §6: the spinner is decorative too — the gerund label carries
+   * the meaning — so the rotation is removed entirely. */
+  .animate-spin {
     animation: none;
   }
 
@@ -339,6 +492,43 @@
 .app-shell-link[data-current="true"] {
   background-color: var(--album-surface-soft);
   color: var(--album-primary);
+}
+
+/* Administrative navigation — second header row, admin only. The row scrolls
+ * horizontally on narrow viewports; the active item reuses the same
+ * surface-soft / primary treatment as the user row. */
+.admin-nav-list {
+  scrollbar-width: thin;
+}
+
+.admin-nav-link.is-current,
+.admin-nav-link[data-current="true"] {
+  background-color: var(--album-surface-soft);
+  color: var(--album-primary);
+}
+
+/* ---------------------------------------------------------------------------
+ * Admin primitives — centralised state colours (Commit 2)
+ *
+ * The selected-row tint and the danger-ghost hover are the only two state
+ * colours that need a colour-mix between a semantic token and the surface.
+ * They live here, once, so no component repeats a hex value or a Tailwind
+ * opacity modifier over a token.
+ *
+ *   - `.admin-row-selected` — primary 8% mixed with the surface, applied by
+ *     `DataTable` rows when `selected` is true.
+ *   - `.danger-ghost:hover` — danger 12% mixed with the surface, applied by
+ *     the `dangerGhost` Button variant.
+ *
+ * Both rules are intentionally unlayered so they win over Tailwind utilities
+ * without `!important`.
+ * ------------------------------------------------------------------------- */
+.admin-row-selected {
+  background-color: color-mix(in srgb, var(--album-primary) 8%, var(--album-surface));
+}
+
+.danger-ghost:hover {
+  background-color: color-mix(in srgb, var(--album-danger) 12%, var(--album-surface));
 }
 
 .app-shell-dock {
