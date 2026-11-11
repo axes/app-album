@@ -30,11 +30,10 @@ import { removeAlbumAction } from "./actions";
  *   The Server Action (`removeAlbumAction`) and its `redirect("/app")` are
  *   untouched. There is no `router.refresh` or extra revalidation here.
  *
- *   The trigger button is a native <button> (not the <Button> primitive)
- *   because the primitive is a function component and does not forward
- *   refs, and we need a ref to return focus when the dialog closes. The
- *   classes come from the same daisyUI `btn-error` family the primitive
- *   uses, so visually it is identical.
+ *   The trigger is a low-emphasis outlined danger button: removing an album
+ *   is rare and destructive, so it must not outweigh the page's primary
+ *   actions. The filled danger treatment is reserved for the confirm button
+ *   inside the dialog.
  */
 export function RemoveAlbumButton({ userAlbumId }: { userAlbumId: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -120,9 +119,9 @@ export function RemoveAlbumButton({ userAlbumId }: { userAlbumId: string }) {
         onClick={openModal}
         data-testid="remove-album-trigger"
         className={[
-          "btn btn-error min-h-0 rounded-control border-0 px-4 h-10 text-sm font-medium shadow-none",
+          "inline-flex min-h-11 items-center justify-center rounded-control border border-danger bg-transparent px-4 text-sm font-medium text-danger",
           "transition-[color,background-color,border-color,opacity] duration-[var(--transition-fast)] ease-[var(--ease-standard)]",
-          "hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+          "danger-ghost focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50",
         ].join(" ")}
       >
         Quitar de mi colección

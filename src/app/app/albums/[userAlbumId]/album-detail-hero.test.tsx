@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const connections = vi.hoisted(() => ({ share: vi.fn(), remove: vi.fn() }));
@@ -32,6 +32,25 @@ describe("AlbumDetailHero", () => {
     expect(screen.getByRole("progressbar", { name: "71% completado" })).toBeTruthy();
     expect(connections.share).toHaveBeenCalledWith({ sharing: base.sharing, userAlbumId: "collection-1" });
     expect(connections.remove).toHaveBeenCalledWith({ userAlbumId: "collection-1" });
+  });
+
+  it("keeps the secondary actions collapsed until the options control is used", () => {
+    render(<AlbumDetailHero {...base} />);
+
+    const trigger = screen.getByRole("button", { name: "Compartir y opciones" });
+    const panel = document.getElementById(trigger.getAttribute("aria-controls") ?? "");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(panel?.hidden).toBe(true);
+
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(panel?.hidden).toBe(false);
+  });
+
+  it("opens the options by default while a public link is active", () => {
+    render(<AlbumDetailHero {...base} sharing={{ enabled: true, token: "abc" }} />);
+    const trigger = screen.getByRole("button", { name: "Compartir y opciones" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("uses the editorial fallback when publisher and year are absent", () => {
