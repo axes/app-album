@@ -71,6 +71,55 @@ describe("StickerCollection", () => {
     expect(screen.getByText("Repetida · 2 copias")).toBeTruthy();
   });
 
+  it("filters the mosaic to missing or duplicate stickers and back", async () => {
+    const user = userEvent.setup();
+    renderCollection();
+
+    const filters = screen.getByRole("group", { name: "Filtrar láminas" });
+    expect(filters).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Todas" }).getAttribute("aria-pressed")).toBe("true");
+
+    await user.click(screen.getByRole("button", { name: "Faltantes" }));
+    expect(screen.getByText("004")).toBeTruthy();
+    expect(screen.queryByText("A1")).toBeNull();
+    expect(screen.queryByText("ESP-01")).toBeNull();
+    // The page counter still describes the whole page, not the filtered set.
+    expect(screen.getByText("3 / 4")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Repetidas" }));
+    expect(screen.queryByText("004")).toBeNull();
+    expect(screen.queryByText("A1")).toBeNull();
+    expect(screen.getByText("ESP-01")).toBeTruthy();
+    expect(screen.getByText("MAX")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Todas" }));
+    expect(screen.getByText("004")).toBeTruthy();
+    expect(screen.getByText("A1")).toBeTruthy();
+  });
+
+  it("opens every matching page under a filter and explains an empty result", async () => {
+    const user = userEvent.setup();
+    const complete = groups[0].stickers.map((sticker) => ({ ...sticker, id: `${sticker.id}-b`, quantity: 1 }));
+    render(
+      <StickerCollection
+        groups={[
+          { id: "page-1", name: "Página 1", stickers: complete },
+          { id: "page-2", name: "Página 2", stickers: groups[0].stickers },
+        ]}
+        userAlbumId="collection-1"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Faltantes" }));
+    expect(screen.queryByText("Página 1")).toBeNull();
+    expect(screen.getByText("Página 2").closest("summary")?.getAttribute("aria-expanded")).toBe("true");
+
+    cleanup();
+    render(<StickerCollection groups={[{ id: "page-1", name: "Página 1", stickers: complete }]} userAlbumId="collection-1" />);
+    await user.click(screen.getByRole("button", { name: "Faltantes" }));
+    expect(screen.getByText("No te falta ninguna")).toBeTruthy();
+  });
+
   it("opens only the first section when several groups exist", () => {
     const secondPage = groups[0].stickers.map((sticker) => ({ ...sticker, id: `${sticker.id}-b` }));
     render(

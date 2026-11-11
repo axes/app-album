@@ -88,7 +88,7 @@ describe("/share/[token] Server Component", () => {
     expect(text).toContain("Minecraft");
     expect(text).toContain("Panini");
     expect(text).toContain("2 / 4 láminas · 50%");
-    expect(text).toContain("2 faltantes · 1 repetidas");
+    expect(text).toContain("2 faltantes · 1 repetida");
     // These codes/names are rendered by the child `StickerList` component, so
     // they only appear when the element is actually rendered.
     expect(screen.getByText("A2")).toBeTruthy();

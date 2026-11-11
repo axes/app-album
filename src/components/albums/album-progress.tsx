@@ -46,7 +46,7 @@ export function AlbumProgress({ progress, detailed = false }: AlbumProgressProps
       <UiProgress value={progress.percentage} label={label} variant="primary" />
       {detailed ? (
         <p className="type-caption text-muted">
-          {progress.missing} faltantes · {progress.duplicates} repetidas
+          {progress.missing} {progress.missing === 1 ? "faltante" : "faltantes"} · {progress.duplicates} {progress.duplicates === 1 ? "repetida" : "repetidas"}
         </p>
       ) : null}
     </div>

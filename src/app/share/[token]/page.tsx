@@ -67,7 +67,7 @@ export default async function SharedAlbumPage({ params }: { params: Promise<{ to
                 <div className="h-full bg-success" style={{ width: `${view.progress.percentage}%` }} />
               </div>
               <p className="text-sm text-muted">
-                {view.progress.missing} faltantes · {view.progress.duplicates} repetidas
+                {view.progress.missing} {view.progress.missing === 1 ? "faltante" : "faltantes"} · {view.progress.duplicates} {view.progress.duplicates === 1 ? "repetida" : "repetidas"}
               </p>
             </div>
           </div>
