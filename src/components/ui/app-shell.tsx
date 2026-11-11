@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./button";
 import { Icon } from "./icons";
 import { Logo } from "./logo";
+import { Wordmark } from "./wordmark";
 import { MobileNav, MOBILE_NAV_ITEMS } from "./mobile-nav";
 import { NavLink } from "./nav-link";
 
@@ -52,13 +53,19 @@ export type AppShellUser = {
 export type AppShellProps = {
   user?: AppShellUser | null;
   children: ReactNode;
+  /**
+   * Optional footer rendered after the main content. Public pages pass
+   * `<SiteFooter />`; the signed-in application leaves it empty so the mobile
+   * dock stays the last element.
+   */
+  footer?: ReactNode;
   className?: string;
 };
 
 const linkBase =
   "app-shell-link inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-control px-3 text-sm font-medium text-content transition-colors duration-[var(--transition-fast)] ease-[var(--motion-ease)] hover:bg-surface-muted hover:text-primary";
 
-export function AppShell({ user = null, children, className }: AppShellProps) {
+export function AppShell({ user = null, children, footer, className }: AppShellProps) {
   const isAdmin = user?.role === "admin";
 
   return (
@@ -85,7 +92,7 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
             aria-label="MiColección — ir al inicio"
           >
             <Logo size="sm" label="MiColección" />
-            <span>MiColección</span>
+            <Wordmark />
           </NavLink>
 
           <nav
@@ -155,6 +162,8 @@ export function AppShell({ user = null, children, className }: AppShellProps) {
       <main id="main-content" className="app-shell-main mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 pb-24 md:pb-6">
         {children}
       </main>
+
+      {footer}
 
       {user ? (
         <div

@@ -63,6 +63,6 @@ describe("root layout logo definitions (DESIGN v2 §14)", () => {
     // Next.js injects `metadata` into <head> outside the component tree, so
     // the rendered markup never carries the <title>. Assert on the exported
     // metadata object instead.
-    expect(metadata.title).toBe("MiColección");
+    expect(metadata.title).toBe("MiColección.cl");
   });
 });
