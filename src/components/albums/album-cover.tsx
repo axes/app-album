@@ -66,7 +66,7 @@ export function AlbumCover({ coverUrl, title, className }: AlbumCoverProps) {
           {/* Outlined accent seal in the bottom-right — light visual weight, full hue. */}
           <div
             aria-hidden="true"
-            className="absolute bottom-3 right-3 size-9 rounded-full border-2 border-accent"
+            className="absolute bottom-[8%] right-[8%] aspect-square w-[24%] rounded-full border-2 border-accent"
           />
           <div
             aria-hidden="true"

@@ -17,29 +17,26 @@ export default function UserAlbumLoading() {
   return (
     <LoadingRegion label="Cargando el álbum">
       <section className="flex flex-col gap-6">
-        <header className="grid gap-5 border-b border-border pb-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-6">
-          <div className="mx-auto w-full max-w-[10rem] sm:mx-0">
+        <header className="flex flex-col gap-3 border-b border-border pb-4">
+          <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-6">
             <Skeleton className="aspect-[3/4] w-full rounded-card" />
-          </div>
-          <div className="flex min-w-0 flex-col gap-5">
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-3 w-10" />
+            <div className="flex min-w-0 flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-40" />
               </div>
-              <Skeleton className="h-2 w-full" />
-              <Skeleton className="h-3 w-44" />
-            </div>
-            <Skeleton className="h-10 w-full sm:w-56" />
-            <div className="flex w-full border-t border-border pt-4 sm:justify-end">
-              <Skeleton className="h-10 w-full sm:w-40" />
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-3 w-44" />
+              </div>
             </div>
           </div>
+          <Skeleton className="h-11 w-48" />
         </header>
 
         <section className="flex flex-col gap-4">
