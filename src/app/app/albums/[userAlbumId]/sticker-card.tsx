@@ -215,7 +215,7 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
   // for assistive technology.
   const identity = <div className={`min-w-0${grid ? " max-sm:pointer-events-none max-sm:relative max-sm:z-10 max-sm:pr-7" : ""}`}>
     <code className="type-sticker-number block truncate leading-tight" title={sticker.code}>{sticker.code}</code>
-    {sticker.name ? <p className={`truncate text-xs text-muted${grid ? " max-sm:hidden" : ""}`} title={sticker.name}>{sticker.name}</p> : null}
+    {sticker.name ? <p className={`${grid ? "max-sm:hidden " : ""}truncate text-xs text-muted`} title={sticker.name}>{sticker.name}</p> : null}
   </div>;
   const status = grid ? (
     <>

@@ -50,7 +50,7 @@ export function QuantityButton({
   return (
     <button
       aria-label={label}
-      className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-border bg-surface text-content hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted${stretch ? " w-full" : ""}${compact ? ` ${COMPACT_CLASSES[compact]}` : ""}`}
+      className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-border bg-surface text-content hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted${stretch ? " w-full" : ""} ${compact ? COMPACT_CLASSES[compact] : ""}`}
       disabled={unavailable}
       onClick={() => {
         if (!unavailable) onIntent?.();
