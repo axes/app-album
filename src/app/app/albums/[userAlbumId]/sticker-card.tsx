@@ -138,7 +138,25 @@ function QuantityControls({
   );
 }
 
-export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; userAlbumId: string; view: "grid" | "list" }) {
+/**
+ * `lastMissing` marks the only sticker the album still lacks. While it is
+ * missing the card trembles on hover to build anticipation, and obtaining it
+ * calls `onAlbumCompleted` from the click itself (never from incoming data),
+ * so a refresh or a navigation can not replay the celebration.
+ */
+export function StickerCard({
+  sticker,
+  userAlbumId,
+  view,
+  lastMissing = false,
+  onAlbumCompleted,
+}: {
+  sticker: Sticker;
+  userAlbumId: string;
+  view: "grid" | "list";
+  lastMissing?: boolean;
+  onAlbumCompleted?: () => void;
+}) {
   const cardRef = useRef<HTMLLIElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
   const reduced = useReducedMotion();
@@ -210,7 +228,10 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
     // negative quantity. The server remains the authority on the real value.
     setOptimistic(Math.max(0, to));
     setAnimation((previous) => ({ id: (previous?.id ?? 0) + 1, intent: intentFor(from, to) }));
+    if (lastMissing && from === 0 && change === "increment") onAlbumCompleted?.();
   }
+
+  const trembling = lastMissing && displayed === 0 ? " sticker-last-missing" : "";
 
   const grid = view === "grid";
   // Mosaic below `sm`: the whole tile is the "add a copy" target (see
@@ -252,7 +273,7 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
   const layer = celebrating ? <StickerMotionLayer intent={animation.intent} /> : null;
 
   if (view === "list") return (
-    <li className="relative flex min-w-0 flex-col gap-3 overflow-hidden px-3 py-3 sm:flex-row sm:items-center">
+    <li className={`relative flex min-w-0 flex-col gap-3 overflow-hidden px-3 py-3 sm:flex-row sm:items-center${trembling}`}>
       <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: state.token }} />
       <div className="sm:flex-1">{identity}</div>
       {status}
@@ -263,7 +284,7 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
   return (
     <li
       ref={cardRef}
-      className={`relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-sticker border p-2.5 max-sm:gap-1 max-sm:p-1.5 ${tinted ? "border-border bg-surface" : "border-dashed border-border bg-surface-muted"}`}
+      className={`relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-sticker border p-2.5 max-sm:gap-1 max-sm:p-1.5 ${tinted ? "border-border bg-surface" : "border-dashed border-border bg-surface-muted"}${trembling}`}
       style={tint}
     >
       {layer}

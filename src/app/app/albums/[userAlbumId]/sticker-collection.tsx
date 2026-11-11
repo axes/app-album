@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { UserAlbumDetail } from "@/lib/collection/service";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedControl, type SegmentedControlItem } from "@/components/ui/segmented-control";
+import { announceAlbumCompleted } from "./album-completion";
 import { StickerCard } from "./sticker-card";
 import { StickerSection } from "./sticker-section";
 import { ViewToggle, type ViewMode } from "./view-toggle";
@@ -54,6 +55,12 @@ export function StickerCollection({ groups, userAlbumId }: { groups: StickerGrou
     }));
   }
 
+  // The one sticker standing between the user and a complete album, if any.
+  // It follows the authoritative quantities, so it only exists while exactly
+  // one sticker is missing on the server.
+  const missing = groups.flatMap((group) => group.stickers).filter((sticker) => sticker.quantity === 0);
+  const lastMissingId = missing.length === 1 ? missing[0].id : null;
+
   const { filter, ids } = state;
   const visibleGroups = groups
     .map((group) => ({ group, stickers: ids ? group.stickers.filter((sticker) => ids.has(sticker.id)) : group.stickers }))
@@ -92,7 +99,14 @@ export function StickerCollection({ groups, userAlbumId }: { groups: StickerGrou
               >
                 <ul className={view === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 p-2 sm:grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] sm:gap-3 sm:p-3" : "divide-y divide-border"}>
                   {stickers.map((sticker) => (
-                    <StickerCard key={sticker.id} sticker={sticker} userAlbumId={userAlbumId} view={view} />
+                    <StickerCard
+                      key={sticker.id}
+                      lastMissing={sticker.id === lastMissingId}
+                      onAlbumCompleted={announceAlbumCompleted}
+                      sticker={sticker}
+                      userAlbumId={userAlbumId}
+                      view={view}
+                    />
                   ))}
                 </ul>
               </StickerSection>

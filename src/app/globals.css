@@ -403,6 +403,91 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * Album completion — last-sticker tremble, golden frame and confetti
+ *
+ * The gold is derived from the warning (amber) and special tokens, never from
+ * a literal. Only `transform`, `opacity` and `box-shadow` are animated, and
+ * the confetti offsets arrive as custom properties computed once per burst.
+ * ------------------------------------------------------------------------- */
+:root {
+  --album-completed-glow:
+    0 0 0 2px color-mix(in srgb, var(--album-warning) 85%, transparent),
+    0 0 14px color-mix(in srgb, var(--album-warning) 65%, transparent),
+    0 0 32px color-mix(in srgb, var(--album-special) 35%, transparent);
+  --album-completed-glow-peak:
+    0 0 0 3px var(--album-warning),
+    0 0 26px color-mix(in srgb, var(--album-warning) 90%, transparent),
+    0 0 56px color-mix(in srgb, var(--album-special) 55%, transparent);
+}
+
+.sticker-last-missing:hover {
+  animation: album-tremble 380ms linear infinite;
+}
+
+@keyframes album-tremble {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  20% {
+    transform: translate(-1px, 1px) rotate(-1.2deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1.2deg);
+  }
+  60% {
+    transform: translate(-1px, -1px) rotate(-0.8deg);
+  }
+  80% {
+    transform: translate(1px, 1px) rotate(0.8deg);
+  }
+}
+
+.album-complete-glow {
+  box-shadow: var(--album-completed-glow);
+}
+
+.album-complete-glow-pulse {
+  animation: album-glow-pulse 1000ms var(--motion-ease) 3;
+}
+
+@keyframes album-glow-pulse {
+  0%,
+  100% {
+    box-shadow: var(--album-completed-glow);
+  }
+  50% {
+    box-shadow: var(--album-completed-glow-peak);
+  }
+}
+
+.album-completed-message {
+  background-color: color-mix(in srgb, var(--album-warning) 18%, var(--album-surface));
+  border: 1px solid color-mix(in srgb, var(--album-warning) 60%, var(--album-border));
+}
+
+.album-confetti-piece {
+  top: -5vh;
+  animation-name: album-confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+@keyframes album-confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--confetti-drift), 112vh, 0) rotate(var(--confetti-spin));
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * Theme-independent tokens (resolved lazily against the active theme).
  * ------------------------------------------------------------------------- */
 :root {
@@ -470,8 +555,14 @@
    * decorative layer when reduced motion is on, so these rules only matter if
    * the preference flips mid-animation. */
   .sticker-burst,
-  .sticker-ghost {
+  .sticker-ghost,
+  .album-confetti {
     display: none;
+  }
+
+  .sticker-last-missing:hover,
+  .album-complete-glow-pulse {
+    animation: none;
   }
 }
 
