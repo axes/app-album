@@ -19,8 +19,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MiColección",
-  description: "Catálogo maestro de álbumes, páginas y láminas",
+  title: "MiColección.cl",
+  description:
+    "Lleva el control de tus álbumes de láminas: cuáles tienes, cuáles te faltan y cuáles tienes repetidas.",
 };
 
 export default function RootLayout({
