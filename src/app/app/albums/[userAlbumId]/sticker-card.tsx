@@ -74,6 +74,11 @@ function QuantityFields({ userAlbumId, stickerId, change }: { userAlbumId: strin
  * and the count lives in the state label, so the row never overflows a
  * ~112 px track. The list layout keeps the explicit counter between them.
  *
+ * Below `sm` the mosaic is denser (four tiles per phone row): the increment
+ * button covers the whole tile and the decrement button keeps its own 44 px
+ * box above it. Both remain the same two real submit buttons, so the forms,
+ * the Server Action and the accessible names do not change.
+ *
  * UI-05C.3 — `onIntent` belongs to the real submit button, not to the form.
  * It therefore runs only for an explicit valid `+` or `−` click and never for
  * clicks on the card or form spacing. The form remains the sole owner of the
@@ -101,20 +106,26 @@ function QuantityControls({
   stretch?: boolean;
   onIntent: (change: "increment" | "decrement") => void;
 }) {
+  // Below `sm` the mosaic drops the decrement control for a sticker the
+  // server does not hold yet (there is nothing to remove), so the tile stays
+  // compact. It follows the authoritative quantity, like `disabled` above.
+  const decrementForm = stretch
+    ? `flex-1 max-sm:flex-none${serverQuantity === 0 ? " max-sm:hidden" : ""}`
+    : undefined;
   return (
-    <div className={`flex items-center ${stretch ? "gap-1" : "gap-2"}`}>
-      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
+    <div className={`flex items-center ${stretch ? "gap-1 max-sm:min-h-11" : "gap-2"}`}>
+      <form action={adjustQuantityAction} className={decrementForm}>
         <QuantityFields change="decrement" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={serverQuantity === 0} label={`Quitar copia de lámina ${sticker.code}`} onIntent={() => onIntent("decrement")} stretch={stretch}>
+        <QuantityButton compact={stretch ? "raised" : undefined} disabled={serverQuantity === 0} label={`Quitar copia de lámina ${sticker.code}`} onIntent={() => onIntent("decrement")} stretch={stretch}>
           <Icon className="block shrink-0" name="remove" size="md" />
         </QuantityButton>
       </form>
       {stretch ? null : (
         <span aria-label={`${displayed} copias`} className="min-w-7 text-center font-semibold tabular-nums">{displayed}</span>
       )}
-      <form action={adjustQuantityAction} className={stretch ? "flex-1" : undefined}>
+      <form action={adjustQuantityAction} className={stretch ? "flex-1 max-sm:flex-none" : undefined}>
         <QuantityFields change="increment" stickerId={sticker.id} userAlbumId={userAlbumId} />
-        <QuantityButton disabled={serverQuantity >= 1000} label={`Añadir copia de lámina ${sticker.code}`} onIntent={() => onIntent("increment")} stretch={stretch}>
+        <QuantityButton compact={stretch ? "cover" : undefined} disabled={serverQuantity >= 1000} label={`Añadir copia de lámina ${sticker.code}`} onIntent={() => onIntent("increment")} stretch={stretch}>
           <Icon className="block shrink-0" name="add" size="md" />
         </QuantityButton>
       </form>
@@ -196,11 +207,32 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
     setAnimation((previous) => ({ id: (previous?.id ?? 0) + 1, intent: intentFor(from, to) }));
   }
 
-  const identity = <div className="min-w-0">
+  const grid = view === "grid";
+  // Mosaic below `sm`: the whole tile is the "add a copy" target (see
+  // `QuantityButton` `compact`), so the text sits above that layer without
+  // intercepting taps, the sticker name is dropped and the state collapses to
+  // a short mark in the top-right corner. The full label stays in the markup
+  // for assistive technology.
+  const identity = <div className={`min-w-0${grid ? " max-sm:pointer-events-none max-sm:relative max-sm:z-10 max-sm:pr-7" : ""}`}>
     <code className="type-sticker-number block truncate leading-tight" title={sticker.code}>{sticker.code}</code>
-    {sticker.name ? <p className="truncate text-xs text-muted" title={sticker.name}>{sticker.name}</p> : null}
+    {sticker.name ? <p className={`truncate text-xs text-muted${grid ? " max-sm:hidden" : ""}`} title={sticker.name}>{sticker.name}</p> : null}
   </div>;
-  const status = <span ref={labelRef} className={`block leading-snug ${state.textClass}`}>{state.label}</span>;
+  const status = grid ? (
+    <>
+      <span ref={labelRef} className={`block leading-snug ${state.textClass} max-sm:sr-only`}>{state.label}</span>
+      {displayed > 0 ? (
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute right-1.5 top-1.5 z-10 leading-snug sm:hidden ${state.textClass}`}
+          data-testid="sticker-compact-state"
+        >
+          {displayed === 1 ? <Icon className="block" name="owned" size="sm" /> : `×${displayed}`}
+        </span>
+      ) : null}
+    </>
+  ) : (
+    <span ref={labelRef} className={`block leading-snug ${state.textClass}`}>{state.label}</span>
+  );
 
   /**
    * UI-05C.3 — celebrations are mosaic-only. The list view stays a stable,
@@ -223,7 +255,7 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
   return (
     <li
       ref={cardRef}
-      className={`relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-sticker border p-2.5 ${tinted ? "border-border bg-surface" : "border-dashed border-border bg-surface-muted"}`}
+      className={`relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-sticker border p-2.5 max-sm:gap-1 max-sm:p-1.5 ${tinted ? "border-border bg-surface" : "border-dashed border-border bg-surface-muted"}`}
       style={tint}
     >
       {layer}

@@ -50,6 +50,27 @@ describe("StickerCollection", () => {
     expect(screen.getByText("Expandida")).toBeTruthy();
   });
 
+  it("makes the whole mosaic tile the add target on phones and keeps removal separate", () => {
+    renderCollection();
+
+    const add = screen.getByRole("button", { name: "Añadir copia de lámina A1" });
+    const remove = screen.getByRole("button", { name: "Quitar copia de lámina A1" });
+    expect(add.className).toContain("max-sm:absolute");
+    expect(add.className).toContain("max-sm:inset-0");
+    expect(remove.className).toContain("max-sm:z-10");
+    expect(remove.className).toContain("min-w-11");
+    expect(remove.closest("form")?.className).not.toContain("max-sm:hidden");
+
+    // A sticker the user does not hold has nothing to remove on a phone tile.
+    const missingRemove = screen.getByRole("button", { name: "Quitar copia de lámina 004" });
+    expect(missingRemove.closest("form")?.className).toContain("max-sm:hidden");
+
+    // The compact mark mirrors the state; the full label stays in the markup.
+    const marks = screen.getAllByTestId("sticker-compact-state");
+    expect(marks.map((mark) => mark.textContent)).toContain("×2");
+    expect(screen.getByText("Repetida · 2 copias")).toBeTruthy();
+  });
+
   it("opens only the first section when several groups exist", () => {
     const secondPage = groups[0].stickers.map((sticker) => ({ ...sticker, id: `${sticker.id}-b` }));
     render(
@@ -126,7 +147,8 @@ describe("StickerCollection", () => {
     renderCollection();
 
     const list = screen.getByRole("list");
-    expect(list.className).toContain("grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]");
+    expect(list.className).toContain("grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))]");
+    expect(list.className).toContain("sm:grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]");
 
     const add = screen.getByRole("button", { name: "Añadir copia de lámina 004" });
     expect(add.className).toContain("min-h-11");

@@ -54,15 +54,15 @@ export default function UserAlbumLoading() {
                 <Skeleton className="h-4 w-16" />
               </div>
               <div className="border-t border-border">
-                <ul className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-3 p-3">
+                <ul className="grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 p-2 sm:grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] sm:gap-3 sm:p-3">
                   {Array.from({ length: STICKERS_PER_SECTION }, (_, stickerIndex) => (
                     <li
-                      className="flex flex-col gap-2 rounded-sticker border border-border bg-surface-muted p-2.5"
+                      className="flex flex-col gap-2 rounded-sticker border border-border bg-surface-muted p-2.5 max-sm:gap-1 max-sm:p-1.5"
                       key={stickerIndex}
                     >
                       <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-3 w-1/2 max-sm:hidden" />
+                      <Skeleton className="h-3 w-20 max-sm:hidden" />
                       <Skeleton className="h-11 w-full" />
                     </li>
                   ))}
