@@ -25,7 +25,7 @@ export function StickerCollection({ groups, userAlbumId }: { groups: StickerGrou
         const owned = group.stickers.filter((sticker) => sticker.quantity > 0).length;
         return (
           <StickerSection key={group.id} name={group.name} owned={owned} total={group.stickers.length} defaultOpen={index === 0}>
-            <ul className={view === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-3 p-3" : "divide-y divide-border"}>
+            <ul className={view === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 p-2 sm:grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] sm:gap-3 sm:p-3" : "divide-y divide-border"}>
               {group.stickers.map((sticker) => (
                 <StickerCard key={sticker.id} sticker={sticker} userAlbumId={userAlbumId} view={view} />
               ))}
