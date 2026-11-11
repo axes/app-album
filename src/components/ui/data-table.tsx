@@ -121,16 +121,29 @@ export function DataTableRow({
   );
 }
 
+/**
+ * `sticky` pins a cell to the right edge of the scroll region. It is meant for
+ * the actions column: if a table ever overflows, the row actions stay visible
+ * and reachable instead of being clipped. The pinned cell paints its own
+ * background (header, body, hover and selected tints) so the scrolled content
+ * never shows through; the matching rules live in `globals.css`.
+ */
+export type DataTableHeaderCellProps = ThHTMLAttributes<HTMLTableCellElement> & {
+  sticky?: boolean;
+};
+
 export function DataTableHeaderCell({
+  sticky = false,
   className,
   children,
   ...rest
-}: ThHTMLAttributes<HTMLTableCellElement>) {
+}: DataTableHeaderCellProps) {
   return (
     <th
       scope="col"
       className={[
-        "px-4 py-3 text-left text-xs font-semibold text-muted",
+        "px-3 py-3 text-left text-xs font-semibold text-muted sm:px-4",
+        sticky ? "data-table-sticky sticky right-0 bg-surface-muted" : null,
         className,
       ]
         .filter(Boolean)
@@ -142,14 +155,23 @@ export function DataTableHeaderCell({
   );
 }
 
+export type DataTableCellProps = TdHTMLAttributes<HTMLTableCellElement> & {
+  sticky?: boolean;
+};
+
 export function DataTableCell({
+  sticky = false,
   className,
   children,
   ...rest
-}: TdHTMLAttributes<HTMLTableCellElement>) {
+}: DataTableCellProps) {
   return (
     <td
-      className={["px-4 py-3 align-middle text-content", className]
+      className={[
+        "px-3 py-3 align-middle text-content sm:px-4",
+        sticky ? "data-table-sticky sticky right-0 bg-surface" : null,
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
       {...rest}

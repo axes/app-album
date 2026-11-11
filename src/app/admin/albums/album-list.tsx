@@ -72,16 +72,16 @@ export function AdminAlbumList({ albums }: AdminAlbumListProps) {
           )}
         />
       ) : (
-        <DataTable ariaLabel="Álbumes" minWidth="56rem" className="bg-surface">
+        <DataTable ariaLabel="Álbumes" className="bg-surface">
           <DataTableHead>
             <DataTableRow>
               <DataTableHeaderCell>Título</DataTableHeaderCell>
               <DataTableHeaderCell>Estado</DataTableHeaderCell>
-              <DataTableHeaderCell>Editorial / año</DataTableHeaderCell>
-              <DataTableHeaderCell className="text-right">Páginas</DataTableHeaderCell>
-              <DataTableHeaderCell className="text-right">Láminas</DataTableHeaderCell>
-              <DataTableHeaderCell className="text-right">En colección</DataTableHeaderCell>
-              <DataTableHeaderCell className="text-right">Acciones</DataTableHeaderCell>
+              <DataTableHeaderCell className="hidden md:table-cell">Editorial / año</DataTableHeaderCell>
+              <DataTableHeaderCell className="hidden text-right lg:table-cell">Páginas</DataTableHeaderCell>
+              <DataTableHeaderCell className="hidden text-right sm:table-cell">Láminas</DataTableHeaderCell>
+              <DataTableHeaderCell className="hidden text-right sm:table-cell">En colección</DataTableHeaderCell>
+              <DataTableHeaderCell sticky className="text-right">Acciones</DataTableHeaderCell>
             </DataTableRow>
           </DataTableHead>
           <DataTableBody>
@@ -96,19 +96,19 @@ export function AdminAlbumList({ albums }: AdminAlbumListProps) {
                     {album.status === "published" ? "Publicado" : "Borrador"}
                   </Badge>
                 </DataTableCell>
-                <DataTableCell>
+                <DataTableCell className="hidden md:table-cell">
                   {[album.publisher, album.year].filter(Boolean).join(" · ") || "—"}
                 </DataTableCell>
-                <DataTableCell className="text-right tabular-nums">
+                <DataTableCell className="hidden text-right tabular-nums lg:table-cell">
                   {album.sectionCount}
                 </DataTableCell>
-                <DataTableCell className="text-right tabular-nums">
+                <DataTableCell className="hidden text-right tabular-nums sm:table-cell">
                   {album.stickerCount}
                 </DataTableCell>
-                <DataTableCell className="text-right tabular-nums">
+                <DataTableCell className="hidden text-right tabular-nums sm:table-cell">
                   {album.collectionCount}
                 </DataTableCell>
-                <DataTableCell className="text-right">
+                <DataTableCell sticky className="text-right">
                   <Button
                     asChild
                     size="sm"
