@@ -102,15 +102,15 @@ export function AdminUserList({ users, currentUserId }: AdminUserListProps) {
           )}
         />
       ) : (
-        <DataTable ariaLabel="Usuarios" minWidth="48rem" className="bg-surface">
+        <DataTable ariaLabel="Usuarios" className="bg-surface">
           <DataTableHead>
             <DataTableRow>
               <DataTableHeaderCell>Usuario</DataTableHeaderCell>
-              <DataTableHeaderCell>Email</DataTableHeaderCell>
-              <DataTableHeaderCell>Contacto</DataTableHeaderCell>
+              <DataTableHeaderCell className="hidden sm:table-cell">Email</DataTableHeaderCell>
+              <DataTableHeaderCell className="hidden lg:table-cell">Contacto</DataTableHeaderCell>
               <DataTableHeaderCell>Rol</DataTableHeaderCell>
-              <DataTableHeaderCell>Estado</DataTableHeaderCell>
-              <DataTableHeaderCell>Acciones</DataTableHeaderCell>
+              <DataTableHeaderCell className="hidden sm:table-cell">Estado</DataTableHeaderCell>
+              <DataTableHeaderCell sticky>Acciones</DataTableHeaderCell>
             </DataTableRow>
           </DataTableHead>
           <DataTableBody>
@@ -118,20 +118,28 @@ export function AdminUserList({ users, currentUserId }: AdminUserListProps) {
               <DataTableRow className="last:border-b-0" key={user.id}>
                 <DataTableCell>
                   <div className="font-semibold text-content">{user.username}</div>
+                  {/* Below `sm` the email column is hidden, so it rides here. */}
+                  <div className="break-all text-xs text-muted sm:hidden">{user.email}</div>
                 </DataTableCell>
-                <DataTableCell className="break-words">{user.email}</DataTableCell>
-                <DataTableCell>{ownerLabels[user.emailOwnerType]}</DataTableCell>
+                <DataTableCell className="hidden break-words sm:table-cell">{user.email}</DataTableCell>
+                <DataTableCell className="hidden lg:table-cell">{ownerLabels[user.emailOwnerType]}</DataTableCell>
                 <DataTableCell>
                   <Badge variant={user.role === "admin" ? "primary" : "neutral"}>
                     {roleLabels[user.role]}
                   </Badge>
+                  {/* Below `sm` the status column is hidden, so it rides here. */}
+                  <div className="mt-1 sm:hidden">
+                    <Badge variant={user.status === "active" ? "success" : "danger"}>
+                      {statusLabels[user.status]}
+                    </Badge>
+                  </div>
                 </DataTableCell>
-                <DataTableCell>
+                <DataTableCell className="hidden sm:table-cell">
                   <Badge variant={user.status === "active" ? "success" : "danger"}>
                     {statusLabels[user.status]}
                   </Badge>
                 </DataTableCell>
-                <DataTableCell>
+                <DataTableCell sticky>
                   <UserActions
                     userId={user.id}
                     username={user.username}

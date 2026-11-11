@@ -531,6 +531,21 @@
   background-color: color-mix(in srgb, var(--album-danger) 12%, var(--album-surface));
 }
 
+/* Pinned actions column (`DataTableCell sticky`). The cell paints its own
+ * background so scrolled content never shows through; these rules keep it in
+ * step with the row's hover and selected tints and draw the dividing edge. */
+.data-table-sticky {
+  box-shadow: inset 1px 0 0 var(--album-border);
+}
+
+tbody tr:hover > .data-table-sticky {
+  background-color: var(--album-surface-soft);
+}
+
+tbody tr.admin-row-selected > .data-table-sticky {
+  background-color: color-mix(in srgb, var(--album-primary) 8%, var(--album-surface));
+}
+
 .app-shell-dock {
   position: fixed;
   left: 0;

@@ -120,15 +120,18 @@ describe("AdminUserList", () => {
     expect(maria.textContent).toContain("Bloqueado");
   });
 
-  it("keeps the table narrow enough for the shell and lets the email wrap", () => {
+  it("fits the shell without a forced width and keeps the actions column pinned", () => {
     const html = renderToStaticMarkup(
       <AdminUserList users={users} currentUserId={SELF_ID} />,
     );
 
-    // The shell caps the content at max-w-5xl (64rem) minus 2 × 16 px of
-    // padding, so 48rem (768 px) always fits inside it.
-    expect(html).toContain("min-width:48rem");
-    expect(html).not.toContain("min-width:64rem");
+    // No forced minimum width: secondary columns drop out on narrow screens
+    // instead of pushing the actions column off-screen.
+    expect(html).not.toContain("min-width:");
+    expect(html).toContain("hidden sm:table-cell");
+    expect(html).toContain("hidden lg:table-cell");
+    // If the table still overflows, the actions stay reachable.
+    expect(html).toContain("data-table-sticky sticky right-0");
     // The email must wrap instead of widening the column.
     expect(html).toContain("break-words");
   });
@@ -183,11 +186,17 @@ describe("AdminUserList", () => {
     // lookups to the row that carries the badge.
     const pedro = screen.getByRole("row", { name: /pedro/ });
     expect(within(pedro).getByText("Administrador").className).toContain("bg-primary");
-    expect(within(pedro).getByText("Activo").className).toContain("bg-success");
+    // The status badge is rendered twice: in its own column (from `sm`) and
+    // folded under the role (below `sm`). CSS shows exactly one of them.
+    for (const badge of within(pedro).getAllByText("Activo")) {
+      expect(badge.className).toContain("bg-success");
+    }
 
     const maria = screen.getByRole("row", { name: /maria/ });
     expect(within(maria).getByText("Usuario").className).toContain("bg-surface-muted");
-    expect(within(maria).getByText("Bloqueado").className).toContain("bg-danger");
+    for (const badge of within(maria).getAllByText("Bloqueado")) {
+      expect(badge.className).toContain("bg-danger");
+    }
 
     const region = screen.getByRole("region", { name: "Usuarios" });
     expect(region.textContent).not.toMatch(/\badmin\b/);
