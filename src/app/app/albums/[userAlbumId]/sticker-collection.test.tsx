@@ -120,6 +120,37 @@ describe("StickerCollection", () => {
     expect(screen.getByText("No te falta ninguna")).toBeTruthy();
   });
 
+  it("marks the last missing sticker and announces the completion on its click only", async () => {
+    const user = userEvent.setup();
+    const announced = vi.fn();
+    window.addEventListener("micoleccion:album-completed", announced);
+    try {
+      renderCollection();
+
+      // `groups` has exactly one missing sticker (004).
+      const last = screen.getByText("004").closest("li");
+      expect(last?.className).toContain("sticker-last-missing");
+      expect(screen.getByText("A1").closest("li")?.className).not.toContain("sticker-last-missing");
+
+      await user.click(screen.getByRole("button", { name: "Añadir copia de lámina A1" }));
+      expect(announced).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole("button", { name: "Añadir copia de lámina 004" }));
+      expect(announced).toHaveBeenCalledTimes(1);
+      // Once obtained it stops trembling.
+      expect(screen.getByText("004").closest("li")?.className).not.toContain("sticker-last-missing");
+    } finally {
+      window.removeEventListener("micoleccion:album-completed", announced);
+    }
+  });
+
+  it("does not single out any sticker while more than one is missing", () => {
+    const stickers = groups[0].stickers.map((sticker) => ({ ...sticker, quantity: 0 }));
+    render(<StickerCollection groups={[{ id: "page-1", name: "Página 1", stickers }]} userAlbumId="collection-1" />);
+
+    expect(document.querySelector(".sticker-last-missing")).toBeNull();
+  });
+
   it("opens only the first section when several groups exist", () => {
     const secondPage = groups[0].stickers.map((sticker) => ({ ...sticker, id: `${sticker.id}-b` }));
     render(
