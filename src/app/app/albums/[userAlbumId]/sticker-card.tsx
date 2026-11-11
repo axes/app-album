@@ -24,6 +24,11 @@ type Sticker = UserAlbumDetail["unassigned"][number];
  * `quantity`. `surfaceMix` and `borderMix` are percentages of the state token
  * blended into the neutral surface and border through `color-mix()`, so the
  * card tint always comes from the token and never from a literal colour.
+ *
+ * The three states must be told apart at a glance and without relying on
+ * colour alone: a missing sticker is dashed with a muted number, an owned one
+ * is filled and carries a check, and a duplicate is filled stronger and shows
+ * its count.
  */
 type StickerState = {
   label: string;
@@ -48,16 +53,16 @@ function stickerState(quantity: number): StickerState {
       label: "Obtenida",
       token: "var(--album-sticker-owned)",
       textClass: "text-xs font-semibold text-success",
-      surfaceMix: 10,
-      borderMix: 40,
+      surfaceMix: 20,
+      borderMix: 70,
     };
   }
   return {
     label: `Repetida · ${quantity} copias`,
     token: "var(--album-sticker-duplicate)",
     textClass: "text-sm font-bold text-accent",
-    surfaceMix: 18,
-    borderMix: 65,
+    surfaceMix: 26,
+    borderMix: 80,
   };
 }
 
@@ -214,12 +219,15 @@ export function StickerCard({ sticker, userAlbumId, view }: { sticker: Sticker; 
   // a short mark in the top-right corner. The full label stays in the markup
   // for assistive technology.
   const identity = <div className={`min-w-0${grid ? " max-sm:pointer-events-none max-sm:relative max-sm:z-10 max-sm:pr-7" : ""}`}>
-    <code className="type-sticker-number block truncate leading-tight" title={sticker.code}>{sticker.code}</code>
+    <code className={`${displayed === 0 ? "text-muted " : ""}type-sticker-number block truncate leading-tight`} title={sticker.code}>{sticker.code}</code>
     {sticker.name ? <p className={`${grid ? "max-sm:hidden " : ""}truncate text-xs text-muted`} title={sticker.name}>{sticker.name}</p> : null}
   </div>;
   const status = grid ? (
     <>
-      <span ref={labelRef} className={`block leading-snug ${state.textClass} max-sm:sr-only`}>{state.label}</span>
+      <span className="flex items-center gap-1 max-sm:sr-only">
+        {displayed === 1 ? <Icon className="block shrink-0 text-success" name="owned" size="sm" /> : null}
+        <span ref={labelRef} className={`block leading-snug ${state.textClass}`}>{state.label}</span>
+      </span>
       {displayed > 0 ? (
         <span
           aria-hidden="true"
